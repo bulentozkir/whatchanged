@@ -1,0 +1,157 @@
+using System.Diagnostics;
+using System.Text.Json;
+using PCChangeTracker.Core;
+using PCChangeTracker.Windows;
+
+namespace PCChangeTracker.App;
+
+public interface ICaptureService
+{
+    Task<Snapshot> CaptureAsync(IReadOnlySet<Category> enabled, IProgress<string> progress, CancellationToken cancellationToken,
+        CollectionScope scope = CollectionScope.Both, bool requestAdministratorAccess = false);
+}
+
+public sealed class CaptureService(string dataDirectory) : ICaptureService
+{
+    public async Task<Snapshot> CaptureAsync(IReadOnlySet<Category> enabled, IProgress<string> progress, CancellationToken cancellationToken,
+        CollectionScope scope = CollectionScope.Both, bool requestAdministratorAccess = false)
+    {
+        ValidateRequest(scope, requestAdministratorAccess);
+        if (CollectorTransport.IsAdministrator)
+            throw new CaptureAccessException("Start ChangeTracker normally, not as administrator. Optional administrator access is limited to one requested check.");
+        cancellationToken.ThrowIfCancellationRequested();
+        if (scope == CollectionScope.Both)
+        {
+            var machine = requestAdministratorAccess
+                ? await CollectorTransport.CaptureElevatedAsync(dataDirectory, enabled, cancellationToken)
+                : await CaptureLocalAsync(enabled, CollectionScope.Machine, null, progress, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            var user = await CaptureLocalAsync(enabled, CollectionScope.CurrentUser, null, progress, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return Combine(user, machine);
+        }
+        return requestAdministratorAccess
+            ? await CollectorTransport.CaptureElevatedAsync(dataDirectory, enabled, cancellationToken)
+            : await CaptureLocalAsync(enabled, scope, null, progress, cancellationToken);
+    }
+
+    internal static void ValidateRequest(CollectionScope scope, bool requestAdministratorAccess)
+    {
+        if (scope is not CollectionScope.CurrentUser and not CollectionScope.Machine and not CollectionScope.Both)
+            throw new ArgumentException("Choose current-user or machine-wide collection.");
+        if (requestAdministratorAccess && scope is not CollectionScope.Machine and not CollectionScope.Both)
+            throw new ArgumentException("Administrator access is only available for an explicit machine-wide check.");
+    }
+
+    internal static Snapshot Combine(Snapshot user, Snapshot machine)
+    {
+        if (user.Scope != CollectionScope.CurrentUser || user.Elevated || machine.Scope != CollectionScope.Machine || user.SchemaVersion != machine.SchemaVersion)
+            throw new InvalidDataException("Combined checks require an unelevated user observation and a separate machine observation.");
+        var results = new List<CollectionResult>();
+        foreach (var category in Enum.GetValues<Category>())
+        {
+            var runs = new[] { user, machine }.Where(snapshot => CollectorCatalog.Supports(category, snapshot.Scope))
+                .Select(snapshot => snapshot.Results.Single(result => result.Category == category)).ToArray();
+            var keys = runs.Select(run => run.FingerprintKeyId).Where(key => key is not null).Distinct().ToArray();
+            var items = runs.SelectMany(run => run.Items).ToArray();
+            var status = runs.All(run => run.Status == CollectionStatus.Disabled) ? CollectionStatus.Disabled
+                : runs.All(run => run.Status == CollectionStatus.Failed) ? CollectionStatus.Failed
+                : runs.All(run => run.Status == CollectionStatus.Success) && keys.Length <= 1 && items.Select(item => item.Key).Distinct(StringComparer.OrdinalIgnoreCase).Count() == items.Length
+                    ? CollectionStatus.Success : CollectionStatus.Partial;
+            results.Add(new(category, status, runs.Min(run => run.StartedAt), runs.Max(run => run.FinishedAt), items,
+                status == CollectionStatus.Success ? null : status == CollectionStatus.Disabled ? "Not selected for collection."
+                    : "One or more selected scopes did not provide a complete compatible reading. This category is not compared.")
+                { Version = 2, FingerprintKeyId = keys.Length == 1 ? keys[0] : null });
+        }
+        return new(Guid.NewGuid(), user.StartedAt < machine.StartedAt ? user.StartedAt : machine.StartedAt,
+            user.FinishedAt > machine.FinishedAt ? user.FinishedAt : machine.FinishedAt, results)
+            { Scope = CollectionScope.Both, Elevated = machine.Elevated, SchemaVersion = user.SchemaVersion };
+    }
+
+    internal async Task<Snapshot> CaptureLocalAsync(IReadOnlySet<Category> enabled, CollectionScope scope, byte[]? comparisonKey,
+        IProgress<string>? progress, CancellationToken cancellationToken)
+    {
+        var start = DateTimeOffset.UtcNow;
+        var results = new List<CollectionResult>();
+        foreach (var descriptor in CollectorCatalog.All)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!CollectorCatalog.Supports(descriptor.Category, scope) || !enabled.Contains(descriptor.Category))
+            {
+                results.Add(new(descriptor.Category, CollectionStatus.Disabled, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, [],
+                    CollectorCatalog.Supports(descriptor.Category, scope) ? "Not selected for collection." : "Outside the selected collection scope."));
+                continue;
+            }
+            progress?.Report("Checking " + descriptor.Name.ToLowerInvariant() + "...");
+            results.Add(await CollectAsync(descriptor.Category, scope, comparisonKey, cancellationToken));
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        return new(Guid.NewGuid(), start, DateTimeOffset.UtcNow, results) { Scope = scope, Elevated = CollectorTransport.IsAdministrator };
+    }
+
+    private async Task<CollectionResult> CollectAsync(Category category, CollectionScope scope, byte[]? comparisonKey, CancellationToken cancellationToken)
+    {
+        var started = DateTimeOffset.UtcNow;
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(25));
+        using var process = new Process { StartInfo = WorkerStartInfo(category, scope, comparisonKey is not null) };
+        try
+        {
+            if (!process.Start()) throw new InvalidOperationException("Collector could not start.");
+            try { process.PriorityClass = ProcessPriorityClass.BelowNormal; } catch (System.ComponentModel.Win32Exception) { }
+            var outputTask = CollectorTransport.ReadTextAsync(process.StandardOutput, 16_000_000, deadline.Token);
+            var errorTask = CollectorTransport.ReadTextAsync(process.StandardError, 64_000, deadline.Token);
+            if (comparisonKey is not null)
+            {
+                await process.StandardInput.BaseStream.WriteAsync(comparisonKey, deadline.Token);
+                await process.StandardInput.BaseStream.FlushAsync(deadline.Token);
+                process.StandardInput.Close();
+            }
+            await process.WaitForExitAsync(deadline.Token);
+            var output = await outputTask;
+            await errorTask;
+            if (process.ExitCode != 0 || output.Length > 16_000_000) throw new InvalidOperationException("Collector output was not usable.");
+            var result = JsonSerializer.Deserialize<CollectionResult>(output);
+            if (result is null || result.Category != category) throw new InvalidOperationException("Collector output was not valid.");
+            return result;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new(category, CollectionStatus.Failed, started, DateTimeOffset.UtcNow, [], "The check exceeded its 25-second limit. No removals were inferred.");
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            return new(category, CollectionStatus.Failed, started, DateTimeOffset.UtcNow, [], "This Windows source could not be checked. No settings were changed.");
+        }
+        finally
+        {
+            try { if (process.Id > 0 && !process.HasExited) { process.Kill(true); await process.WaitForExitAsync(CancellationToken.None); } }
+            catch (InvalidOperationException) { }
+            catch (System.ComponentModel.Win32Exception) { }
+        }
+    }
+
+    private ProcessStartInfo WorkerStartInfo(Category category, CollectionScope scope, bool keyFromInput)
+    {
+        var executable = Environment.ProcessPath ?? throw new InvalidOperationException("Application path unavailable.");
+        var info = new ProcessStartInfo(executable)
+        {
+            UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
+            RedirectStandardInput = keyFromInput
+        };
+        if (Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+            info.ArgumentList.Add(typeof(App).Assembly.Location);
+        info.ArgumentList.Add("--collect");
+        info.ArgumentList.Add(category.ToString());
+        info.ArgumentList.Add("--scope");
+        info.ArgumentList.Add(scope.ToString());
+        if (keyFromInput) info.ArgumentList.Add("--key-stdin");
+        else
+        {
+            info.ArgumentList.Add("--data-dir");
+            info.ArgumentList.Add(dataDirectory);
+        }
+        return info;
+    }
+}

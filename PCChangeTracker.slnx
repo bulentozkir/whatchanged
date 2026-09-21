@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PCChangeTracker.Core/PCChangeTracker.Core.csproj" />
+    <Project Path="src/PCChangeTracker.Windows/PCChangeTracker.Windows.csproj" />
+    <Project Path="src/PCChangeTracker.App/PCChangeTracker.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PCChangeTracker.Tests/PCChangeTracker.Tests.csproj" />
+  </Folder>
+</Solution>

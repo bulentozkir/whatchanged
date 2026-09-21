@@ -1,0 +1,69 @@
+# .NET build and dependency outputs
+[Bb]in/
+[Oo]bj/
+/artifacts/
+/releases/
+/packages/
+*.nupkg
+*.snupkg
+
+# Visual Studio and per-user IDE settings; keep shared .vscode configuration
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Test results, coverage, logs, and diagnostic outputs
+[Tt]est[Rr]esults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+*.binlog
+*.log
+*.dmp
+
+# Generated MSIX/AppX packages; keep manifests and source assets
+AppPackages/
+BundleArtifacts/
+*.msix
+*.msixbundle
+*.msixupload
+*.appx
+*.appxbundle
+*.appxupload
+*.appxsym
+
+# Local PC snapshots, exports, and SQLite history including journals
+/local-data/
+/snapshots/
+/exports/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Local environment settings and private signing material
+.env
+.env.*
+!.env.example
+!.env.sample
+/secrets/
+*.pfx
+*.p12
+*.key
+*.pem
+*.snk
+
+# Temporary files and Windows Explorer metadata
+*.tmp
+*.temp
+*.bak
+*.orig
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini

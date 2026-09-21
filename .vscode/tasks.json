@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/PCChangeTracker.slnx", "--configuration", "Debug", "-nodeReuse:false"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "test",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "${workspaceFolder}/tests/PCChangeTracker.Tests/PCChangeTracker.Tests.csproj", "--configuration", "Release", "--filter", "Category!=Desktop", "-nodeReuse:false"],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    }
+  ]
+}

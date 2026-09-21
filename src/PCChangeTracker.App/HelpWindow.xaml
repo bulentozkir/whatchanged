@@ -1,0 +1,50 @@
+<Window x:Class="PCChangeTracker.App.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
+        Title="{loc:Loc HelpTitle}" Width="1080" Height="780" MinWidth="740" MinHeight="540"
+        WindowStartupLocation="CenterOwner" Language="{Binding Texts.XmlLanguage}" FlowDirection="{Binding Texts.Direction}" Style="{StaticResource {x:Type Window}}">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="FocusSearch"/>
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find"/>
+    </Window.InputBindings>
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,20">
+            <Button DockPanel.Dock="Right" Content="{loc:Loc Close}" IsCancel="True" Click="CloseHelp" AutomationProperties.AutomationId="CloseHelp"/>
+            <StackPanel><TextBlock Text="{loc:Loc HelpHeading}" FontSize="26" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/><TextBlock Text="{loc:Loc OfflineGuide}" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/></StackPanel>
+        </DockPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,18">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Margin="0,0,24,0">
+                <Label Content="{loc:Loc SearchHelp}" Target="{Binding ElementName=HelpSearch}"/>
+                <TextBox x:Name="HelpSearch" TextChanged="SearchChanged" MaxLength="160" AutomationProperties.Name="{loc:Loc SearchHelp}" AutomationProperties.AutomationId="HelpSearch"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" VerticalAlignment="Bottom">
+                <Label Content="{loc:Loc TextSize}" Target="{Binding ElementName=TextZoom}"/>
+                <StackPanel Orientation="Horizontal">
+                    <Slider x:Name="TextZoom" Minimum="100" Maximum="160" Value="100" TickFrequency="10" IsSnapToTickEnabled="True" Width="120" VerticalAlignment="Center" AutomationProperties.Name="{loc:Loc TextSize}" AutomationProperties.AutomationId="HelpTextSize" ValueChanged="TextSizeChanged"/>
+                    <TextBlock Text="{Binding ElementName=TextZoom, Path=Value, StringFormat={}{0:0}%}" MinWidth="48" Margin="8,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid Margin="0,0,18,0">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <TextBlock x:Name="SearchStatus" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite"/>
+                <ListBox x:Name="TopicList" Grid.Row="1" SelectionChanged="TopicChanged" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         AutomationProperties.Name="{loc:Loc HelpHeading}" AutomationProperties.AutomationId="HelpTopics">
+                    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="Padding" Value="8,10"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}"/></Style></ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Title}"/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+            <FlowDocumentScrollViewer x:Name="HelpReader" Grid.Column="1" IsToolBarVisible="False" VerticalScrollBarVisibility="Auto"
+                                      Background="{DynamicResource SurfaceBrush}" Zoom="{Binding ElementName=TextZoom, Path=Value}" MinZoom="100" MaxZoom="160"
+                                      SizeChanged="ReaderSizeChanged"
+                                      AutomationProperties.Name="{loc:Loc HelpHeading}" AutomationProperties.AutomationId="HelpContent"/>
+        </Grid>
+    </Grid>
+</Window>

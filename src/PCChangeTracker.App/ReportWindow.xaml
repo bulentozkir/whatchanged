@@ -1,0 +1,24 @@
+<Window x:Class="PCChangeTracker.App.ReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
+        Title="{loc:Loc ReportTitle}" Width="880" Height="700" MinWidth="640" MinHeight="480" WindowStartupLocation="CenterOwner"
+        Language="{Binding Texts.XmlLanguage}" FlowDirection="{Binding Texts.Direction}" Style="{StaticResource {x:Type Window}}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,16">
+            <TextBlock Text="{loc:Loc ReviewSharing}" FontSize="24" FontWeight="SemiBold"/>
+            <TextBlock Text="{loc:Loc ReportPrivacy}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0"/>
+        </StackPanel>
+        <TextBox x:Name="Preview" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="16" AutomationProperties.Name="{loc:Loc ReportPreview}"/>
+        <DockPanel Grid.Row="2" Margin="0,18,0,0">
+            <Button DockPanel.Dock="Right" Content="{loc:Loc Close}" IsCancel="True"/>
+            <WrapPanel>
+                <Button Content="{loc:Loc CopyText}" Click="CopyText"/>
+                <Button Content="{loc:Loc SaveText}" Click="SaveText"/>
+                <Button x:Name="JsonButton" Content="{loc:Loc SaveJson}" Click="SaveJson"/>
+                <Button x:Name="CsvButton" Content="{loc:Loc SaveCsv}" Click="SaveCsv"/>
+            </WrapPanel>
+        </DockPanel>
+    </Grid>
+</Window>
