@@ -34,6 +34,75 @@ public sealed class DesktopTests
     private static System.Windows.Media.Color Hex(string value) => (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(value);
 
     [Fact]
+    public void ApplicationExecutableContainsTheChangeTrackerIcon()
+    {
+        using var icon = System.Drawing.Icon.ExtractAssociatedIcon(FindExecutable());
+        Assert.NotNull(icon);
+        using var bitmap = icon.ToBitmap();
+        AssertBrandedIcon(bitmap);
+    }
+
+    [Theory]
+    [InlineData(16)]
+    [InlineData(20)]
+    [InlineData(24)]
+    [InlineData(32)]
+    [InlineData(40)]
+    [InlineData(48)]
+    [InlineData(64)]
+    [InlineData(128)]
+    [InlineData(256)]
+    public void ApplicationIconFillsNativeSizes(int size)
+    {
+        using var stream = typeof(PCChangeTracker.App.App).Assembly.GetManifestResourceStream("PCChangeTracker.AppIcon.ico")!;
+        var decoder = new System.Windows.Media.Imaging.IconBitmapDecoder(stream,
+            System.Windows.Media.Imaging.BitmapCreateOptions.PreservePixelFormat, System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
+        var frame = Assert.Single(decoder.Frames, frame => frame.PixelWidth == size && frame.PixelHeight == size);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(frame);
+        using var buffer = new MemoryStream();
+        encoder.Save(buffer);
+        buffer.Position = 0;
+        using var bitmap = new System.Drawing.Bitmap(buffer);
+        AssertBrandedIcon(bitmap);
+        if (size is 16 or 32 or 48)
+        {
+            var directory = Path.Combine(FindRoot(), "artifacts", "screenshots");
+            Directory.CreateDirectory(directory);
+            bitmap.Save(Path.Combine(directory, $"application-icon-{size}.png"), ImageFormat.Png);
+        }
+    }
+
+    private static void AssertBrandedIcon(System.Drawing.Bitmap bitmap)
+    {
+        var brandPixels = 0;
+        var opaquePixels = 0;
+        var left = bitmap.Width;
+        var right = 0;
+        var top = bitmap.Height;
+        var bottom = 0;
+        for (var vertical = 0; vertical < bitmap.Height; vertical++)
+            for (var horizontal = 0; horizontal < bitmap.Width; horizontal++)
+            {
+                var pixel = bitmap.GetPixel(horizontal, vertical);
+                if (pixel.A > 200)
+                {
+                    opaquePixels++;
+                    left = Math.Min(left, horizontal);
+                    right = Math.Max(right, horizontal);
+                    top = Math.Min(top, vertical);
+                    bottom = Math.Max(bottom, vertical);
+                }
+                if (pixel.A > 200 && Math.Abs(pixel.R - 8) < 18 && Math.Abs(pixel.G - 103) < 18 && Math.Abs(pixel.B - 95) < 18)
+                    brandPixels++;
+            }
+        Assert.True(brandPixels >= 8, "The native icon does not contain the ChangeTracker artwork.");
+        Assert.True(opaquePixels >= bitmap.Width * bitmap.Height * 0.55, "The icon has too much empty space.");
+        Assert.True(right - left + 1 >= bitmap.Width * 0.85 && bottom - top + 1 >= bitmap.Height * 0.85,
+            "The visible mark is too small for its icon canvas.");
+    }
+
+    [Fact]
     public void AccessiblePaletteMeetsTextAndControlContrastTargets()
     {
         var resources = XDocument.Load(Path.Combine(FindRoot(), "src", "PCChangeTracker.App", "App.xaml"));
@@ -51,6 +120,20 @@ public sealed class DesktopTests
         }
         Assert.True(ContrastByKey("AccentTextBrush", "AccentBrush") >= 4.5);
         Assert.DoesNotContain(resources.Descendants(presentation + "Style"), style => (string?)style.Attribute(xaml + "Key") == "ModeSegment");
+    }
+
+    [Theory]
+    [InlineData(100, 1d)]
+    [InlineData(125, 1.25d)]
+    [InlineData(150, 1.5d)]
+    [InlineData(200, 2d)]
+    [InlineData(-1, 1d)]
+    public void TextSizeScalesAllSharedFontRoles(int percentage, double scale)
+    {
+        var resources = new System.Windows.ResourceDictionary();
+        PCChangeTracker.App.App.ApplyTextSize(resources, percentage);
+        foreach (var size in new[] { 14, 16, 17, 18, 19, 20, 22, 24, 26 })
+            Assert.Equal(size * scale, Assert.IsType<double>(resources["AppFont" + size]));
     }
 
     [Fact]
@@ -124,6 +207,8 @@ public sealed class DesktopTests
     {
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
         var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("schedule.interval", "Off");
+        store.SetPreference("retention", "Forever");
         store.SetPreference("collection.scope", "CurrentUser");
         var first = Seed(0, false) with { Scope = CollectionScope.CurrentUser };
         var second = Seed(0, true) with
@@ -133,6 +218,7 @@ public sealed class DesktopTests
         };
         store.Save(first);
         store.Save(second);
+        store.Save(Seed(1, false) with { Scope = CollectionScope.CurrentUser });
         store.Rename(first.Id, "Before setup");
         store.Rename(second.Id, "After setup");
         var summaries = store.List();
@@ -144,6 +230,7 @@ public sealed class DesktopTests
         {
             Assert.True(process.WaitForInputIdle(15000));
             var window = WaitForWindow(process.Id, "ChangeTracker");
+            Assert.Equal(WindowVisualState.Maximized, ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Current.WindowVisualState);
             Assert.True(((SelectionItemPattern)FindId(window, "SimpleMode").GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected);
             var texts = new PCChangeTracker.App.Localization.UiText("en");
             var beforePicker = FindId(window, "BeforeSnapshot");
@@ -159,8 +246,29 @@ public sealed class DesktopTests
             Screenshot(window, Path.Combine(screenshots, "comparison-dates.png"));
             InvokeId(window, "CheckNow");
             WaitForText(window, "Custom comparison. The baseline has not changed.");
-            Assert.Equal(2, store.List().Count);
+            Assert.Equal(3, store.List().Count);
             Assert.Equal(first.Id, store.GetBaselineId(CollectionScope.CurrentUser));
+            ((SelectionItemPattern)FindId(window, "AdvancedMode").GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
+            ((ExpandCollapsePattern)FindId(window, "ComparisonOptions").GetCurrentPattern(ExpandCollapsePattern.Pattern)).Expand();
+            AssertSelectedSnapshot(window, "BeforeSnapshot", texts.Snapshot(summaries.Single(snapshot => snapshot.Id == first.Id), true));
+            AssertSelectedSnapshot(window, "AfterSnapshot", texts.Snapshot(summaries.Single(snapshot => snapshot.Id == second.Id), true));
+            var day = first.FinishedAt.ToLocalTime().Date.ToString("D", texts.Culture);
+            SelectSnapshot(window, "BeforeDate", day);
+            SelectSnapshot(window, "AfterDate", day);
+            var filteredPicker = FindId(window, "BeforeSnapshot");
+            var filteredPopup = (ExpandCollapsePattern)filteredPicker.GetCurrentPattern(ExpandCollapsePattern.Pattern);
+            filteredPopup.Expand();
+            Assert.Equal(2, filteredPicker.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Count);
+            filteredPopup.Collapse();
+            SelectSnapshot(window, "BeforeSnapshot", texts.Snapshot(summaries.Single(snapshot => snapshot.Id == first.Id), true));
+            SelectSnapshot(window, "AfterSnapshot", texts.Snapshot(summaries.Single(snapshot => snapshot.Id == second.Id), true));
+            Screenshot(window, Path.Combine(screenshots, "advanced-comparison-dates.png"));
+            ((SelectionItemPattern)FindId(window, "SimpleMode").GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
+            AssertSelectedSnapshot(window, "BeforeSnapshot", texts.Snapshot(summaries.Single(snapshot => snapshot.Id == first.Id), true));
+            AssertSelectedSnapshot(window, "AfterSnapshot", texts.Snapshot(summaries.Single(snapshot => snapshot.Id == second.Id), true));
+            InvokeId(window, "CheckNow");
+            WaitForText(window, "Custom comparison. The baseline has not changed.");
             ((ExpandCollapsePattern)FindId(window, "ComparisonOptions").GetCurrentPattern(ExpandCollapsePattern.Pattern)).Collapse();
             AutomationElement? routineGroup = null;
             Assert.True(SpinWait.SpinUntil(() =>
@@ -176,6 +284,10 @@ public sealed class DesktopTests
             search.SetValue("DPAPI");
             WaitForText(help, "1 topic");
             WaitForText(help, "Privacy And Storage");
+            search.SetValue("snapshot frequency");
+            WaitForText(help, "1 topic");
+            WaitForText(help, "Settings");
+            Screenshot(help, Path.Combine(screenshots, "offline-help-settings.png"));
             search.SetValue("not-a-real-help-term-123");
             WaitForText(help, "0 topics");
             search.SetValue("presentation modes");
@@ -188,7 +300,7 @@ public sealed class DesktopTests
             Assert.False(FindId(help, "CloseHelp").Current.IsOffscreen);
             Screenshot(help, Path.Combine(screenshots, "offline-help-large-text.png"));
             InvokeId(help, "CloseHelp");
-            Assert.Equal(2, store.List().Count);
+            Assert.Equal(3, store.List().Count);
             window = WaitForWindow(process.Id, "ChangeTracker");
             AutomationElement? comparisonOptions = null;
             Assert.True(SpinWait.SpinUntil(() =>
@@ -200,13 +312,12 @@ public sealed class DesktopTests
             ((ExpandCollapsePattern)comparisonOptions!.GetCurrentPattern(ExpandCollapsePattern.Pattern)).Expand();
             ((SelectionItemPattern)FindId(window, "CompareToday").GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
             Assert.True(SpinWait.SpinUntil(() => FindId(window, "CheckNow").Current.Name == "Check now", 5000));
-            ((TransformPattern)window.GetCurrentPattern(TransformPattern.Pattern)).Resize(960, 720);
+            ResizeWindow(window, 960, 720);
             Assert.False(FindId(window, "BeforeSnapshot").Current.IsOffscreen);
             Assert.False(FindId(window, "CheckNow").Current.IsOffscreen);
             Screenshot(window, Path.Combine(screenshots, "comparison-small-window.png"));
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(process.WaitForExit(10000));
-            Assert.Equal(0, process.ExitCode);
+            ExitFromTray(process);
         }
         finally
         {
@@ -251,7 +362,7 @@ public sealed class DesktopTests
             Directory.CreateDirectory(screenshots);
             Screenshot(window, Path.Combine(screenshots, "language-spanish.png"));
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(process.WaitForExit(10000));
+            ExitFromTray(process, "es");
         }
         finally
         {
@@ -272,11 +383,80 @@ public sealed class DesktopTests
             Assert.Equal(baseline.Id, store.GetBaselineId(CollectionScope.CurrentUser));
             Assert.Single(store.List());
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(reopened.WaitForExit(10000));
+            ExitFromTray(reopened, "es");
         }
         finally
         {
             if (!reopened.HasExited) { reopened.Kill(true); reopened.WaitForExit(10000); }
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Desktop")]
+    public void SidebarStorageRemainsVisibleWithRetentionTooltip()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
+        var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("collection.scope", "Both");
+        store.SetPreference("schedule.interval", "Off");
+        store.SetPreference("retention", "Forever");
+        store.Save(Seed(0, false) with { Scope = CollectionScope.CurrentUser });
+        store.Save(Seed(1, true) with { Scope = CollectionScope.Machine });
+        var start = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
+        start.ArgumentList.Add("--data-dir");
+        start.ArgumentList.Add(directory);
+        using var process = Process.Start(start)!;
+        var originalPointer = System.Windows.Forms.Cursor.Position;
+        System.Drawing.Point? hoverPoint = null;
+        try
+        {
+            Assert.True(process.WaitForInputIdle(15000));
+            var window = WaitForWindow(process.Id, "ChangeTracker");
+            var texts = new PCChangeTracker.App.Localization.UiText("en");
+            foreach (var page in new[] { "ReviewPage", "HistoryPage", "SourcesPage", "SettingsPage" })
+            {
+                InvokeId(window, page);
+                var label = FindId(window, "SnapshotStorage");
+                Assert.False(label.Current.IsOffscreen);
+                Assert.StartsWith("Snapshot storage: ", label.Current.Name);
+                Assert.Equal(texts["SnapshotStorageHelp"], label.Current.HelpText);
+                Assert.True(label.Current.BoundingRectangle.Bottom <= FindId(window, "HelpMe").Current.BoundingRectangle.Top);
+            }
+            ResizeWindow(window, 960, 720);
+            var storage = FindId(window, "SnapshotStorage");
+            var bounds = storage.Current.BoundingRectangle;
+            Assert.True(bounds.Top > FindId(window, "SettingsPage").Current.BoundingRectangle.Bottom);
+            Assert.True(bounds.Right <= FindId(window, "SettingsPage").Current.BoundingRectangle.Right + 1);
+            storage.SetFocus();
+            Assert.True(SpinWait.SpinUntil(() => storage.Current.HasKeyboardFocus, 5000));
+            hoverPoint = new System.Drawing.Point((int)(bounds.Left + bounds.Width / 2), (int)(bounds.Top + bounds.Height / 2));
+            System.Windows.Forms.Cursor.Position = hoverPoint.Value;
+            var pointedElement = AutomationElement.FromPoint(new System.Windows.Point(hoverPoint.Value.X, hoverPoint.Value.Y));
+            Assert.Equal(process.Id, pointedElement.Current.ProcessId);
+            AutomationElement? tooltip = null;
+            Assert.True(SpinWait.SpinUntil(() =>
+            {
+                var roots = AutomationElement.RootElement.FindAll(TreeScope.Children,
+                    new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id)).Cast<AutomationElement>();
+                var condition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ToolTip);
+                tooltip = roots.Select(root => root.Current.ControlType == ControlType.ToolTip ? root : root.FindFirst(TreeScope.Descendants, condition))
+                    .FirstOrDefault(candidate => candidate is not null && !candidate.Current.IsOffscreen);
+                return tooltip is not null && !tooltip.Current.IsOffscreen;
+            }, 5000), $"The snapshot storage tooltip did not open on hover; hit={pointedElement.Current.AutomationId}; pointer={System.Windows.Forms.Cursor.Position}; target={hoverPoint}.");
+            Assert.True(tooltip!.Current.Name == texts["SnapshotStorageHelp"] || tooltip.FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.NameProperty, texts["SnapshotStorageHelp"])) is not null);
+            var screenshots = Path.Combine(FindRoot(), "artifacts", "screenshots");
+            Directory.CreateDirectory(screenshots);
+            Screenshot(window, Path.Combine(screenshots, "snapshot-storage-sidebar.png"));
+            if (tooltip.Current.NativeWindowHandle != 0) Screenshot(tooltip, Path.Combine(screenshots, "snapshot-storage-tooltip.png"));
+            Assert.Equal(2, store.List().Count);
+            ExitFromTray(process);
+        }
+        finally
+        {
+            if (hoverPoint == System.Windows.Forms.Cursor.Position) System.Windows.Forms.Cursor.Position = originalPointer;
+            if (!process.HasExited) { process.Kill(true); process.WaitForExit(10000); }
             if (Directory.Exists(directory)) Directory.Delete(directory, true);
         }
     }
@@ -288,6 +468,7 @@ public sealed class DesktopTests
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
         var store = new HistoryStore(Path.Combine(directory, "history.db"));
         store.SetPreference("collection.scope", "CurrentUser");
+        store.SetPreference("startup.minimizeToTray", "False");
         store.SetPreference("schedule.lastRun.CurrentUser", DateTimeOffset.UtcNow.ToString("O"));
         store.SetPreference("retention.lastRun.Retain90Days", DateTimeOffset.UtcNow.ToString("O"));
         var baseline = Seed(0, false) with { Scope = CollectionScope.CurrentUser };
@@ -331,22 +512,17 @@ public sealed class DesktopTests
             Assert.Equal("Calibri", textPattern.DocumentRange.GetAttributeValue(TextPattern.FontNameAttribute));
             Invoke(report, "Close");
             Assert.True(SpinWait.SpinUntil(() => window.Current.IsEnabled, 5000));
-            var tray = FindId(window, "MinimizeToTray");
-            tray.SetFocus();
-            ((TogglePattern)tray.GetCurrentPattern(TogglePattern.Pattern)).Toggle();
-            Assert.True(SpinWait.SpinUntil(() => store.GetPreference("startup.minimizeToTray") == "True", 5000));
+            Assert.Null(window.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "MinimizeToTray")));
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
             Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
             Assert.False(process.HasExited);
             using (var activate = Process.Start(start)!)
                 Assert.True(activate.WaitForExit(10000));
             window = WaitForWindow(process.Id, "ChangeTracker");
-            tray = FindId(window, "MinimizeToTray");
-            ((TogglePattern)tray.GetCurrentPattern(TogglePattern.Pattern)).Toggle();
-            Assert.True(SpinWait.SpinUntil(() => store.GetPreference("startup.minimizeToTray") == "False", 5000));
+            Assert.Equal("False", store.GetPreference("startup.minimizeToTray"));
             SelectSnapshot(window, "ThemePicker", "Light");
             Assert.Equal("Light", store.GetPreference("theme"));
-            ((TransformPattern)window.GetCurrentPattern(TransformPattern.Pattern)).Resize(960, 720);
+            ResizeWindow(window, 960, 720);
             Assert.True(((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).WaitForInputIdle(5000));
             var settings = FindId(window, "SettingsContent");
             var scrollbar = settings.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ScrollBar));
@@ -357,8 +533,68 @@ public sealed class DesktopTests
             Assert.Single(store.List());
             Assert.Equal(baseline.Id, store.GetBaselineId(CollectionScope.CurrentUser));
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(process.WaitForExit(10000));
-            Assert.Equal(0, process.ExitCode);
+            ExitFromTray(process);
+        }
+        finally
+        {
+            if (!process.HasExited) { process.Kill(true); process.WaitForExit(10000); }
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("False")]
+    [InlineData("True")]
+    [Trait("Category", "Desktop")]
+    public void HiddenStartupAndMinimizeKeepRunningUntilTrayExit(string? previousTrayChoice)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
+        var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("collection.scope", "CurrentUser");
+        store.SetPreference("schedule.interval", "Off");
+        if (previousTrayChoice is not null) store.SetPreference("startup.minimizeToTray", previousTrayChoice);
+        var start = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
+        start.ArgumentList.Add("--data-dir");
+        start.ArgumentList.Add(directory);
+        start.ArgumentList.Add("--start-minimized");
+        using var process = Process.Start(start)!;
+        try
+        {
+            Assert.True(process.WaitForInputIdle(15000));
+            Assert.NotEqual(IntPtr.Zero, FindTrayWindow(process));
+            process.Refresh();
+            Assert.Equal(IntPtr.Zero, process.MainWindowHandle);
+            Assert.False(process.HasExited);
+            InvokeTrayCommand(process, new PCChangeTracker.App.Localization.UiText("en")["TrayOpen"]);
+            var window = WaitForWindow(process.Id, "ChangeTracker");
+            Assert.Equal(WindowVisualState.Maximized, ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Current.WindowVisualState);
+            var handle = (nint)window.Current.NativeWindowHandle;
+            Assert.NotEqual(0, GetWindowLong(handle, -20) & 0x40000);
+            Assert.NotEqual(IntPtr.Zero, SendMessageTimeout(handle, 0x7F, 1, 0, 2, 5000, out var windowIcon));
+            Assert.NotEqual(IntPtr.Zero, windowIcon);
+            using (var icon = System.Drawing.Icon.FromHandle(windowIcon))
+            using (var bitmap = icon.ToBitmap()) AssertBrandedIcon(bitmap);
+            ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).SetWindowVisualState(WindowVisualState.Minimized);
+            Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
+            Assert.False(process.HasExited);
+            var trayWindow = FindTrayWindow(process);
+            Assert.True(PostMessage(trayWindow, 0x800, 1, 0x203));
+            window = WaitForWindow(process.Id, "ChangeTracker");
+            Assert.Equal(WindowVisualState.Maximized, ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Current.WindowVisualState);
+            ResizeWindow(window, 1000, 740);
+            var restoredSize = window.Current.BoundingRectangle.Size;
+            ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).SetWindowVisualState(WindowVisualState.Minimized);
+            Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
+            InvokeTrayCommand(process, new PCChangeTracker.App.Localization.UiText("en")["TrayOpen"]);
+            window = WaitForWindow(process.Id, "ChangeTracker");
+            Assert.Equal(WindowVisualState.Normal, ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Current.WindowVisualState);
+            Assert.Equal(restoredSize, window.Current.BoundingRectangle.Size);
+            ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
+            Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
+            Assert.False(process.HasExited);
+            Assert.Empty(store.List());
+            ExitFromTray(process);
         }
         finally
         {
@@ -380,6 +616,12 @@ public sealed class DesktopTests
         Assert.Contains(topics, topic => topic.Title == "Compare A Snapshot With Today");
         Assert.Contains(PCChangeTracker.App.HelpContent.Search(topics, "uac"), topic => topic.Title == "Administrator Access");
         Assert.Contains(PCChangeTracker.App.HelpContent.Search(topics, "DPAPI"), topic => topic.Title == "Privacy And Storage");
+        foreach (var term in new[] { "Snapshot storage", "history.db-wal", "KiB", "Size unavailable" })
+            Assert.Contains(PCChangeTracker.App.HelpContent.Search(topics, term), topic => topic.Title == "Privacy And Storage");
+        Assert.Contains(PCChangeTracker.App.HelpContent.Search(topics, "not backfilled"), topic => topic.Title == "Collection Sources And Limits");
+        Assert.Contains(PCChangeTracker.App.HelpContent.Search(topics, "Storage size stays large"), topic => topic.Title == "Troubleshooting");
+        foreach (var term in new[] { "F6", "Ctrl+4", "200%", "Screen-Reader Information" })
+            Assert.Contains(PCChangeTracker.App.HelpContent.Search(topics, term), topic => topic.Title == "Accessibility And Keyboard Use");
         Assert.Empty(PCChangeTracker.App.HelpContent.Search(topics, "not-a-real-help-term-123"));
         Assert.Equal(topics.Count, PCChangeTracker.App.HelpContent.Search(topics, "").Count);
     }
@@ -426,6 +668,13 @@ public sealed class DesktopTests
         Assert.Contains("DPAPI", translated);
         Assert.Contains("JSON/CSV", translated);
         Assert.Contains("allowElevation", translated);
+        var storageTopic = Assert.Single(PCChangeTracker.App.HelpContent.Search(translatedTopics, "history.db-wal"));
+        Assert.Contains(PCChangeTracker.App.HelpContent.Search(translatedTopics, "DPAPI"), topic => topic.Title == storageTopic.Title);
+        Assert.Contains("history.db-shm", translated);
+        Assert.Contains("KiB", translated);
+        var accessibilityTopic = Assert.Single(PCChangeTracker.App.HelpContent.Search(translatedTopics, "Ctrl+4"));
+        foreach (var term in new[] { "F6", "200%" })
+            Assert.Contains(PCChangeTracker.App.HelpContent.Search(translatedTopics, term), topic => topic.Title == accessibilityTopic.Title);
     }
 
     [Fact]
@@ -449,6 +698,12 @@ public sealed class DesktopTests
                 Assert.Contains("Advanced: ", new System.Windows.Documents.TextRange(compact.ContentStart, compact.ContentEnd).Text);
                 var started = PCChangeTracker.App.HelpContent.Render(topics.Single(topic => topic.Title == "Getting Started"));
                 Assert.Contains(started.Blocks.Cast<System.Windows.Documents.Block>(), block => block is System.Windows.Documents.List);
+                var storage = PCChangeTracker.App.HelpContent.Render(topics.Single(topic => topic.Title == "Privacy And Storage"));
+                Assert.Contains(storage.Blocks.Cast<System.Windows.Documents.Block>(), block => block is System.Windows.Documents.List);
+                var storageText = new System.Windows.Documents.TextRange(storage.ContentStart, storage.ContentEnd).Text;
+                Assert.Contains("Manage Disk Usage", storageText);
+                Assert.Contains("history.db-wal", storageText);
+                Assert.DoesNotContain("###", storageText);
             }
             catch (Exception exception) { failure = exception; }
         });
@@ -488,6 +743,7 @@ public sealed class DesktopTests
     {
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
         var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("schedule.interval", "Off");
         var enabled = new[] { Category.Applications, Category.Startup, Category.DefaultApps, Category.Network, Category.Environment };
         foreach (var category in Enum.GetValues<Category>()) store.SetPreference("source." + category, enabled.Contains(category).ToString());
         var info = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
@@ -538,9 +794,12 @@ public sealed class DesktopTests
             InvokeId(window!, "CheckNow");
             Assert.True(SpinWait.SpinUntil(() => !FindId(window!, "CheckNow").Current.IsEnabled, 5000));
             ((WindowPattern)window!.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(process.WaitForExit(10000));
-            Assert.Equal(0, process.ExitCode);
-            Assert.Equal(2, store.List().Count);
+            Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
+            Assert.False(process.HasExited);
+            Assert.True(SpinWait.SpinUntil(() => store.List().Count == 3, 60000), "Closing the window interrupted the active capture.");
+            Assert.Equal(baselineId, store.GetBaselineId(CollectionScope.CurrentUser));
+            ExitFromTray(process);
+            Assert.Equal(3, store.List().Count);
         }
         finally
         {
@@ -596,8 +855,7 @@ public sealed class DesktopTests
             Assert.All(machine.Results.Single(result => result.Category == Category.Applications).Items,
                 item => Assert.Equal("Machine", item.Fields["Scope"]));
             ((WindowPattern)window!.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(process.WaitForExit(10000));
-            Assert.Equal(0, process.ExitCode);
+            ExitFromTray(process);
         }
         finally
         {
@@ -644,13 +902,29 @@ public sealed class DesktopTests
             Assert.NotNull(FindId(window, "BeforeSnapshot"));
             Assert.NotNull(FindId(window, "CompareToday"));
             ((ExpandCollapsePattern)FindId(window, "ComparisonOptions").GetCurrentPattern(ExpandCollapsePattern.Pattern)).Collapse();
+            var screenshots = Path.Combine(rootPath, "artifacts", "screenshots");
+            Directory.CreateDirectory(screenshots);
+            var beforeValue = FindName(FindId(window, "SimpleChangeValues"), "Name, Before");
+            var afterValue = FindName(FindId(window, "SimpleChangeValues"), "Name, After");
+            Assert.True(((ValuePattern)beforeValue.GetCurrentPattern(ValuePattern.Pattern)).Current.IsReadOnly);
+            Assert.Equal("Not present", ((ValuePattern)beforeValue.GetCurrentPattern(ValuePattern.Pattern)).Current.Value);
+            Assert.Equal("Example Sync", ((ValuePattern)afterValue.GetCurrentPattern(ValuePattern.Pattern)).Current.Value);
+            Screenshot(window, Path.Combine(screenshots, "review-simple-readable.png"));
+            var inspect = FindId(window, "InspectChange");
+            ((InvokePattern)inspect.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+            var detail = FindId(window, "ChangeDetails");
+            Assert.NotNull(FindName(detail, "Name, After"));
+            Assert.False(FindId(window, "ReviewPage").Current.IsEnabled);
+            Assert.False(FindId(window, "HelpMe").Current.IsEnabled);
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "CloseChangeDetails").Current.HasKeyboardFocus, 5000));
+            Screenshot(window, Path.Combine(screenshots, "change-details-simple.png"));
+            InvokeId(window, "CloseChangeDetails");
+            Assert.True(SpinWait.SpinUntil(() => inspect.Current.HasKeyboardFocus, 5000));
             var selection = (SelectionItemPattern)advanced.GetCurrentPattern(SelectionItemPattern.Pattern);
             Assert.False(selection.Current.IsSelected);
             selection.Select();
             Assert.True(SpinWait.SpinUntil(() => store.GetPreference("mode") == "advanced", 5000));
 
-            var screenshots = Path.Combine(rootPath, "artifacts", "screenshots");
-            Directory.CreateDirectory(screenshots);
             Screenshot(window, Path.Combine(screenshots, "review-desktop.png"));
 
             var advancedFields = FindId(window, "AdvancedFields");
@@ -693,7 +967,7 @@ public sealed class DesktopTests
 
             Assert.True(SpinWait.SpinUntil(() => window.Current.IsEnabled, 5000));
             var originalWidth = window.Current.BoundingRectangle.Width;
-            ((TransformPattern)window.GetCurrentPattern(TransformPattern.Pattern)).Resize(980, 720);
+            ResizeWindow(window, 980, 720);
             Assert.True(SpinWait.SpinUntil(() => window.Current.BoundingRectangle.Width < originalWidth, 5000),
                 $"Original width {originalWidth}; resized width {window.Current.BoundingRectangle.Width}.");
             Assert.False(FindId(window, "CheckNow").Current.IsOffscreen);
@@ -703,9 +977,15 @@ public sealed class DesktopTests
             Assert.True(SpinWait.SpinUntil(() => store.GetPreference("mode") == "simple", 5000));
             Assert.Equal(first.Id, store.BaselineId);
             Assert.Equal(2, store.List().Count);
+            InvokeId(window, "ChangeScope");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "CurrentUserScope").Current.HasKeyboardFocus, 5000));
+            Assert.False(FindId(window, "HelpMe").Current.IsEnabled);
+            Assert.True(FindId(window, "ScopeHelpMe").Current.IsEnabled);
+            InvokeId(window, "ConfirmScope");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "ChangeScope").Current.HasKeyboardFocus, 5000));
+            Assert.True(FindId(window, "HelpMe").Current.IsEnabled);
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            Assert.True(process.WaitForExit(10000));
-            Assert.Equal(0, process.ExitCode);
+            ExitFromTray(process);
         }
         finally
         {
@@ -733,8 +1013,26 @@ public sealed class DesktopTests
         return new(Guid.NewGuid(), start, start.AddSeconds(1), results);
     }
 
-    private static AutomationElement FindId(AutomationElement parent, string id) => parent.FindFirst(TreeScope.Descendants,
-        new PropertyCondition(AutomationElement.AutomationIdProperty, id)) ?? throw new InvalidOperationException("Control not found: " + id);
+    private static AutomationElement FindId(AutomationElement parent, string id)
+    {
+        AutomationElement? element = null;
+        var found = SpinWait.SpinUntil(() =>
+        {
+            element = parent.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, id));
+            return element is not null;
+        }, 5000);
+        if (!found)
+        {
+            var state = parent.TryGetCurrentPattern(WindowPattern.Pattern, out var pattern)
+                ? ((WindowPattern)pattern).Current.WindowVisualState.ToString() : "Not a window";
+            var handle = (nint)parent.Current.NativeWindowHandle;
+            var style = GetWindowLong(handle, -16);
+            var foreground = GetForegroundWindow();
+            GetWindowThreadProcessId(foreground, out var foregroundProcess);
+            Assert.Fail($"Control not found: {id}; parent={parent.Current.Name}; handle={handle}; state={state}; offscreen={parent.Current.IsOffscreen}; nativeStyle=0x{style:X8}; foregroundProcess={foregroundProcess}.");
+        }
+        return element!;
+    }
 
     private static AutomationElement WaitForWindow(int processId, string title)
     {
@@ -747,7 +1045,8 @@ public sealed class DesktopTests
                 new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Window));
             window = ownedRoots.FirstOrDefault(root => root.Current.Name == title)
                 ?? ownedRoots.Select(root => root.FindFirst(TreeScope.Descendants, condition)).FirstOrDefault(candidate => candidate is not null);
-            return window is not null;
+            return window is not null && !window.Current.IsOffscreen &&
+                ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Current.WindowVisualState != WindowVisualState.Minimized;
         }, 10000), "Window not found: " + title);
         return window!;
     }
@@ -779,9 +1078,249 @@ public sealed class DesktopTests
         Assert.True(found, $"Choice unavailable: {label}; state: {expand.Current.ExpandCollapseState}; options: {string.Join(", ", available)}");
         ((SelectionItemPattern)item!.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
         expand.Collapse();
+        AssertSelectedSnapshot(window, pickerId, label);
+        Assert.True(SpinWait.SpinUntil(() => expand.Current.ExpandCollapseState == ExpandCollapseState.Collapsed, 5000));
+        Assert.True(((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).WaitForInputIdle(5000));
     }
 
-    private static void InvokeId(AutomationElement parent, string id) => ((InvokePattern)FindId(parent, id).GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+    private static void InvokeId(AutomationElement parent, string id)
+    {
+        var element = FindId(parent, id);
+        if (element.TryGetCurrentPattern(InvokePattern.Pattern, out var invoke)) ((InvokePattern)invoke).Invoke();
+        else ((SelectionItemPattern)element.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
+    }
+
+    [Theory]
+    [InlineData("Light", 100, "en")]
+    [InlineData("Dark", 100, "en")]
+    [InlineData("Dark", 200, "en")]
+    [InlineData("Light", 150, "ar")]
+    [Trait("Category", "Desktop")]
+    public void AllPagesAndSecondaryWindowsExposeReadableAccessibleControls(string theme, int textSize, string languageCode)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
+        var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("collection.scope", "Both");
+        store.SetPreference("schedule.interval", "Off");
+        store.SetPreference("retention", "Forever");
+        store.SetPreference("theme", theme);
+        store.SetPreference("textSize", textSize.ToString());
+        store.SetPreference("language", languageCode);
+        var texts = new PCChangeTracker.App.Localization.UiText(languageCode);
+        store.Save(Seed(0, false) with { Scope = CollectionScope.Both });
+        store.Save(Seed(1, true) with { Scope = CollectionScope.Both });
+        var start = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
+        start.ArgumentList.Add("--data-dir");
+        start.ArgumentList.Add(directory);
+        using var process = Process.Start(start)!;
+        try
+        {
+            Assert.True(process.WaitForInputIdle(15000));
+            var window = WaitForWindow(process.Id, "ChangeTracker");
+            ResizeWindow(window, 1000, 740);
+            foreach (var page in new[] { "ReviewPage", "HistoryPage", "SourcesPage", "SettingsPage" })
+            {
+                InvokeId(window, page);
+                Assert.True(((SelectionItemPattern)FindId(window, page).GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected);
+                var headingId = page.Replace("Page", "Heading", StringComparison.Ordinal);
+                Assert.True(SpinWait.SpinUntil(() => !FindId(window, headingId).Current.IsOffscreen, 5000), "Page heading was not brought into view: " + headingId);
+                AssertNamedControls(window);
+                if (page == "HistoryPage")
+                {
+                    var rows = FindId(window, "SnapshotList").FindAll(TreeScope.Descendants,
+                        new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.DataItem));
+                    Assert.NotEmpty(rows.Cast<AutomationElement>());
+                    Assert.All(rows.Cast<AutomationElement>(), row => Assert.Contains(texts.Context(CollectionScope.Both, false), row.Current.Name));
+                }
+                if (page == "SourcesPage")
+                {
+                    Assert.Contains("PATH", FindId(window, "SourceEnvironment").Current.HelpText);
+                    Assert.False(string.IsNullOrWhiteSpace(FindId(window, "SourceNetwork").Current.ItemStatus));
+                }
+                var screenshots = Path.Combine(FindRoot(), "artifacts", "screenshots");
+                Directory.CreateDirectory(screenshots);
+                Screenshot(window, Path.Combine(screenshots, $"accessible-{page}-{theme}-{textSize}-{languageCode}.png"));
+            }
+            InvokeId(window, "Report");
+            var report = WaitForWindow(process.Id, texts["ReportTitle"]);
+            Assert.True(SpinWait.SpinUntil(() => FindId(report, "ReportContent").Current.HasKeyboardFocus, 5000));
+            AssertNamedControls(report);
+            Screenshot(report, Path.Combine(FindRoot(), "artifacts", "screenshots", $"accessible-report-{theme}-{textSize}-{languageCode}.png"));
+            Invoke(report, texts["Close"]);
+            InvokeId(window, "HelpMe");
+            var help = WaitForWindow(process.Id, texts["HelpTitle"]);
+            Assert.True(SpinWait.SpinUntil(() => FindId(help, "HelpSearch").Current.HasKeyboardFocus, 5000));
+            AssertNamedControls(help);
+            ((ValuePattern)FindId(help, "HelpSearch").GetCurrentPattern(ValuePattern.Pattern)).SetValue("history.db-wal");
+            WaitForText(help, texts["OneTopic"]);
+            var topics = FindId(help, "HelpTopics").FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem));
+            var storageTopic = Assert.Single(PCChangeTracker.App.HelpContent.Search(PCChangeTracker.App.HelpContent.LoadTopics(languageCode), "history.db-wal"));
+            Assert.Equal(storageTopic.Title, Assert.Single(topics.Cast<AutomationElement>()).Current.Name);
+            Screenshot(help, Path.Combine(FindRoot(), "artifacts", "screenshots", $"accessible-help-{theme}-{textSize}-{languageCode}.png"));
+            InvokeId(help, "CloseHelp");
+            Assert.Equal(2, store.List().Count);
+        }
+        finally
+        {
+            if (!process.HasExited) { process.Kill(true); process.WaitForExit(10000); }
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    private static void AssertNamedControls(AutomationElement root)
+    {
+        var namedTypes = new[] { ControlType.Button, ControlType.CheckBox, ControlType.RadioButton, ControlType.ComboBox, ControlType.Edit, ControlType.List, ControlType.ListItem, ControlType.Slider };
+        foreach (var element in root.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>())
+        {
+            var current = element.Current;
+            if (current.IsEnabled && current.IsKeyboardFocusable && !current.IsOffscreen && namedTypes.Contains(current.ControlType))
+                Assert.False(string.IsNullOrWhiteSpace(current.Name), $"Unnamed {current.ControlType.ProgrammaticName}: {current.AutomationId} / {current.ClassName}");
+            foreach (var internalName in new[] { "SourceOption", "HelpTopic {", "SnapshotSummary {", "ChangeDetailRow {", "PRIVATE-HMAC" })
+                Assert.DoesNotContain(internalName, current.Name);
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Desktop")]
+    public void KeyboardNavigationTextSizingAndModalEscapeWorkWithoutCollecting()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
+        var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("collection.scope", "Both");
+        store.SetPreference("schedule.interval", "Off");
+        store.SetPreference("retention", "Forever");
+        store.Save(Seed(0, false) with { Scope = CollectionScope.Both });
+        store.Save(Seed(1, true) with { Scope = CollectionScope.Both });
+        var start = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
+        start.ArgumentList.Add("--data-dir");
+        start.ArgumentList.Add(directory);
+        using var process = Process.Start(start)!;
+        try
+        {
+            Assert.True(process.WaitForInputIdle(15000));
+            var window = WaitForWindow(process.Id, "ChangeTracker");
+            ResizeWindow(window, 1000, 740);
+            FindId(window, "ReviewPage").SetFocus();
+            SendKeysTo(process, "{DOWN}");
+            Assert.True(SpinWait.SpinUntil(() => ((SelectionItemPattern)FindId(window, "HistoryPage").GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected, 5000));
+            SendKeysTo(process, "{F6}");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "SimpleMode").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "{F6}");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "HistoryHeading").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "+{F6}");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "SimpleMode").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "^4");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "SettingsHeading").Current.HasKeyboardFocus, 5000));
+            SelectSnapshot(window, "AppTextSize", "150%");
+            Assert.True(SpinWait.SpinUntil(() => store.GetPreference("textSize") == "150", 5000));
+            SendKeysTo(process, "^1");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "ReviewHeading").Current.HasKeyboardFocus, 5000));
+            var inspect = FindId(window, "InspectChange");
+            inspect.SetFocus();
+            SendKeysTo(process, "{ENTER}");
+            Assert.True(SpinWait.SpinUntil(() => FindId(window, "CloseChangeDetails").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "^4");
+            Assert.True(((SelectionItemPattern)FindId(window, "ReviewPage").GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected);
+            SendKeysTo(process, "+{TAB}");
+            Assert.False(FindId(window, "HelpMe").Current.IsEnabled);
+            Assert.False(FindId(window, "SnapshotStorage").Current.HasKeyboardFocus);
+            SendKeysTo(process, "{ESC}");
+            Assert.True(SpinWait.SpinUntil(() => inspect.Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "{F1}");
+            var help = WaitForWindow(process.Id, "Help me - ChangeTracker");
+            Assert.True(SpinWait.SpinUntil(() => FindId(help, "HelpSearch").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "{F6}");
+            SendKeysTo(process, "{F6}");
+            Assert.True(SpinWait.SpinUntil(() => FindId(help, "HelpContent").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "^f");
+            Assert.True(SpinWait.SpinUntil(() => FindId(help, "HelpSearch").Current.HasKeyboardFocus, 5000));
+            SendKeysTo(process, "{ESC}");
+            Assert.True(SpinWait.SpinUntil(() => inspect.Current.HasKeyboardFocus, 5000));
+            Assert.Equal(2, store.List().Count);
+            ExitFromTray(process);
+        }
+        finally
+        {
+            if (!process.HasExited) { process.Kill(true); process.WaitForExit(10000); }
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    private static void SendKeysTo(Process process, string keys)
+    {
+        GetWindowThreadProcessId(GetForegroundWindow(), out var foregroundProcess);
+        Assert.Equal((uint)process.Id, foregroundProcess);
+        System.Windows.Forms.SendKeys.SendWait(keys);
+    }
+
+    private static AutomationElement FindName(AutomationElement parent, string name) => parent.FindFirst(TreeScope.Descendants,
+        new PropertyCondition(AutomationElement.NameProperty, name)) ?? throw new InvalidOperationException($"The accessible element '{name}' was not found.");
+
+    private static void AssertSelectedSnapshot(AutomationElement window, string pickerId, string name)
+    {
+        Assert.True(SpinWait.SpinUntil(() =>
+        {
+            var selected = ((SelectionPattern)FindId(window, pickerId).GetCurrentPattern(SelectionPattern.Pattern)).Current.GetSelection();
+            return selected.Length == 1 && selected[0].Current.Name == name;
+        }, 5000), $"The selected value in {pickerId} changed unexpectedly.");
+    }
+
+    private static void ResizeWindow(AutomationElement window, double width, double height)
+    {
+        var pattern = (WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern);
+        pattern.SetWindowVisualState(WindowVisualState.Normal);
+        Assert.True(SpinWait.SpinUntil(() => pattern.Current.WindowVisualState == WindowVisualState.Normal, 5000));
+        ((TransformPattern)window.GetCurrentPattern(TransformPattern.Pattern)).Resize(width, height);
+        Assert.True(pattern.WaitForInputIdle(5000));
+    }
+
+    private static nint FindTrayWindow(Process process)
+    {
+        nint trayWindow = 0;
+        Assert.True(SpinWait.SpinUntil(() =>
+        {
+            EnumWindows((handle, parameter) =>
+            {
+                GetWindowThreadProcessId(handle, out var processId);
+                if (processId != process.Id) return true;
+                var className = new System.Text.StringBuilder(256);
+                GetClassName(handle, className, className.Capacity);
+                if (!className.ToString().StartsWith("WindowsForms10.Window", StringComparison.Ordinal)) return true;
+                var identifier = new TrayIconIdentifier { Size = (uint)Marshal.SizeOf<TrayIconIdentifier>(), Window = handle, Id = 1 };
+                if (Shell_NotifyIconGetRect(ref identifier, out _) != 0) return true;
+                trayWindow = handle;
+                return false;
+            }, 0);
+            return trayWindow != 0;
+        }, 10000), "The app's registered notification-area icon was not found.");
+        return trayWindow;
+    }
+
+    private static void InvokeTrayCommand(Process process, string label)
+    {
+        const uint notifyIconCallback = 0x800;
+        const nint rightButtonReleased = 0x205;
+        Assert.True(PostMessage(FindTrayWindow(process), notifyIconCallback, 1, rightButtonReleased));
+        AutomationElement? command = null;
+        Assert.True(SpinWait.SpinUntil(() =>
+        {
+            var roots = AutomationElement.RootElement.FindAll(TreeScope.Children,
+                new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id)).Cast<AutomationElement>();
+            var condition = new AndCondition(new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem),
+                new PropertyCondition(AutomationElement.NameProperty, label), new PropertyCondition(AutomationElement.IsOffscreenProperty, false));
+            command = roots.Select(root => root.FindFirst(TreeScope.Descendants, condition)).FirstOrDefault(item => item is not null);
+            return command is not null;
+        }, 5000), "Tray command not found: " + label);
+        ((InvokePattern)command!.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+    }
+
+    private static void ExitFromTray(Process process, string languageCode = "en")
+    {
+        InvokeTrayCommand(process, new PCChangeTracker.App.Localization.UiText(languageCode)["TrayExit"]);
+        Assert.True(process.WaitForExit(10000), "Tray Exit did not terminate the application.");
+        Assert.Equal(0, process.ExitCode);
+    }
 
     private static void Invoke(AutomationElement parent, string name)
     {
@@ -818,4 +1357,47 @@ public sealed class DesktopTests
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool PrintWindow(nint window, nint deviceContext, uint flags);
+
+    private delegate bool EnumWindowsCallback(nint window, nint parameter);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool EnumWindows(EnumWindowsCallback callback, nint parameter);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint window, out uint processId);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(nint window, System.Text.StringBuilder className, int capacity);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PostMessage(nint window, uint message, nint parameter, nint detail);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowLong(nint window, int index);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern nint SendMessageTimeout(nint window, uint message, nint parameter, nint detail, uint flags, uint timeout, out nint result);
+
+    [DllImport("shell32.dll")]
+    private static extern int Shell_NotifyIconGetRect(ref TrayIconIdentifier identifier, out NativeRectangle rectangle);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct TrayIconIdentifier
+    {
+        public uint Size;
+        public nint Window;
+        public uint Id;
+        public Guid Guid;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRectangle
+    {
+        public int Left, Top, Right, Bottom;
+    }
 }

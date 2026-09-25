@@ -3,18 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
         Title="{loc:Loc HelpTitle}" Width="1080" Height="780" MinWidth="740" MinHeight="540"
-        WindowStartupLocation="CenterOwner" Language="{Binding Texts.XmlLanguage}" FlowDirection="{Binding Texts.Direction}" Style="{StaticResource {x:Type Window}}">
+        WindowStartupLocation="CenterOwner" Language="{Binding Texts.XmlLanguage}" Style="{StaticResource {x:Type Window}}">
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Find" Executed="FocusSearch"/>
     </Window.CommandBindings>
     <Window.InputBindings>
         <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find"/>
     </Window.InputBindings>
-    <Grid Margin="24">
+    <Grid Margin="24" FlowDirection="{Binding Texts.Direction}">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <DockPanel Margin="0,0,0,20">
             <Button DockPanel.Dock="Right" Content="{loc:Loc Close}" IsCancel="True" Click="CloseHelp" AutomationProperties.AutomationId="CloseHelp"/>
-            <StackPanel><TextBlock Text="{loc:Loc HelpHeading}" FontSize="26" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/><TextBlock Text="{loc:Loc OfflineGuide}" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/></StackPanel>
+            <StackPanel><TextBlock Text="{loc:Loc HelpHeading}" FontSize="{DynamicResource AppFont26}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/><TextBlock Text="{loc:Loc OfflineGuide}" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/></StackPanel>
         </DockPanel>
         <Grid Grid.Row="1" Margin="0,0,0,18">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -37,7 +37,7 @@
                 <TextBlock x:Name="SearchStatus" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite"/>
                 <ListBox x:Name="TopicList" Grid.Row="1" SelectionChanged="TopicChanged" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          AutomationProperties.Name="{loc:Loc HelpHeading}" AutomationProperties.AutomationId="HelpTopics">
-                    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="Padding" Value="8,10"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}"/></Style></ListBox.ItemContainerStyle>
+                    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="AutomationProperties.Name" Value="{Binding Title}"/></Style></ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Title}"/></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
             </Grid>

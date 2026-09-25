@@ -99,17 +99,15 @@ public partial class App : Application
             Resources["AppFontFamily"] = new System.Windows.Media.FontFamily(store.GetPreference("font") ?? "Segoe UI");
             ApplyAppearance();
             var viewModel = new MainViewModel(store, new CaptureService(dataDirectory), dataDirectory);
+            SetTextSize(viewModel.SelectedTextSize);
             var window = new MainWindow(viewModel);
             MainWindow = window;
             SetupTrayIcon(window, viewModel);
             activation = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\PCChangeTracker.Open." + suffix);
             activationRegistration = ThreadPool.RegisterWaitForSingleObject(activation,
-                (_, _) => Dispatcher.BeginInvoke(() => { window.Show(); window.WindowState = WindowState.Normal; window.Activate(); }),
+                (_, _) => Dispatcher.BeginInvoke(window.RestoreFromTray),
                 null, Timeout.Infinite, false);
-            var startMinimized = eventArgs.Args.Contains("--start-minimized");
-            if (startMinimized && viewModel.MinimizeToTray) { /* Stay hidden; restore from the tray icon. */ }
-            else if (startMinimized) { window.WindowState = WindowState.Minimized; window.Show(); }
-            else window.Show();
+            if (!eventArgs.Args.Contains("--start-minimized")) window.Show();
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -124,7 +122,9 @@ public partial class App : Application
         SystemParameters.StaticPropertyChanged -= SystemSettingsChanged;
         activationRegistration?.Unregister(null);
         activation?.Dispose();
+        var icon = trayIcon?.Icon;
         trayIcon?.Dispose();
+        icon?.Dispose();
         if (instanceMutex is not null) { instanceMutex.ReleaseMutex(); instanceMutex.Dispose(); }
         base.OnExit(eventArgs);
     }
@@ -141,6 +141,14 @@ public partial class App : Application
     internal void SetButtonColor(string color) { currentButtonColor = color; ApplyAppearance(); }
     internal void SetLabelColor(string color) { currentLabelColor = color; ApplyAppearance(); }
     internal void SetFont(string fontFamily) => Resources["AppFontFamily"] = new System.Windows.Media.FontFamily(fontFamily);
+    internal static IReadOnlyList<int> TextSizePercentages { get; } = [100, 125, 150, 200];
+    internal void SetTextSize(int percentage) => ApplyTextSize(Resources, percentage);
+    internal static void ApplyTextSize(ResourceDictionary resources, int percentage)
+    {
+        if (!TextSizePercentages.Contains(percentage)) percentage = 100;
+        foreach (var size in new[] { 14, 16, 17, 18, 19, 20, 22, 24, 26 })
+            resources["AppFont" + size] = size * percentage / 100d;
+    }
 
     private void ApplyAppearance()
     {
@@ -201,19 +209,15 @@ public partial class App : Application
 
     private void SetupTrayIcon(MainWindow window, MainViewModel viewModel)
     {
-        trayIcon = new System.Windows.Forms.NotifyIcon { Icon = LoadTrayIcon(), Text = "ChangeTracker", Visible = viewModel.MinimizeToTray };
-        trayIcon.DoubleClick += (_, _) => RestoreWindow(window);
-        trayOpenItem = new System.Windows.Forms.ToolStripMenuItem(viewModel.Texts["TrayOpen"], null, (_, _) => RestoreWindow(window));
+        trayIcon = new System.Windows.Forms.NotifyIcon { Icon = LoadTrayIcon(), Text = "ChangeTracker", Visible = true };
+        trayIcon.DoubleClick += (_, _) => window.RestoreFromTray();
+        trayOpenItem = new System.Windows.Forms.ToolStripMenuItem(viewModel.Texts["TrayOpen"], null, (_, _) => window.RestoreFromTray());
         trayExitItem = new System.Windows.Forms.ToolStripMenuItem(viewModel.Texts["TrayExit"], null, (_, _) => window.ForceClose());
         var menu = new System.Windows.Forms.ContextMenuStrip();
         menu.Items.Add(trayOpenItem);
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
         menu.Items.Add(trayExitItem);
         trayIcon.ContextMenuStrip = menu;
-        viewModel.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(MainViewModel.MinimizeToTray) && trayIcon is not null) trayIcon.Visible = viewModel.MinimizeToTray;
-        };
         viewModel.Texts.Changed += (_, _) =>
         {
             if (trayOpenItem is not null) trayOpenItem.Text = viewModel.Texts["TrayOpen"];
@@ -221,13 +225,11 @@ public partial class App : Application
         };
     }
 
-    private static void RestoreWindow(MainWindow window) { window.Show(); window.WindowState = WindowState.Normal; window.Activate(); }
-
     private static System.Drawing.Icon LoadTrayIcon()
     {
-        using var stream = typeof(App).Assembly.GetManifestResourceStream("PCChangeTracker.TrayIcon.png")!;
-        using var bitmap = new System.Drawing.Bitmap(stream);
-        return System.Drawing.Icon.FromHandle(bitmap.GetHicon());
+        using var stream = typeof(App).Assembly.GetManifestResourceStream("PCChangeTracker.AppIcon.ico")!;
+        using var icon = new System.Drawing.Icon(stream, System.Windows.Forms.SystemInformation.SmallIconSize);
+        return (System.Drawing.Icon)icon.Clone();
     }
 
     internal static void ApplyAccessibilityColors(ResourceDictionary resources, IReadOnlyDictionary<string, object> standard, bool highContrast)

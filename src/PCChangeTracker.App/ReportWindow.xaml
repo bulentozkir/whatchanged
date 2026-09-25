@@ -3,14 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
         Title="{loc:Loc ReportTitle}" Width="880" Height="700" MinWidth="640" MinHeight="480" WindowStartupLocation="CenterOwner"
-        Language="{Binding Texts.XmlLanguage}" FlowDirection="{Binding Texts.Direction}" Style="{StaticResource {x:Type Window}}">
+        Language="{Binding Texts.XmlLanguage}" Style="{StaticResource {x:Type Window}}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" FlowDirection="{Binding Texts.Direction}">
     <Grid Margin="24">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <StackPanel Margin="0,0,0,16">
-            <TextBlock Text="{loc:Loc ReviewSharing}" FontSize="24" FontWeight="SemiBold"/>
+            <TextBlock Text="{loc:Loc ReviewSharing}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/>
             <TextBlock Text="{loc:Loc ReportPrivacy}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0"/>
         </StackPanel>
-        <TextBox x:Name="Preview" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="16" AutomationProperties.Name="{loc:Loc ReportPreview}"/>
+        <TextBox x:Name="Preview" Grid.Row="1" Height="360" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="{DynamicResource AppFont16}" AutomationProperties.Name="{loc:Loc ReportPreview}" AutomationProperties.AutomationId="ReportContent"/>
         <DockPanel Grid.Row="2" Margin="0,18,0,0">
             <Button DockPanel.Dock="Right" Content="{loc:Loc Close}" IsCancel="True"/>
             <WrapPanel>
@@ -21,4 +22,5 @@
             </WrapPanel>
         </DockPanel>
     </Grid>
+    </ScrollViewer>
 </Window>

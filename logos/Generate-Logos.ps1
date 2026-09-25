@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$Overwrite,
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+    [string]$ApplicationIconPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -61,6 +62,55 @@ function Draw-ChangeTrackerMark {
         $before.Dispose(); $after.Dispose(); $outline.Dispose(); $lightOutline.Dispose()
         $teal.Dispose(); $white.Dispose(); $amber.Dispose()
     }
+}
+
+if ($ApplicationIconPath) {
+    if ($Overwrite -or $ValidateOnly) { throw 'Application icon generation cannot be combined with logo generation or validation switches.' }
+    $outputPath = [System.IO.Path]::GetFullPath($ApplicationIconPath)
+    [void][System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($outputPath))
+    $sizes = @(16, 20, 24, 32, 40, 48, 64, 128, 256)
+    $frames = [System.Collections.Generic.List[byte[]]]::new()
+    foreach ($size in $sizes) {
+        $bitmap = [System.Drawing.Bitmap]::new($size, $size, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+        $buffer = [System.IO.MemoryStream]::new()
+        try {
+            $graphics.Clear([System.Drawing.Color]::Transparent)
+            $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+            $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+            $graphics.TranslateTransform(1, 1)
+            $graphics.ScaleTransform([single](($size - 2) / 410.0), [single](($size - 2) / 332.0))
+            $graphics.TranslateTransform(-52, -84)
+            Draw-ChangeTrackerMark $graphics $true
+            $bitmap.Save($buffer, [System.Drawing.Imaging.ImageFormat]::Png)
+            $frames.Add($buffer.ToArray())
+        }
+        finally { $buffer.Dispose(); $graphics.Dispose(); $bitmap.Dispose() }
+    }
+    $stream = [System.IO.File]::Create($outputPath)
+    $writer = [System.IO.BinaryWriter]::new($stream)
+    try {
+        $writer.Write([uint16]0)
+        $writer.Write([uint16]1)
+        $writer.Write([uint16]$sizes.Count)
+        $offset = [uint32](6 + 16 * $sizes.Count)
+        for ($index = 0; $index -lt $sizes.Count; $index++) {
+            $dimension = [byte]$(if ($sizes[$index] -eq 256) { 0 } else { $sizes[$index] })
+            $writer.Write($dimension)
+            $writer.Write($dimension)
+            $writer.Write([byte]0)
+            $writer.Write([byte]0)
+            $writer.Write([uint16]1)
+            $writer.Write([uint16]32)
+            $writer.Write([uint32]$frames[$index].Length)
+            $writer.Write($offset)
+            $offset += [uint32]$frames[$index].Length
+        }
+        foreach ($frame in $frames) { $writer.Write($frame) }
+    }
+    finally { $writer.Dispose(); $stream.Dispose() }
+    Write-Output "Application icon: $outputPath"
+    return
 }
 
 function Write-Logo {

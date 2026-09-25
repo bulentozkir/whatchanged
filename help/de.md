@@ -13,10 +13,12 @@ App-Namen, eigene Bezeichnungen, Pfade, Kennungen und Originalwerte werden nicht
 Öffnen Sie Einstellungen im Menü. Die Auswahl wird für das aktuelle Verlaufsverzeichnis gespeichert und beim Neustart wiederhergestellt.
 
 - Darstellung bietet Hell/Dunkel, Schriftart sowie unabhängige Farben für App-Text, Beschriftungen, Schaltflächenhintergrund und Schaltflächentext. Benannte Farbfelder bieten Standard, Marineblau, Waldgrün, Bordeaux und Violett. Standard setzt die jeweilige Designfarbe zurück. Der hohe Kontrast von Windows hat Vorrang; Hauptaktionen behalten kontrastierenden Text.
-- Automatische Aufnahmen sind zunächst aus. Intervalle: 15 Minuten, 1 Stunde, 6 Stunden, täglich oder wöchentlich. Sie laufen nur bei geöffneter App, auch im Infobereich, mit normalen Rechten und Abbruchmöglichkeit. Sie fordern keine Administratorrechte und wecken den PC nicht. Fälligkeit wird minütlich geprüft; nach erneutem Öffnen kann eine überfällige Prüfung folgen, nicht jede verpasste einzeln.
-- Aufbewahrung ist zunächst unbegrenzt. 30, 90, 180 oder 365 Tage löschen nur ältere unbenannte Aufnahmen, die keine Referenz sind. Bereinigung läuft bei erster Fälligkeit, danach täglich während die App läuft und nach erfolgreichen automatischen Prüfungen, auch bei ausgeschalteter Aufnahmefrequenz. Benannte Prüfpunkte und alle Referenzen bleiben geschützt.
+- Automatische Aufnahmen erfolgen standardmäßig alle 4 Stunden; gespeicherte Einstellungen einschließlich Aus bleiben erhalten. Intervalle: 15 Minuten, 1 Stunde, 4 Stunden, 6 Stunden, täglich oder wöchentlich. Für rein manuelle Prüfungen wählen Sie Aus. Sie laufen nur bei geöffneter App, auch im Infobereich, mit normalen Rechten und Abbruchmöglichkeit. Nach Bestätigung des Bereichs kann die erste oder eine überfällige Prüfung beim nächsten minütlichen Kontrolllauf starten; weitere folgen dem Intervall. Keine automatische Rechteerhöhung, kein Aufwecken und keine Wiederholung aller verpassten Intervalle.
+- Die Standardaufbewahrung beträgt 30 Tage; gespeicherte Einstellungen einschließlich unbegrenzter Aufbewahrung bleiben erhalten. Wählen Sie 30, 90, 180 oder 365 Tage oder unbegrenzt. Nur ältere unbenannte Aufnahmen, die keine Referenz sind, werden gelöscht. Bereinigung läuft bei erster Fälligkeit, danach täglich während die App läuft und nach erfolgreichen automatischen Prüfungen, auch bei ausgeschalteter Aufnahmefrequenz. Benannte Prüfpunkte und alle Referenzen bleiben geschützt.
 - Start bei Anmeldung ist optional und zunächst aus. Das gilt auch nach einem Neustart, nicht vor der Anmeldung. Nur der eigene benutzerbezogene Starteintrag wird geändert; kein Dienst oder Systemstarttask, keine andere App oder Richtlinie. Ein Fehler lässt die vorige Auswahl bestehen.
-- Im Infobereich weiterlaufen ist optional und zunächst aus. Minimieren oder Schließen verbirgt das Fenster, Prüfungen laufen weiter. Öffnen oder erneuter App-Start stellt es wieder her. Beenden im Infobereich bricht aktive Arbeit ab und beendet die App. Ohne diese Option bricht Schließen ab und beendet.
+- Minimieren oder Schließen verbirgt das Fenster immer im Infobereich; Prüfungen laufen weiter. Öffnen, ein Doppelklick auf das Symbol oder ein erneuter App-Start stellt es wieder her. Beenden im Infobereich bricht aktive Arbeit ab und beendet die App. Ein normaler Start öffnet maximiert; Wiederherstellen behält den letzten sichtbaren Zustand. Der optionale Start bei der Anmeldung bleibt verborgen, auch nach einem Windows-Neustart; kein Betrieb vor der Anmeldung und kein Dienst.
+
+Einfach zeigt geänderte öffentliche Felder mit Vorher/Nachher-Beschriftung und größeren, auswählbaren, schreibgeschützten Werten. Beim Schließen der Details kehrt der Fokus zur ursprünglichen Schaltfläche zurück, sofern verfügbar. Erweitert trennt gespeicherte Tage von genauen Erfassungszeiten und zeigt Prüfpunkt und Bereich/Zugriff in eigenen Zeilen. Ein Moduswechsel behält den ausgewählten Vergleich.
 
 Neue Profile wählen beide Bereiche; gespeicherte Entscheidungen bleiben erhalten. Alle aufbewahrten Bereiche lassen sich unabhängig vom Erfassungsbereich durchsuchen, aber Vergleichsenden müssen bei Bereich und Rechten übereinstimmen. Einstellungen erhöhen keine Rechte. Ressourcenprofilierung und Prüfung installierter Pakete stehen noch aus.
 
@@ -24,10 +26,10 @@ Neue Profile wählen beide Bereiche; gespeicherte Entscheidungen bleiben erhalte
 
 1. Normal starten, nicht als Administrator.
 2. **Aktueller Benutzer** und **Gesamter Computer** prüfen. Bei neuen Profilen sind beide Kästchen an. Eines oder beide wählen, nie keines, und bestätigen.
-3. Quellen prüfen. Netzwerk und PATH sind optional. Eine Auswahl startet keine Erfassung.
+3. Quellen prüfen. Alle unterstützten Prüfungen einschließlich Netzwerk und PATH sind standardmäßig aktiviert. Gespeicherte Auswahl bleibt erhalten; Quellen können deaktiviert werden. Eine Auswahl startet keine Erfassung.
 4. Heute und Jetzt prüfen wählen.
 
-Die erste nutzbare Beobachtung wird zur Referenz für Umfang und Rechte. Sie ist Bestand, keine Rekonstruktion früherer Änderungen. Neue Profile erfassen nicht automatisch; aktivierte Intervalle gelten nur während die App läuft.
+Die erste nutzbare Beobachtung wird zur Referenz für Umfang und Rechte. Sie ist Bestand, keine Rekonstruktion früherer Änderungen. Neue Profile verwenden ein Intervall von 4 Stunden, erst nach Bestätigung des Bereichs und nur während die App läuft. Wählen Sie Aus für rein manuelle Prüfungen.
 
 ## Einfach und Erweitert
 
@@ -55,7 +57,7 @@ Früheres Datum und Aufnahme wählen, dann Gespeicherte Aufnahme sowie späteres
 
 Frühere Aufnahme und Heute wählen. Jetzt prüfen erfasst frisch und vergleicht genau mit der Auswahl, nicht heimlich mit einer anderen Referenz. Der Auswahlbereich klappt nach Erfolg zu und lässt sich wieder öffnen.
 
-Eine Administratorreferenz erhöht niemals automatisch Rechte. Die separate Adminaktion verwenden oder nur den aktuellen Zustand erfassen. Abbrechen stoppt die Prüfung und bewahrt den Verlauf. Bei aktiviertem Infobereich läuft die Erfassung nach Schließen weiter; Beenden im Infobereich bricht sie ab und beendet die App.
+Eine Administratorreferenz erhöht niemals automatisch Rechte. Die separate Adminaktion verwenden oder nur den aktuellen Zustand erfassen. Abbrechen stoppt die Prüfung und bewahrt den Verlauf. Nach Schließen läuft die Erfassung im Infobereich weiter; Beenden im Infobereich bricht sie ab und beendet die App.
 
 ## Administratorrechte
 
@@ -92,7 +94,9 @@ Kein festes Prüfpunktlimit. Die optionale Aufbewahrung bereinigt alte unbenannt
 | Updates und Treiber | Erfolgreicher lokaler Verlauf bis 5.000 Ereignisse (darüber teilweise), WMI-Metadaten; keine Installation, Firmware oder Rücksetzung. |
 | Standards und Audio | Unterstützte Zuordnungen und Standardgeräte; keine Tonaufnahme oder Änderung. |
 | Schutz | Firewallprofile, keine Antivirusbewertung. |
-| Netzwerk und PATH | Optional: Proxy oder DNS/DHCP und gespeicherter PATH. Keine Pakete, Kennwörter, Sonden oder anderen Variablen. |
+| Netzwerk und PATH | Standardmäßig aktiviert: Proxy oder DNS/DHCP und gespeicherter PATH. Keine Pakete, Kennwörter, Sonden oder anderen Variablen. |
+
+Ohne gültige gespeicherte Auswahl sind alle unterstützten Quellen standardmäßig aktiviert. Eine deaktivierte Quelle bleibt nach einem Update deaktiviert; ändern Sie sie unter Quellen. Aktivieren startet keine Erfassung und erhöht keine Rechte. Unterschiede benötigen verwendbare Beobachtungen an beiden Endpunkten; alte Snapshots werden nicht nachträglich ergänzt.
 
 25 Sekunden Limit je Quelle. Der sichtbare Bestand zeigt 1.000 Einträge je Quelle, alle tatsächlich erfassten Daten bleiben gespeichert. Nur Lesen erlaubt eigenen Verlauf und angeforderte Exporte, nicht Änderungen überwachter Einstellungen.
 
@@ -106,9 +110,28 @@ Schlüssel, Fingerabdrücke, Startwerte, Prüfpunktnamen und Audio-IDs werden ni
 
 Normaler Pfad: `%LOCALAPPDATA%\PCChangeTracker`; Einstellungen zeigt den tatsächlichen Ort. SQLite ist unverschlüsselt. Der Schlüssel nutzt benutzerbezogenes DPAPI; Kopieren in ein anderes Konto garantiert keine Entschlüsselung. Vor neuen Versionen sicher sichern.
 
+### Speicherplatz verwalten
+
+1. Der Snapshotspeicher steht links oberhalb der Hilfe, auf jeder Seite. Er umfasst alle Bereiche des aktuellen Verlaufs.
+2. Zeigen Sie mit der Maus auf die Größe, um Hinweise zu lesen. Tab fokussiert die Beschriftung; Screenreader erhalten Namen und Hilfetext.
+3. Ändern Sie die Häufigkeit automatischer Prüfungen in Einstellungen. Ein längeres Intervall erzeugt weniger neue Snapshots. Aus stoppt automatische Erfassungen, löscht aber keinen Verlauf und stoppt nicht die Aufbewahrungsbereinigung.
+4. Eine kürzere Aufbewahrung entfernt geeignete alte Snapshots bei der nächsten fälligen Bereinigung, nicht sofort bei Auswahl. Sie läuft bei Fälligkeit, danach täglich während der Ausführung und nach erfolgreichen automatischen Erfassungen. Referenzen und benannte Prüfpunkte bleiben geschützt; dies ist keine feste Speicherobergrenze.
+
+Die Größe summiert vorhandene `history.db`, `history.db-wal` und `history.db-shm`. Sie enthält Einstellungen, Verwaltungsdaten und wiederverwendbare freie Bereiche, nicht nur Snapshots; sie entspricht nicht der auf Blöcke gerundeten Windows-Belegung. Exporte, Installation und Schlüsseldatei zählen nicht mit. B, KiB, MiB, GiB und TiB verwenden Vielfache von 1.024 und die lokale Zahlenformatierung.
+
+Der Wert aktualisiert sich mit dem Verlauf nach Erfassung, Löschen oder Bereinigung, nicht kontinuierlich. Größe nicht verfügbar bedeutet nicht null. Löschen kann Platz zur Wiederverwendung hinterlassen, ohne die Datei zu verkleinern; auch ein leerer Verlauf belegt Platz. Keine automatische Komprimierung der Datenbank. Datenbank und temporäre Dateien nicht bei laufender App löschen.
+
 Verlaufsformat 2 bewahrt alte Daten als gemischt und blockiert alte Leser. Der Helfer erhält nur Kategorien und temporäre Schlüsselkopie, keine Verlaufspfade oder freien Befehle. Nur das normale Fenster schreibt. MSIX-Datenlebenszyklen benötigen eigene Tests.
 
 ## Barrierefreiheit
+
+Einstellungen > Darstellung > Textgröße bietet 100%, 125%, 150% und 200%. Die gespeicherte Auswahl vergrößert Seiten, Bedienelemente, Hilfe und Bericht. Feldpaare werden bei Platzmangel untereinander angeordnet; Seiten, Seitenleiste und Dialoge sind scrollbar. Die Schriftwahl gilt auch für die Hilfe; ihr zusätzlicher Dokumentzoom reicht bis 160% dieser Basis.
+
+Die Seitennavigation meldet die ausgewählte Seite und lässt sich mit Pfeiltasten bedienen. Ctrl+1 öffnet Änderungen, Ctrl+2 Snapshots, Ctrl+3 Quellen und Ctrl+4 Einstellungen. F6 und Shift+F6 wechseln zwischen Navigation, Befehlsleiste und Seitenüberschrift; Tab führt in die Bedienelemente. In der Hilfe wechselt F6 zwischen Suche, Themen und Dokument, Ctrl+F zur Suche.
+
+Die Bereichsauswahl fokussiert das erste Kästchen und kehrt nach Bestätigung zu Bereich ändern zurück. Modale Bereiche deaktivieren die ganze Seitenleiste und Seitentastenkürzel; Tab bleibt im Bereich. Escape schließt Details und stellt den Fokus zur ursprünglichen Aktion wieder her, wenn verfügbar. Hilfe beginnt in der Suche, Bericht in der schreibgeschützten Vorschau. Snapshotzeilen, Themen, Gruppen und Felder haben lesbare Namen; Werte nennen Feld und Vorher/Nachher, Quellen melden Status und Bereich. Hauptbedienelemente haben mindestens 44 geräteunabhängige Einheiten Interaktionshöhe.
+
+Das ist keine universelle Konformitätsbescheinigung. Manuelle Tests mit Screenreadern, Kontrastthemen, Windows-Skalierung und Menschen mit Behinderungen bleiben nötig. Echte Tastaturtests benötigen eine entsperrte, ungestörte Sitzung.
 
 Tab/Umschalt+Tab, Pfeile und Leertaste bedienen die Oberfläche. Unabhängige Kästchen für den Umfang, Radios für Modi. Art und Priorität haben Text zusätzlich zur Farbe. Sichtbarer Fokus und Windows-Kontrastfarben werden unterstützt.
 

@@ -19,6 +19,7 @@ public partial class ReportWindow : Window
         Preview.Text = Texts.TextReport(report);
         Texts.Changed += LanguageChanged;
         JsonButton.Visibility = CsvButton.Visibility = advanced ? Visibility.Visible : Visibility.Collapsed;
+        Loaded += (_, _) => Preview.Focus();
     }
 
     private void LanguageChanged(object? sender, EventArgs eventArgs) => Preview.Text = Texts.TextReport(report);

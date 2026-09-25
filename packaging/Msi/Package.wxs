@@ -4,6 +4,8 @@
     <MajorUpgrade Schedule="afterInstallInitialize" DowngradeErrorMessage="This version or a newer version of ChangeTracker is already installed." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
     <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPPRODUCTICON" Value="ChangeTrackerIcon" />
+    <Icon Id="ChangeTrackerIcon" SourceFile="!(bindpath.Publish)\PCChangeTracker.exe" />
     <Property Id="WINDOWS_BUILD">
       <RegistrySearch Id="WindowsBuildNumber" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
                       Name="CurrentBuildNumber" Type="raw" Bitness="always64" />
@@ -15,7 +17,7 @@
         <Component Id="ApplicationExecutable" Guid="*">
           <File Id="AppExecutable" Source="!(bindpath.Publish)\PCChangeTracker.exe" KeyPath="yes">
             <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="ChangeTracker"
-                      WorkingDirectory="INSTALLFOLDER" Advertise="yes" />
+                      WorkingDirectory="INSTALLFOLDER" Advertise="no" Icon="ChangeTrackerIcon" IconIndex="0" />
           </File>
         </Component>
       </Directory>

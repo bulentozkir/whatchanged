@@ -7,6 +7,7 @@
     <AssemblyName>PCChangeTracker</AssemblyName>
     <Product>ChangeTracker</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>$(BaseIntermediateOutputPath)ChangeTracker.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Using Include="System.IO" />
@@ -16,10 +17,17 @@
     <EmbeddedResource Include="../../Helpme.md" LogicalName="PCChangeTracker.Helpme.md" />
     <EmbeddedResource Include="Localization/*.json" LogicalName="PCChangeTracker.Strings.%(Filename).json" />
     <EmbeddedResource Include="../../help/*.md" LogicalName="PCChangeTracker.Helpme.%(Filename).md" />
-    <EmbeddedResource Include="../../logos/ChangeTracker-Logo-44x44.png" LogicalName="PCChangeTracker.TrayIcon.png" />
+    <EmbeddedResource Include="$(ApplicationIcon)" LogicalName="PCChangeTracker.AppIcon.ico" />
+    <Resource Include="$(ApplicationIcon)" Link="Assets/ChangeTracker.ico" />
     <ProjectReference Include="../PCChangeTracker.Core/PCChangeTracker.Core.csproj" />
     <ProjectReference Include="../PCChangeTracker.Windows/PCChangeTracker.Windows.csproj" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Markdig" Version="1.3.2" />
   </ItemGroup>
+  <Target Name="GenerateApplicationIcon" BeforeTargets="PrepareForBuild"
+          Inputs="$(MSBuildProjectDirectory)/../../logos/Generate-Logos.ps1"
+          Outputs="$(ApplicationIcon)">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="pwsh -NoProfile -File &quot;$(MSBuildProjectDirectory)/../../logos/Generate-Logos.ps1&quot; -ApplicationIconPath &quot;$(ApplicationIcon)&quot;" />
+  </Target>
 </Project>

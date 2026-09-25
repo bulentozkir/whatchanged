@@ -13,10 +13,12 @@ Los nombres, rutas, identificadores y valores reales no se traducen. JSON/CSV ma
 Abra Configuración en el menú. Las preferencias se guardan para la carpeta de historial actual y se recuperan al reiniciar.
 
 - Apariencia incluye tema claro/oscuro, fuente y colores independientes para texto de la app, etiquetas, fondo y texto de botones. Las muestras con nombre ofrecen Predeterminado, Azul marino, Verde bosque, Granate y Morado. Predeterminado restaura el color del tema; el alto contraste de Windows tiene prioridad y las acciones principales mantienen texto contrastante.
-- Las capturas automáticas están desactivadas inicialmente. Intervalos: 15 minutos, 1 hora, 6 horas, diario o semanal. Funcionan solo con la app abierta, también en la bandeja, con acceso normal y cancelación; no piden administrador ni despiertan el equipo. Se comprueba cada minuto si hay trabajo pendiente; al reabrir puede ejecutarse una comprobación vencida, sin repetir todos los intervalos perdidos.
-- Retención conserva todo por defecto. Con 30, 90, 180 o 365 días, elimina solo capturas antiguas sin nombre que no sean referencias. La limpieza se ejecuta cuando corresponde por primera vez, después diariamente mientras la app está abierta y tras capturas automáticas correctas; también funciona con las capturas automáticas desactivadas. Puntos con nombre y referencias de todos los ámbitos quedan protegidos.
+- Las capturas automáticas son cada 4 horas por defecto; se conservan las elecciones guardadas, incluido Desactivado. Intervalos: 15 minutos, 1 hora, 4 horas, 6 horas, diario o semanal. Elija Desactivado para comprobar solo manualmente. Funcionan solo con la app abierta, también en la bandeja, con acceso normal y cancelación. Tras confirmar el ámbito, la primera comprobación o una vencida puede ejecutarse en la siguiente revisión por minuto; las siguientes respetan el intervalo. No piden administrador, despiertan el equipo ni repiten todos los intervalos perdidos.
+- La retención predeterminada es de 30 días; se conservan las elecciones guardadas, incluido conservar para siempre. Elija 30, 90, 180 o 365 días, o conservar para siempre. Solo se eliminan capturas antiguas sin nombre que no sean referencias. La limpieza se ejecuta cuando corresponde por primera vez, después diariamente mientras la app está abierta y tras capturas automáticas correctas; también funciona con las capturas automáticas desactivadas. Puntos con nombre y referencias de todos los ámbitos quedan protegidos.
 - Iniciar al entrar en Windows es opcional y está desactivado. Incluye el inicio de sesión después de reiniciar, no la captura antes de entrar. Solo cambia la entrada de inicio de esta app para este usuario; no instala servicio ni tarea de arranque, ni cambia otras apps o políticas. Un fallo conserva la elección anterior.
-- Seguir en la bandeja también es opcional y está desactivado. Minimizar o Cerrar oculta la ventana y continúa las comprobaciones. Abrir o iniciar otra copia la restaura. Salir desde la bandeja cancela el trabajo y termina. Sin esta opción, Cerrar cancela y termina.
+- Minimizar o Cerrar siempre oculta la ventana en la bandeja y continúa las comprobaciones. Abrir, hacer doble clic en el icono o iniciar otra copia la restaura. Salir desde la bandeja cancela el trabajo y termina la app. El inicio normal abre maximizado; al restaurar desde la bandeja se mantiene el último estado visible. El inicio de sesión opcional comienza oculto, también después de reiniciar Windows; no funciona antes de iniciar sesión ni como servicio.
+
+Simple muestra los campos públicos modificados con etiquetas Antes/Después y valores más grandes, seleccionables y de solo lectura. Al cerrar los detalles, el foco vuelve al botón de origen si sigue disponible. Avanzado separa las fechas conservadas de las horas exactas de captura, con punto de control y ámbito/acceso en líneas distintas. Cambiar de modo conserva la comparación seleccionada.
 
 Ambos ámbitos están seleccionados en perfiles nuevos; las elecciones guardadas se respetan. Todo el historial retenido puede consultarse desde cualquier ámbito, pero los extremos de una comparación deben tener ámbito y acceso compatibles. Ninguna preferencia eleva permisos. El perfilado de recursos y la validación del ciclo de instalación siguen pendientes.
 
@@ -24,10 +26,10 @@ Ambos ámbitos están seleccionados en perfiles nuevos; las elecciones guardadas
 
 1. Abra normalmente, no como administrador.
 2. Revise las casillas **Usuario actual** y **Todo el equipo**, ambas activadas en un perfil nuevo. Mantenga una o ambas, nunca ninguna; confirme.
-3. Revise **Fuentes**. Red y PATH son opcionales. Elegir no inicia una comprobación.
+3. Revise **Fuentes**. Todas las comprobaciones compatibles, incluidas Red y PATH, están activadas por defecto. Se conservan las elecciones guardadas; puede desactivar fuentes. Elegir no inicia una comprobación.
 4. Seleccione **Hoy (nueva captura)** y **Comprobar ahora**.
 
-La primera observación utilizable establece una referencia para su ámbito y acceso. Es inventario, no reconstrucción de cambios pasados. En perfiles nuevos las capturas automáticas están desactivadas; los intervalos habilitados solo funcionan mientras la app está abierta.
+La primera observación utilizable establece una referencia para su ámbito y acceso. Es inventario, no reconstrucción de cambios pasados. Los perfiles nuevos usan un intervalo de 4 horas, solo tras confirmar el ámbito y mientras la app esté abierta. Elija Desactivado para comprobar solo manualmente.
 
 ## Simple y Avanzado
 
@@ -55,7 +57,7 @@ Elija fecha y captura anteriores. Seleccione **Instantánea guardada**, la fecha
 
 Elija la referencia deseada y **Hoy (nueva captura)**. **Comprobar ahora** captura y compara con esa selección, no con otra referencia oculta. El panel se contrae tras éxito y puede reabrirse. Una selección pendiente no altera el informe mostrado.
 
-Si la referencia usó administrador, solicite esa acción explícitamente o elija solo estado actual. Cancelar detiene la captura y conserva el historial. Con la bandeja activada, Cerrar mantiene la captura; Salir desde la bandeja la cancela y termina la app.
+Si la referencia usó administrador, solicite esa acción explícitamente o elija solo estado actual. Cancelar detiene la captura y conserva el historial. Cerrar mantiene la captura en la bandeja; Salir desde la bandeja la cancela y termina la app.
 
 ## Permisos de administrador
 
@@ -92,7 +94,9 @@ No hay límite fijo de puntos. La retención opcional limpia capturas antiguas s
 | Actualizaciones y drivers | Historial local exitoso con máximo 5.000 eventos (si excede, parcial), metadatos WMI; sin instalación, firmware ni reversión. |
 | Predeterminadas y audio | Asociaciones compatibles y dispositivos predeterminados; sin grabación ni cambios. |
 | Protección | Perfiles de firewall, no evaluación antivirus. |
-| Red y PATH | Opcionales: proxy o DNS/DHCP y PATH persistente; sin paquetes, contraseñas, exploración o variables adicionales. |
+| Red y PATH | Activadas por defecto: proxy o DNS/DHCP y PATH persistente; sin paquetes, contraseñas, exploración o variables adicionales. |
+
+Todas las fuentes compatibles se activan por defecto si no hay una elección válida guardada. Una fuente que desactivó permanece desactivada tras una actualización; cámbiela en Fuentes. Activarla no inicia una captura ni eleva permisos. Para mostrar diferencias necesita observaciones válidas en ambos extremos; las capturas antiguas no se completan retroactivamente.
 
 Tiempo límite por fuente: 25 segundos. Inventario visible: 1.000 registros por fuente; se conserva todo lo realmente capturado. Solo lectura permite escribir el historial propio y exports solicitados, no ajustes monitorizados.
 
@@ -106,9 +110,28 @@ Se omiten claves, huellas, comandos, nombres de puntos e IDs de audio en reporte
 
 Ruta normal: `%LOCALAPPDATA%\PCChangeTracker`; Ajustes muestra la real. SQLite no está cifrada. La clave usa DPAPI del usuario actual: copiarla a otra cuenta no garantiza descifrarla. Respalde de forma segura antes de versiones nuevas.
 
+### Gestionar el espacio
+
+1. Consulte el espacio de capturas encima de Ayuda en la barra izquierda. Aparece en todas las páginas y abarca todos los ámbitos del historial actual.
+2. Pase el ratón sobre la etiqueta para ver información. También puede enfocarla con Tab; los lectores de pantalla reciben su nombre y ayuda.
+3. En Configuración, ajuste la frecuencia de comprobaciones automáticas. Un intervalo mayor genera menos capturas futuras. Desactivado detiene las capturas automáticas, pero no borra historial ni desactiva la limpieza por retención.
+4. Una retención más corta elimina capturas antiguas aptas en la siguiente limpieza programada, no inmediatamente al seleccionar. La limpieza funciona al vencer, luego a diario mientras la app está abierta y tras capturas automáticas correctas. Se protegen todas las referencias y puntos con nombre, por lo que no es un límite estricto de espacio.
+
+La cifra suma `history.db`, `history.db-wal` y `history.db-shm` cuando existen. Incluye preferencias, datos auxiliares y espacio reutilizable, no solo capturas; no es el tamaño asignado por bloques que muestra Windows. Excluye exportaciones, instalación y archivo de clave. Las unidades B, KiB, MiB, GiB y TiB usan múltiplos de 1.024 y formato numérico local.
+
+Se actualiza al refrescar el historial tras capturas, borrado o limpieza; no es un monitor continuo. Tamaño no disponible no significa cero. Borrar puede dejar espacio reutilizable sin reducir el archivo; incluso un historial vacío ocupa espacio. No hay compactación automática. No borre la base ni sus archivos temporales mientras la app esté abierta.
+
 El formato de historial 2 conserva los registros antiguos como mixtos y bloquea lectores antiguos. El ayudante recibe categorías y una clave temporal, nunca rutas de historial ni comandos arbitrarios; solo la ventana normal guarda. El ciclo de datos de MSIX necesita pruebas aparte.
 
 ## Accesibilidad
+
+En Configuración > Apariencia, Tamaño del texto ofrece 100%, 125%, 150% y 200%, guarda la elección y amplía páginas, controles, Ayuda e Informe. Los pares de campos pasan a una columna cuando falta espacio; la página, la barra lateral y los diálogos se pueden desplazar. La fuente elegida también se usa en la guía; el zoom propio de Ayuda sigue disponible hasta 160% del tamaño base.
+
+La navegación lateral anuncia la página seleccionada y usa las flechas. Ctrl+1 abre Revisar cambios, Ctrl+2 Instantáneas, Ctrl+3 Fuentes y Ctrl+4 Configuración. F6 y Shift+F6 recorren navegación, barra de comandos y título de la página; Tab continúa por sus controles. En Ayuda, F6 recorre búsqueda, temas y documento; Ctrl+F vuelve a la búsqueda.
+
+El selector de ámbito enfoca su primera casilla y, al confirmar, vuelve a Cambiar ámbito. Los paneles modales desactivan toda la barra lateral y los atajos de página; Tab permanece dentro. Escape cierra los detalles y devuelve el foco a la acción original si existe. Ayuda empieza en búsqueda e Informe en la vista previa de solo lectura. Las filas de capturas, temas, grupos y campos tienen nombres legibles; los valores identifican campo y lado Antes/Después, y las fuentes anuncian estado y alcance. Los controles principales tienen una altura mínima de interacción de 44 unidades independientes del dispositivo.
+
+Estas funciones no certifican conformidad universal. Faltan pruebas manuales con lectores de pantalla, temas de contraste, escalas de Windows y personas con discapacidad. Las pruebas de teclado real requieren una sesión desbloqueada y sin interferencias.
 
 Tab/Mayús+Tab, flechas y espacio permiten navegar. Ámbito usa casillas, modos usan radio. Prioridad y tipo tienen texto además de color. Hay foco visible y colores Windows de alto contraste.
 

@@ -19,17 +19,22 @@ public sealed partial class SourceOption(CollectorDescriptor descriptor, UiText?
     public string DetailDisplay => text.Language.Code == "en" || string.IsNullOrEmpty(Detail) ? Detail
         : text[Status == "Partial" ? "PartialHelp" : Status == "Failed" ? "FailedHelp" : "OutsideScope"];
     public string CountDisplay => text.Format("RecordCount", Count);
+    public string AccessibilityDescription => string.Join(" ", new[] { Scope, StatusDisplay, CountDisplay, DetailDisplay }.Where(value => !string.IsNullOrWhiteSpace(value)));
     public void RefreshLanguage() => OnPropertyChanged(string.Empty);
     public bool Recommended => descriptor.Recommended;
-    [ObservableProperty] private string scope = descriptor.Scope;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(AccessibilityDescription))] private string scope = descriptor.Scope;
     [ObservableProperty] private bool available;
     [ObservableProperty] private bool enabled = descriptor.Recommended;
-    [ObservableProperty] private string status = "Not checked";
-    [ObservableProperty] private string detail = "";
-    [ObservableProperty] private int count;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(StatusDisplay)), NotifyPropertyChangedFor(nameof(AccessibilityDescription))] private string status = "Not checked";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(DetailDisplay)), NotifyPropertyChangedFor(nameof(AccessibilityDescription))] private string detail = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CountDisplay)), NotifyPropertyChangedFor(nameof(AccessibilityDescription))] private int count;
 }
 
-public sealed record ChangeDetailRow(string Field, string Before, string After, string Difference);
+public sealed record ChangeDetailRow(string Field, string Before, string After, string Difference)
+{
+    public string BeforeLabel { get; init; } = "";
+    public string AfterLabel { get; init; } = "";
+}
 
 public sealed record ChangeRow(ObservedChange Change, bool Expected, UiText? Texts = null, Comparison? Comparison = null)
 {
@@ -38,6 +43,26 @@ public sealed record ChangeRow(ObservedChange Change, bool Expected, UiText? Tex
     public string Category => text.Category(Change.Category);
     public string Kind => text[Change.Kind.ToString()];
     public string TechnicalSummary => text.Format("TechnicalSummary", Category, Kind, Window);
+    public IReadOnlyList<ChangeDetailRow> ChangedFields
+    {
+        get
+        {
+            var rows = new List<ChangeDetailRow>();
+            if (Change.Before?.Name != Change.After?.Name)
+                rows.Add(Detail("Name", Change.Before?.Name, Change.After?.Name));
+            var keys = (Change.Before?.Fields.Keys ?? Enumerable.Empty<string>())
+                .Union(Change.After?.Fields.Keys ?? Enumerable.Empty<string>())
+                .Where(key => key is not "Source" and not "Endpoint").Order(StringComparer.OrdinalIgnoreCase);
+            foreach (var propertyName in keys)
+            {
+                var before = Change.Before?.Fields.GetValueOrDefault(propertyName);
+                var after = Change.After?.Fields.GetValueOrDefault(propertyName);
+                if (before != after) rows.Add(Detail(propertyName, before, after));
+            }
+            return rows;
+        }
+    }
+    public string SimpleSummary => ChangedFields.Count == 0 ? DifferenceSummary : "";
     public IReadOnlyList<ChangeDetailRow> FieldDetails
     {
         get
@@ -84,7 +109,8 @@ public sealed record ChangeRow(ObservedChange Change, bool Expected, UiText? Tex
     private string RowsText(IEnumerable<ChangeDetailRow> rows) => string.Join("\n\n", rows.Select(row =>
         $"{row.Field} ({row.Difference})\n{text["Before"]}: {row.Before}\n{text["After"]}: {row.After}"));
     private ChangeDetailRow Detail(string key, string? before, string? after) => new(text[key], Value(before), Value(after),
-        text[before == after ? "UnchangedField" : before is null ? "Added" : after is null ? "Removed" : "Modified"]);
+        text[before == after ? "UnchangedField" : before is null ? "Added" : after is null ? "Removed" : "Modified"])
+        { BeforeLabel = $"{text[key]}, {text["Before"]}", AfterLabel = $"{text[key]}, {text["After"]}" };
     private string Value(string? value) => value is null ? text["NotPresent"] : value.Length == 0 ? text["EmptyValue"] : ReportExporter.Sanitize(value);
     private static string? Timestamp(DateTimeOffset? value) => value?.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture);
     public string DifferenceSummary
@@ -149,7 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static readonly (string Code, int Minutes)[] ScheduleMinutes =
     [
-        ("Off", 0), ("Every15Minutes", 15), ("EveryHour", 60), ("Every6Hours", 360), ("EveryDay", 1440), ("EveryWeek", 10080)
+        ("Off", 0), ("Every15Minutes", 15), ("EveryHour", 60), ("Every4Hours", 240), ("Every6Hours", 360), ("EveryDay", 1440), ("EveryWeek", 10080)
     ];
     private static readonly (string Code, int Days)[] RetentionDays =
     [
@@ -180,18 +206,21 @@ public sealed partial class MainViewModel : ObservableObject
     public IReadOnlyList<NamedOption> RetentionOptions { get; private set; } = [];
     [ObservableProperty] private string selectedTheme = "Light";
     [ObservableProperty] private string selectedFont = "Segoe UI";
+    [ObservableProperty] private int selectedTextSize = 100;
+    public IReadOnlyList<int> TextSizes => App.TextSizePercentages;
     [ObservableProperty] private string selectedButtonTextColor = "ButtonColorDefault";
     [ObservableProperty] private string selectedAppTextColor = "ButtonColorDefault";
     [ObservableProperty] private string selectedButtonColor = "ButtonColorDefault";
     [ObservableProperty] private string selectedLabelColor = "ButtonColorDefault";
-    [ObservableProperty] private string selectedScheduleInterval = "Off";
-    [ObservableProperty] private string selectedRetention = "Forever";
+    [ObservableProperty] private string selectedScheduleInterval = "Every4Hours";
+    [ObservableProperty] private string selectedRetention = "Retain30Days";
     [ObservableProperty] private bool startWithWindows;
-    [ObservableProperty] private bool minimizeToTray;
     public ObservableCollection<SourceOption> Sources { get; } = [];
     public ObservableCollection<SnapshotSummary> Snapshots { get; } = [];
     public ObservableCollection<SnapshotSummary> BeforeSnapshots { get; } = [];
     public ObservableCollection<SnapshotSummary> AfterSnapshots { get; } = [];
+    public IEnumerable<SnapshotSummary> BeforeSnapshotChoices => Advanced ? BeforeSnapshots : Snapshots;
+    public IEnumerable<SnapshotSummary> AfterSnapshotChoices => Advanced ? AfterSnapshots : Snapshots;
     /// <summary>Distinct local calendar dates that have at least one retained snapshot; the only dates the date pickers may select.</summary>
     public IReadOnlyList<DateTime> SnapshotDates { get; private set; } = [];
     public ObservableCollection<ChangeRow> ReviewItems { get; } = [];
@@ -269,10 +298,34 @@ public sealed partial class MainViewModel : ObservableObject
     public string OtherHeading => Texts.Format("OtherCount", OtherCount);
     public string BaselineText => Texts.Format("BaselineLabel", BaselineLabel);
     public string StorageText => Texts.Format("DatabaseSize", StorageSize);
+    public string SnapshotStorageLabel => Texts.Format("SnapshotStorageSize", StorageSize);
     public bool HasMoreReviews => ReviewCount > 3 && !ShowAllReviews;
     public bool HasNoReviews => HasComparison && ReviewCount == 0;
-    public string StorageSize => File.Exists(Path.Combine(DataDirectory, "history.db"))
-        ? $"{new FileInfo(Path.Combine(DataDirectory, "history.db")).Length / 1024d / 1024d:0.0} MB" : "0 MB";
+    public string StorageSize => HistoryStorageBytes is { } bytes ? FormatStorageSize(bytes, Texts.Culture) : Texts["StorageUnavailable"];
+    internal long? HistoryStorageBytes
+    {
+        get
+        {
+            long bytes = 0;
+            foreach (var suffix in new[] { "", "-wal", "-shm" })
+            {
+                try { bytes += new FileInfo(Path.Combine(DataDirectory, "history.db" + suffix)).Length; }
+                catch (FileNotFoundException) { }
+                catch (DirectoryNotFoundException) { }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { return null; }
+            }
+            return bytes;
+        }
+    }
+
+    internal static string FormatStorageSize(long bytes, System.Globalization.CultureInfo culture)
+    {
+        string[] units = ["B", "KiB", "MiB", "GiB", "TiB"];
+        var unit = 0;
+        var size = (double)bytes;
+        while (size >= 1024 && unit < units.Length - 1) { size /= 1024; unit++; }
+        return size.ToString(unit == 0 ? "0" : "0.0", culture) + " " + units[unit];
+    }
 
     public MainViewModel(HistoryStore store, ICaptureService captureService, string dataDirectory, Func<bool>? confirmAdministratorAccess = null,
         Func<bool, bool>? setStartupEnabled = null)
@@ -308,14 +361,14 @@ public sealed partial class MainViewModel : ObservableObject
             ShowSnapshot(latest.Id);
         selectedTheme = store.GetPreference("theme") == "Dark" ? "Dark" : "Light";
         selectedFont = Fonts.Contains(store.GetPreference("font")) ? store.GetPreference("font")! : "Segoe UI";
+        selectedTextSize = int.TryParse(store.GetPreference("textSize"), out var textSize) && TextSizes.Contains(textSize) ? textSize : 100;
         selectedButtonTextColor = RestoreColorPreference("buttonTextColor");
         selectedAppTextColor = RestoreColorPreference("appTextColor");
         selectedButtonColor = RestoreColorPreference("buttonColor");
         selectedLabelColor = RestoreColorPreference("labelColor");
-        selectedScheduleInterval = ScheduleMinutes.Any(entry => entry.Code == store.GetPreference("schedule.interval")) ? store.GetPreference("schedule.interval")! : "Off";
-        selectedRetention = RetentionDays.Any(entry => entry.Code == store.GetPreference("retention")) ? store.GetPreference("retention")! : "Forever";
+        selectedScheduleInterval = ScheduleMinutes.Any(entry => entry.Code == store.GetPreference("schedule.interval")) ? store.GetPreference("schedule.interval")! : "Every4Hours";
+        selectedRetention = RetentionDays.Any(entry => entry.Code == store.GetPreference("retention")) ? store.GetPreference("retention")! : "Retain30Days";
         startWithWindows = bool.TryParse(store.GetPreference("startup.autostart"), out var startupEnabled) && startupEnabled;
-        minimizeToTray = bool.TryParse(store.GetPreference("startup.minimizeToTray"), out var trayEnabled) && trayEnabled;
         scheduleTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
         scheduleTimer.Tick += async (_, _) => await CheckScheduleAsync();
         UpdateScheduleTimer();
@@ -430,6 +483,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(Simple));
         OnPropertyChanged(nameof(SelectedChangeDetails));
+        OnPropertyChanged(nameof(BeforeSnapshotChoices));
+        OnPropertyChanged(nameof(AfterSnapshotChoices));
         RunSafely(() => store.SetPreference("mode", value ? "advanced" : "simple"));
     }
     partial void OnSelectedThemeChanged(string value)
@@ -443,6 +498,12 @@ public sealed partial class MainViewModel : ObservableObject
     {
         RunSafely(() => store.SetPreference("font", value));
         (System.Windows.Application.Current as App)?.SetFont(value);
+    }
+    partial void OnSelectedTextSizeChanged(int value)
+    {
+        if (!TextSizes.Contains(value)) return;
+        RunSafely(() => store.SetPreference("textSize", value.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        (System.Windows.Application.Current as App)?.SetTextSize(value);
     }
     private string RestoreColorPreference(string key)
     {
@@ -489,7 +550,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
         RunSafely(() => store.SetPreference("startup.autostart", newValue.ToString()));
     }
-    partial void OnMinimizeToTrayChanged(bool value) => RunSafely(() => store.SetPreference("startup.minimizeToTray", value.ToString()));
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(IsIdle));
@@ -616,7 +676,11 @@ public sealed partial class MainViewModel : ObservableObject
     private void Navigate(string destination)
     {
         Page = destination;
-        if (destination is "Settings" or "Sources") ComparisonPickerExpanded = false;
+    }
+
+    partial void OnPageChanged(string value)
+    {
+        if (value is "Settings" or "Sources") ComparisonPickerExpanded = false;
     }
 
     [RelayCommand(CanExecute = nameof(CanCapture))]
@@ -844,7 +908,7 @@ public sealed partial class MainViewModel : ObservableObject
         var afterId = CompareTo?.Id;
         Snapshots.Clear();
         foreach (var snapshot in store.List()) Snapshots.Add(snapshot);
-        SnapshotDates = Snapshots.Select(snapshot => snapshot.CapturedAt.ToLocalTime().Date).Distinct().OrderBy(date => date).ToArray();
+        SnapshotDates = Snapshots.Select(snapshot => snapshot.CapturedAt.ToLocalTime().Date).Distinct().OrderByDescending(date => date).ToArray();
         OnPropertyChanged(nameof(SnapshotDates));
         var baseline = Snapshots.FirstOrDefault(snapshot => snapshot.Id == store.GetBaselineId(SelectedScope));
         BaselineLabel = baseline is null ? Texts["NoBaseline"] : Texts.Snapshot(baseline);
@@ -862,6 +926,7 @@ public sealed partial class MainViewModel : ObservableObject
         comparisonChoicesInitialized = true;
         OnPropertyChanged(nameof(StorageSize));
         OnPropertyChanged(nameof(StorageText));
+        OnPropertyChanged(nameof(SnapshotStorageLabel));
         OnPropertyChanged(nameof(BaselineText));
     }
 

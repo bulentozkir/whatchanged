@@ -6,7 +6,7 @@ All nine exports are flat in this folder (no subfolders) and every one visibly i
 
 | File | Pixels | Background | Use |
 | --- | --- | --- | --- |
-| [ChangeTracker-Logo-44x44.png](ChangeTracker-Logo-44x44.png) | 44 x 44 | Transparent | MSIX manifest `Square44x44Logo` (app-list icon) and the package `Properties/Logo`. Also embedded as the tray icon source. |
+| [ChangeTracker-Logo-44x44.png](ChangeTracker-Logo-44x44.png) | 44 x 44 | Transparent | MSIX manifest `Square44x44Logo` (app-list icon) and the package `Properties/Logo`. |
 | [ChangeTracker-Logo-71x71.png](ChangeTracker-Logo-71x71.png) | 71 x 71 | Transparent | MSIX manifest `uap:DefaultTile/Square71x71Logo` (small tile). |
 | [ChangeTracker-Logo-150x150.png](ChangeTracker-Logo-150x150.png) | 150 x 150 | Transparent | MSIX manifest `Square150x150Logo` (medium tile). |
 | [ChangeTracker-Logo-300x300.png](ChangeTracker-Logo-300x300.png) | 300 x 300 | Transparent | General 1:1 app tile/icon source, e.g. for a Partner Center app tile upload. |
@@ -20,7 +20,7 @@ The six square `Logo-*` sizes keep a transparent background so Windows can compo
 
 **Note on the 1920x1080 file:** earlier revisions of this folder kept a dedicated, text-free "Super Hero" variant at this size specifically because Microsoft's Partner Center guidance prohibits text on that promotional field. This export now always carries the ChangeTracker wordmark, so it is a general-purpose wide banner, not a ready-made Super Hero upload; produce a separate text-free crop if you need that specific Partner Center field.
 
-**Note on the tray icon:** the running app's system tray icon is embedded from `ChangeTracker-Logo-44x44.png` (see `src/PCChangeTracker.App/PCChangeTracker.App.csproj`). Windows shrinks it well below 44px for the actual tray, so the wordmark is not legible there; only the mark reads at that size. This is a cosmetic tray-icon limitation, not a packaging defect.
+**Windows application icon:** the build uses `Generate-Logos.ps1 -ApplicationIconPath` to create a separate ICO in the app's intermediate output. It contains tightly framed, text-free before/after marks at 16, 20, 24, 32, 40, 48, 64, 128, and 256 pixels for the executable, taskbar/window, and tray. This avoids shrinking a full wordmark into an unreadable tiny image. PowerShell 7 is required for generation. The nine wordmarked PNG exports above remain unchanged; no extra logo exports or subfolders are created.
 
 ## Build And Upload
 

@@ -165,9 +165,17 @@ public sealed class SnapshotTextConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values.Length < 2 || values[0] is not SnapshotSummary snapshot || values[1] is not UiText text) return "";
-        return parameter as string == "Context" ? text.Context(snapshot.Scope, snapshot.Elevated)
-            : text.Snapshot(snapshot, parameter as string == "Compact");
+        if (values.Length < 2 || values[1] is not UiText text) return "";
+        if (values[0] is DateTime day) return day.ToString("D", text.Culture);
+        if (values[0] is not SnapshotSummary snapshot) return "";
+        return (parameter as string) switch
+        {
+            "Context" => text.Context(snapshot.Scope, snapshot.Elevated),
+            "Date" => text.Date(snapshot.CapturedAt, "D"),
+            "Time" => text.Date(snapshot.CapturedAt, "HH:mm:ss.fff zzz"),
+            "Label" => string.IsNullOrWhiteSpace(snapshot.Label) ? text["ManualCheck"] : snapshot.Label,
+            _ => text.Snapshot(snapshot, parameter as string == "Compact")
+        };
     }
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }

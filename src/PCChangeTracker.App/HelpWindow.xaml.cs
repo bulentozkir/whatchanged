@@ -2,6 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Input;
+using System.Windows.Automation.Peers;
+using System.Windows.Threading;
 using Markdig;
 using Markdig.Extensions.Tables;
 using Markdig.Syntax;
@@ -29,6 +32,7 @@ public partial class HelpWindow : Window
         DataContext = this;
         Texts.Changed += LanguageChanged;
         ShowTopics("");
+        Loaded += (_, _) => HelpSearch.Focus();
     }
 
     private void LanguageChanged(object? sender, EventArgs eventArgs)
@@ -61,6 +65,9 @@ public partial class HelpWindow : Window
         TopicList.SelectedItem = matches.FirstOrDefault(topic => topic.Title == selected) ?? matches.FirstOrDefault();
         if (matches.Count == 0)
             HelpReader.Document = HelpContent.EmptyDocument(Texts["NoHelpMatches"], Texts);
+        if (AutomationPeer.ListenerExists(AutomationEvents.LiveRegionChanged))
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                UIElementAutomationPeer.CreatePeerForElement(SearchStatus)?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged)));
     }
 
     private void TopicChanged(object sender, SelectionChangedEventArgs eventArgs)
@@ -75,7 +82,8 @@ public partial class HelpWindow : Window
     {
         if (HelpReader is not null && TopicList.SelectedItem is HelpTopic topic)
         {
-            var compact = HelpReader.ActualWidth / (TextZoom.Value / 100) < 600;
+            var baseSize = TryFindResource("AppFont17") is double size ? size : 17;
+            var compact = HelpReader.ActualWidth / (TextZoom.Value / 100 * baseSize / 17) < 600;
             if (!force && compactTables == compact) return;
             compactTables = compact;
             HelpReader.Document = HelpContent.Render(topic, compact, Texts);
@@ -85,6 +93,17 @@ public partial class HelpWindow : Window
 
     private void FocusSearch(object sender, RoutedEventArgs eventArgs) { HelpSearch.Focus(); HelpSearch.SelectAll(); }
     private void CloseHelp(object sender, RoutedEventArgs eventArgs) => Close();
+
+    protected override void OnPreviewKeyDown(KeyEventArgs eventArgs)
+    {
+        base.OnPreviewKeyDown(eventArgs);
+        if (eventArgs.Key != Key.F6 || Keyboard.Modifiers is not (ModifierKeys.None or ModifierKeys.Shift)) return;
+        UIElement[] regions = [HelpSearch, TopicList, HelpReader];
+        var current = Array.FindIndex(regions, region => region.IsKeyboardFocusWithin);
+        var next = (Math.Max(0, current) + (Keyboard.Modifiers == ModifierKeys.Shift ? 2 : 1)) % regions.Length;
+        regions[next].Focus();
+        eventArgs.Handled = true;
+    }
 }
 
 internal sealed record HelpTopic(string Title, IReadOnlyList<MarkdownBlock> Blocks, string SearchText);
@@ -161,6 +180,8 @@ internal static class HelpContent
         };
         document.SetResourceReference(FlowDocument.ForegroundProperty, "TextBrush");
         document.SetResourceReference(FlowDocument.BackgroundProperty, "SurfaceBrush");
+        document.SetResourceReference(FlowDocument.FontFamilyProperty, "AppFontFamily");
+        document.SetResourceReference(FlowDocument.FontSizeProperty, "AppFont17");
         return document;
     }
 
@@ -171,9 +192,13 @@ internal static class HelpContent
             case HeadingBlock heading:
                 var headingParagraph = ParagraphFrom(heading.Inline);
                 headingParagraph.FontSize = heading.Level <= 2 ? 26 : 20;
+                if (Application.Current?.TryFindResource("AppFont26") is double)
+                    headingParagraph.SetResourceReference(TextElement.FontSizeProperty, heading.Level <= 2 ? "AppFont26" : "AppFont20");
                 headingParagraph.FontWeight = FontWeights.SemiBold;
                 headingParagraph.Margin = new Thickness(0, 12, 0, 14);
                 headingParagraph.KeepWithNext = true;
+                System.Windows.Automation.AutomationProperties.SetHeadingLevel(headingParagraph,
+                    heading.Level <= 2 ? System.Windows.Automation.AutomationHeadingLevel.Level2 : System.Windows.Automation.AutomationHeadingLevel.Level3);
                 return headingParagraph;
             case ParagraphBlock paragraph:
                 return ParagraphFrom(paragraph.Inline);

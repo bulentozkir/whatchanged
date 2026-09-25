@@ -13,26 +13,26 @@ Arabic, Egyptian Arabic, and Urdu use right-to-left content. The selector stays 
 Open **Settings** in the navigation menu. Preferences are saved for the current history directory and restored when you reopen the app.
 
 - **Language** changes the interface and offline help immediately.
-- **Appearance** offers Light/Dark, a font family, and independent app-text, label, button-background, and button-text colors. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Default restores that role's theme color. Shades adapt to Light/Dark; Windows high contrast overrides them. Primary actions retain contrasting text.
-- **Snapshot frequency** is Off by default. Choose every 15 minutes, hour, 6 hours, day, or week. Checks run only while the app is open, including in the tray, use standard access, and can be canceled. The app checks due work once a minute and does not wake a sleeping PC. An overdue check may run after reopening; missed intervals are not replayed.
-- **Data retention** keeps snapshots forever by default. Choose 30, 90, 180, or 365 days to delete older unnamed, non-baseline snapshots. Cleanup runs when first due and then daily while open, even when automatic snapshots are Off, and after successful automatic checks. Named checkpoints and every scope/access baseline are protected. Deleted timestamps leave the selectors.
+- **Appearance** offers Light/Dark, a font family, **Text size** (100%, 125%, 150%, or 200%), and independent app-text, label, button-background, and button-text colors. Text size applies immediately to the main pages, controls, Help, and Report; the choice is saved. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Default restores that role's theme color. Shades adapt to Light/Dark; Windows high contrast overrides them. Primary actions retain contrasting text.
+- **Snapshot frequency** defaults to every 4 hours when no valid preference is saved. Existing choices, including Off, are preserved. Choose Off, every 15 minutes, hour, 4 hours, 6 hours, day, or week. Checks run only while the app is open, including in the tray, use standard access, and can be canceled. After scope confirmation, a first or overdue check can run at the next minute check; subsequent checks follow the chosen interval. The app does not wake a sleeping PC or replay missed intervals.
+- **Data retention** defaults to 30 days when no valid preference is saved. Existing choices, including Forever, are preserved. Choose 30, 90, 180, or 365 days, or Forever. Cleanup deletes only older unnamed, non-baseline snapshots, runs when first due and then daily while open, even when automatic snapshots are Off, and after successful automatic checks. Named checkpoints and every scope/access baseline are protected. Deleted timestamps leave the selectors.
 - **Start ChangeTracker when I sign in** is optional and off by default. It includes sign-in after a reboot, not collection before sign-in. Only this app's per-user startup entry is changed; no service or boot task is installed, and no other app or policy is changed. A failed registration restores the previous choice.
-- **Keep running in the tray when closed** is optional and off by default. Minimize or Close hides the window while checks continue. Open or launching another copy restores it. Tray **Exit** cancels active work and quits. Without this preference, Close cancels and exits.
+- **Tray operation** is always enabled. Minimize, Close, and Alt+F4 hide the main window while checks continue. **Open ChangeTracker**, double-clicking its tray icon, or launching another copy restores it. Use the tray's **Exit** command to cancel active work and quit. Turning off sign-in startup does not change this behavior.
 
 Both **Current user** and **Machine-wide** start selected for new profiles; saved scope choices are preserved. All retained scopes remain browsable from the same history, but comparison endpoints must have matching scope and access. No preference grants administrator access. Resource profiling and installed-package lifecycle qualification remain outstanding.
 
 ## Getting Started
 
-1. Open ChangeTracker normally, without **Run as administrator**.
+1. Open ChangeTracker normally, without **Run as administrator**. It starts maximized. You can restore and resize it; reopening it from the tray keeps the last visible state. Sign-in startup stays hidden in the tray.
 2. Review the **Current user** and **Machine-wide** checkboxes, both selected for a new profile. Keep either or both, never neither, then confirm. Your previous choice is remembered. Selecting scopes does not start collection or request administrator access.
-3. Open **Sources** and review the selected sources. Network and PATH are optional.
+3. Open **Sources** and review the selected sources. All supported checks, including Network and PATH, start enabled when no valid choice is saved. Saved choices, including disabled checks, are preserved. Turn off any sources you do not want; unsupported sources stay disabled for the selected scope.
 4. In **Comparison**, leave **Today (new check)** selected. If there is no earlier snapshot, the next check saves current state only.
 5. Select **Check now**. The app collects the selected sources, saves the observation locally, and reports incomplete coverage where necessary.
 6. After a later configuration change, choose your earlier snapshot and check again, or compare two snapshots already saved.
 
 Your first usable snapshot becomes the baseline for that scope and access level. A first snapshot is inventory, not evidence of earlier changes. Subsequent captures do not automatically move the baseline.
 
-Normal capture happens when you select **Check now**, or when an enabled automatic interval is due while the app is running. Both use standard access; administrator capture requires its separate explicit action. A new profile does not capture automatically. Closing exits unless tray operation is enabled. Changes that happen and disappear between checks can be missed.
+Normal capture happens when you select **Check now**, or when an enabled automatic interval is due while the app is running. Both use standard access; administrator capture requires its separate explicit action. A new profile starts with a four-hour schedule, but no capture occurs before scope confirmation. Choose Off in Settings for manual checks only. Closing hides the window; use tray Exit to stop the app. Changes that happen and disappear between checks can be missed.
 
 ## Simple And Advanced
 
@@ -40,9 +40,9 @@ These are **presentation modes**, not separate editions, permissions, or levels 
 
 | Area | Simple | Advanced |
 | --- | --- | --- |
-| Findings | Change name, Added/Removed/Modified, priority, readable changed-value summary, and explanation. | All captured fields side by side, including unchanged context, added/removed fields, identifiers, and long values without the summary limit. |
-| Before / after | Readable details for the selected finding. | Full fields plus snapshot IDs, scope/access, exact UTC snapshot/source times, collector status/version, schema version, counts, and hidden-value change status. |
-| Date comparisons | Two saved snapshots or a saved snapshot versus today. | The same comparison choices. |
+| Findings | Change name, Added/Removed/Modified, priority, explanation, and labeled Before/After rows for changed public fields in larger, selectable text. | All captured fields side by side, including unchanged context, added/removed fields, identifiers, and long values without the summary limit. |
+| Before / after | Structured fields with repeated Before/After labels, the observation interval, reason, and uncertainty. | Full fields plus snapshot IDs, scope/access, exact UTC snapshot/source times, collector status/version, schema version, counts, and hidden-value change status. |
+| Date comparisons | Two saved snapshots or a saved snapshot versus today, selected by their exact timestamps. | Separate retained-date filters and capture-time lists, with checkpoint and scope/access on separate lines. |
 | Sources, scope, and history | Available. | Available; no extra collection is enabled by switching modes. |
 | Reports | Preview, copy, and save sanitized text. | Text plus JSON and CSV export. |
 | Administrator access | Only the separate explicit machine-wide administrator-check action. | Exactly the same rule. Advanced is not administrator mode. |
@@ -59,8 +59,8 @@ Switching modes does not run a check, create or delete a snapshot, reset a compa
 | Startup entries | This user's Run and RunOnce entries. | Machine Run and RunOnce entries. |
 | Default apps | This user's effective supported file/link handlers. | Not collected. |
 | Audio defaults | This user's playback, recording, and communications defaults. | Not collected. |
-| Network, optional | This user's proxy settings. | Adapter DNS and DHCP configuration. |
-| PATH, optional | Persisted user PATH. | Persisted machine PATH. |
+| Network | This user's proxy settings. | Adapter DNS and DHCP configuration. |
+| PATH | Persisted user PATH. | Persisted machine PATH. |
 | Services, tasks, updates, drivers, firewall | Not collected in this scope. | Selected readable system sources. |
 
 Use **Change scope** to select another scope. An unavailable source is labeled outside scope and cannot be enabled there. Source selections are remembered separately for each scope. Changing scope never starts a capture or an elevation prompt.
@@ -73,11 +73,11 @@ History stays local to the initiating user even for machine-wide checks. The app
 
 The **Comparison** section is available in both modes before running a check. It collapses after a successful check/comparison to make more room for results; expand it whenever you want to change the selection.
 
-- **Before date** selects an exact retained snapshot. Each choice shows its local date, time including milliseconds and UTC offset, checkpoint, and scope/access. Dates and times cannot be typed or invented.
+- **Earlier snapshot** selects an exact retained observation. Each choice shows its local time including milliseconds and UTC offset, checkpoint, and scope/access on separate lines. Simple also shows the date in each choice. Advanced adds a **Before date** filter containing only retained days, newest first, and limits the time list to that day. Dates and times cannot be typed or invented.
 - **Baseline** selects the saved standard-access baseline for the currently selected scope. It does not replace that baseline.
 - **Current state only**, the clear-reference button, removes the earlier selection and targets a fresh check today without a comparison.
 - **Today (new check)** means a new observation captured when you press **Check now**, not a previously saved snapshot from earlier today.
-- **Saved snapshot** shows the **After date** selector for an exact retained observation. The main action becomes **Compare snapshots**, which reads saved history without collecting current configuration.
+- **Saved snapshot** shows the **Later snapshot** selector for an exact retained observation. Advanced also shows the **After date** filter. The main action becomes **Compare snapshots**, which reads saved history without collecting current configuration.
 
 Displayed dates and times are local. Each snapshot also records its observation timestamps; a capture is not an instantaneous whole-PC transaction. Choose two different, chronological, non-overlapping snapshots with matching scope and access.
 
@@ -86,9 +86,9 @@ A date with no snapshot means **no observation is available** and is not offered
 ## Compare Two Saved Snapshots
 
 1. Expand **Comparison** if necessary.
-2. Select the desired saved timestamp under **Before date**.
+2. In Advanced, choose **Before date**, then select the exact **Earlier snapshot** time. In Simple, select its full timestamp directly.
 3. Choose **Saved snapshot** on the After side.
-4. Select the desired saved timestamp under **After date**.
+4. In Advanced, choose **After date**, then select the exact **Later snapshot** time. In Simple, select its full timestamp directly.
 5. Select **Compare snapshots**.
 
 You can compare snapshots from the same day by choosing different capture times. Comparisons do not modify the saved baseline or original observations. The review and report show the selected interval.
@@ -108,7 +108,7 @@ The fresh snapshot is saved and compared against the selected earlier snapshot, 
 
 If the earlier snapshot used administrator access, use the separate **Check with administrator access** action and grant the requested approval for this check. The app will not elevate automatically because a date or an administrator snapshot was selected. Use **Current state only** to make a new observation without a compatible earlier reference.
 
-**Cancel** stops an in-progress manual or automatic check and leaves previously saved history and baselines unchanged. Closing during collection requests cancellation before exit unless tray operation is enabled, in which case collection continues in the tray. The tray's **Exit** command always cancels active collection and exits. Changing selectors does not run a check.
+**Cancel** stops an in-progress manual or automatic check and leaves previously saved history and baselines unchanged. Closing during collection hides the window and lets collection continue in the tray. The tray's **Exit** command cancels active collection and exits after the worker stops. Changing selectors does not run a check.
 
 ## Administrator Access
 
@@ -145,7 +145,7 @@ Actual UAC approval/denial, alternate administrator credentials, cancellation, a
 
 The heading counts review-priority findings in the current filter, not every difference. Routine/expected and Other groups have separate labeled counts. Initially, up to three review findings are shown; **View all review findings** exposes the remainder. Category and search filters can narrow the visible list; **Clear filters** restores it.
 
-Each card includes a readable change summary. **Before / after** opens the full available details, interval, reason, and uncertainty. Hidden launch values, protected fingerprints, and some identifiers are not displayed or exported. A hidden-value change can be detected without exposing that value.
+In Simple, changed public fields appear directly in each finding with separate **Before** and **After** labels and larger, selectable values. Missing values say **Not present** and empty values are labeled separately. **Before / after** opens structured details, interval, reason, and uncertainty. Hidden launch values, protected fingerprints, and some identifiers are not displayed or exported. A hidden-value change can be detected without exposing that value.
 
 In **Advanced**, **All captured fields** includes source/record/endpoint identifiers where captured. **Observation metadata (UTC)** shows exact recorded times and versions. Missing and empty values are distinct; unchanged context remains visible. Long values are selectable and not truncated to the summary limit. Copy details uses this fuller view in Advanced. Device identifiers can identify you; review before sharing. No view can restore sensitive contents that were never stored, and fingerprints/keys stay hidden. Reports retain their stricter privacy projection.
 
@@ -186,13 +186,15 @@ Open **Snapshots** to see capture times, checkpoints, scope/access, record count
 
 There are separate baselines for user-only, machine-only, both scopes, their applicable access levels, and legacy mixed-scope observations. A switch between these contexts cannot be interpreted as added or removed settings.
 
-Ordinary captures and custom comparisons do not move a baseline. There is no fixed checkpoint limit. **Settings > Data retention** keeps data forever by default. A shorter window removes only unnamed, non-baseline snapshots older than 30, 90, 180, or 365 days. Cleanup is checked once a minute, runs when first due and then daily while the app is open, and also runs after successful automatic captures. It works even with automatic snapshots Off. Named checkpoints and every scope/access baseline are protected. A capture with no usable sources is not saved as a baseline.
+Ordinary captures and custom comparisons do not move a baseline. There is no fixed checkpoint limit. **Settings > Data retention** defaults to 30 days; saved preferences, including Forever, are preserved. Time windows remove only unnamed, non-baseline snapshots older than the selected age. Cleanup is checked once a minute, runs when first due and then daily while the app is open, and also runs after successful automatic captures. It works even with automatic snapshots Off. Named checkpoints and every scope/access baseline are protected. A capture with no usable sources is not saved as a baseline.
 
 **Clear local history**, under Settings, requires confirmation and deletes app-owned snapshots and expected marks. It retains source/mode preferences and the protected comparison key. It does not delete exported reports or modify Windows settings. This is not forensic erasure.
 
 ## Collection Sources And Limits
 
 The app currently implements scoped subsets of 11 categories. It is not the complete 20-category roadmap.
+
+All supported sources start enabled when no valid preference is saved. This includes Network and PATH in both user and machine scopes. An existing disabled choice remains disabled after an update; open **Sources** to change it. Changing a source does not run a check or elevate permissions. A newly enabled source needs usable observations at both endpoints before it can show changes; older snapshots are not backfilled.
 
 | Source | What is read | Important limits |
 | --- | --- | --- |
@@ -205,8 +207,8 @@ The app currently implements scoped subsets of 11 categories. It is not the comp
 | Default apps | Effective HTTP/HTTPS, PDF, JPG, PNG, MP3, MP4, ZIP, and CSV handlers. | No protected association writes. |
 | Audio defaults | Default playback, recording, and communications endpoints. | No sound recording/playback or per-app override detection. |
 | Protection | Windows Firewall profile enabled state. | Not an antivirus assessment or security verdict. |
-| Network | User proxy or shared adapter DNS/DHCP, depending on scope. | Optional; no traffic capture, Wi-Fi passwords, network probing, or full VPN inventory. |
-| PATH | Persisted user or machine PATH, including order, duplicates, and unexpanded references. | Optional; no arbitrary environment variables, executable discovery, or directory scanning. |
+| Network | User proxy or shared adapter DNS/DHCP, depending on scope. | Enabled by default; no traffic capture, Wi-Fi passwords, network probing, or full VPN inventory. |
+| PATH | Persisted user or machine PATH, including order, duplicates, and unexpanded references. | Enabled by default; no arbitrary environment variables, executable discovery, or directory scanning. |
 
 Collectors run sequentially in short-lived processes with a 25-second per-source bound. A slow or inaccessible source is shown as incomplete instead of blocking indefinitely. Read-only means monitored Windows configuration is not changed; the app still writes its own history, preferences, and explicitly requested exports.
 
@@ -229,6 +231,23 @@ HTML/PDF export, report import, and encrypted support bundles are not implemente
 
 The normal unpackaged/MSI app stores history under `%LOCALAPPDATA%\PCChangeTracker`. The Settings page shows the actual data directory. Development runs can use a separate `--data-dir` location. Public branding is ChangeTracker, but the internal data/executable name remains PCChangeTracker.
 
+### Manage Disk Usage
+
+1. Find **Snapshot storage** above **Help me** in the left sidebar. It stays visible on every page and includes retained history from all scopes, not just the current capture scope.
+2. Hover over the size label for guidance. Keyboard users can focus the label with Tab; screen readers can read its name and help text.
+3. Open **Settings > Automatic checks**. A less frequent capture interval creates fewer future snapshots; Off stops automatic captures, not retention cleanup. It does not delete existing history.
+4. Choose a shorter **Data retention** period to remove eligible older observations at the next due cleanup. Cleanup runs when first due and then daily while the app runs, even with automatic captures Off, and after successful automatic captures. Changing the selector does not force immediate cleanup.
+
+Baselines for every scope/access and named checkpoints are protected, so retention is not a hard disk-space limit. Saved choices are preserved; without a valid saved preference the defaults are every 4 hours and 30 days. You can still request manual checks.
+
+### Understand The Size
+
+The label counts `history.db`, `history.db-wal`, and `history.db-shm` when present in the current history directory. This is the combined file size, not just snapshot payloads or Windows' allocation-unit-rounded "Size on disk". It includes preferences, database overhead, and reusable free space. It does not include exported reports, the app installation, or the separate protected key file.
+
+Units use powers of 1,024: B, KiB, MiB, GiB, or TiB; the number follows your selected language's formatting. The display refreshes with history after capture, deletion, clearing, or retention cleanup. Temporary SQLite files can appear and disappear, so it is not a continuously sampled disk monitor. **Size unavailable** means the files could not be measured, not that they use zero space.
+
+Deleting snapshots may leave reusable space inside SQLite instead of shrinking the files immediately. Even an empty history has database overhead. The app does not automatically compact the database; do not delete `history.db` or its temporary files while the app is running to try to reclaim space.
+
 | Local data | Protection and behavior |
 | --- | --- |
 | Snapshot history and preferences | Local SQLite storage. The database itself is not encrypted. |
@@ -244,20 +263,40 @@ The app has no telemetry, account requirement, invisible uploads, ads, automatic
 
 ## Accessibility And Keyboard Use
 
-Mode and comparison-target choices use radio controls with visible selected circles. Text labels identify change type and priority; color alone is not the meaning. The main font and control outlines have stronger contrast, and keyboard focus has a visible outline.
+### Text And Colors
 
-- **Tab / Shift+Tab** move between controls. Arrow keys change a focused radio selection or list choice; Space selects controls and Enter activates the focused action as appropriate.
-- Date/time selectors are non-editable lists of retained snapshots; use the arrow keys to choose an observation.
-- Every comparison date, snapshot field, search field, and icon-only action has an accessible name or label.
-- Page titles, section headings, and each finding's name expose a heading level, so screen readers such as Narrator can jump directly between them instead of reading every line in order.
-- Opening a finding's **Before / after** view moves keyboard focus into it, **Escape** or **Close** dismisses it, and **Tab** cycles only within it; the rest of the window is disabled while it is open so keyboard focus can never land on a control hidden behind it.
-- **F1** or **Help me** opens this offline guide. In the help window, **Ctrl+F** focuses topic search and **Escape** closes the window.
-- Search filters topics by title and body. Choose a topic to read it. **Text size** changes the help document's zoom without changing Windows settings.
-- Windows high-contrast colors are respected. Standard controls remain keyboard-operable; full Narrator and all high-contrast configurations still require broader qualification.
-- **Settings > Appearance** offers a Light/Dark theme, a font-family choice, and separate app-text, label, button-background, and button-text colors. Each color selector has named swatches: Default, Navy, Forest green, Maroon, and Purple. Choices apply immediately and survive restart; Default restores that role's theme color. Shades adapt to the theme, and Windows high contrast overrides custom colors. Tested combinations maintain at least 7:1 for app/label text, 4.5:1 for button text, and 3:1 for button outlines. Primary actions use automatically contrasting text.
-- Windows' own display-scaling setting (Settings > System > Display > Scale) enlarges this app's text and controls together, since the app declares per-monitor DPI awareness; there is no separate in-app zoom for the main window.
+Open **Settings > Appearance > Text size** to choose 100%, 125%, 150%, or 200%. This enlarges interface text, labels, buttons, details, Help, and Report without changing Windows settings. The font-family choice also applies to the Help document. The Help window's own Text size slider adds document-only zoom up to 160% of that base size.
 
-The main window has a minimum supported size. The Comparison section can be collapsed while reviewing results; long content remains scrollable. No claim is made that the preview has passed every accessibility standard or assistive-technology combination.
+Larger text makes settings and before/after columns stack when needed. The main pane, sidebar, dialogs, and long field values can scroll; use the scrollbars or keyboard to reach content below the visible area. Selecting a page brings its heading into view. Collapsing Comparison provides more room for findings. Windows display scaling can enlarge the entire interface further.
+
+Light/Dark themes, named color swatches, and Windows high-contrast overrides are supported. Default colors target at least 7:1 text contrast, 4.5:1 primary-button text, and 3:1 control boundaries; available custom presets are contrast-tested. Change kind and priority use words, radio choices show selected circles, and the active page is a selected list item, so color is not the only indicator. Buttons, checkboxes, radios, text fields, and list rows have a minimum 44-device-independent-pixel interaction height; fonts can make them taller.
+
+### Keyboard Navigation
+
+| Key | Action |
+| --- | --- |
+| Tab / Shift+Tab | Move forward/backward through controls. Focused fields can scroll into view. |
+| Arrow keys in Page navigation | Select Review changes, Snapshots, Sources, or Settings. |
+| F6 / Shift+F6 | Move forward/backward between page navigation, the main command bar, and the current page heading. Tab continues into that page. |
+| Ctrl+1 / Ctrl+2 / Ctrl+3 / Ctrl+4 | Open Review changes / Snapshots / Sources / Settings and focus the page heading. |
+| Arrow keys / Space / Enter | Use native list, radio, checkbox, and button behavior. Alt+Down opens a focused selection list. |
+| Escape in change details | Close the detail panel and return focus to the original action when it is still available. |
+| F1 | Open offline Help. |
+| Ctrl+F in Help | Focus topic search. |
+| F6 / Shift+F6 in Help | Move between search, the topic list, and the document. |
+| Escape in Help or Report | Close that window. |
+
+Page shortcuts do not change pages behind an open scope chooser or change-detail panel. All sidebar actions are disabled behind those panels. The scope chooser focuses its first checkbox; confirmation returns focus to Change scope. Tab stays within the modal panel. Its own Help button remains available. Closing Help returns focus to the originating control when it is still available. Report initially focuses its read-only preview.
+
+Closing the main window, including Alt+F4, hides it in the tray rather than quitting. Use the notification area's ChangeTracker icon and its **Exit** menu command to stop the app.
+
+### Screen-Reader Information
+
+Page titles, section headings, and finding names expose heading levels. Page navigation announces its selected item. Snapshot rows announce their timestamp, checkpoint, and scope/access instead of internal object text. Source checkboxes have names, scope/coverage help, and status. Finding groups, captured fields, and Help topics have readable names. Each selectable before/after value identifies its field and side. The checkpoint-name input has a persistent visible label.
+
+The main status and comparison-selection messages, and the Help result count, expose polite live updates. The sidebar storage label exposes the same guidance as its mouse-hover tooltip. Icons used as commands have names; raw fingerprints and comparison keys remain hidden from both visible text and accessible item names.
+
+These are implemented accessibility supports, not a certification. Automated checks cover names, selected states, palettes, modal boundaries, and sampled enlarged/RTL layouts; a complete keyboard-only run, manual Narrator/other assistive-technology evaluation, Windows contrast themes, DPI combinations, and testing with users with disabilities are still required before an accessibility-conformance claim. Automated desktop tests require an unlocked, undisturbed session.
 
 
 ## Troubleshooting
@@ -274,6 +313,12 @@ The main window has a minimum supported size. The Comparison section can be coll
 | A source times out | It is recorded as incomplete. Try a later manual check, with a smaller selected source set if needed. |
 | No baseline exists | Complete at least one usable check for that scope/access. All-failed captures are not saved. |
 | Reports show older results after changing dates | Execute the comparison/check first. Reports describe the currently displayed observation, not pending selections. |
+| Network or PATH is still unchecked after an update | Saved disabled choices are preserved. Enable the supported source in Sources; it needs usable observations at both ends of a comparison. |
+| Storage size stays large after retention or deletion | Cleanup is scheduled, not immediate on selection. Named checkpoints and baselines are protected; SQLite may retain freed space for reuse. See Privacy And Storage. |
+| Snapshot storage says Size unavailable | Check access to the history directory shown in Settings. No files or snapshots are deleted by the size display. |
+| Closing the window does not quit | Close, Minimize, and Alt+F4 hide the main window. Use Exit in the ChangeTracker tray menu to stop active work and quit. |
+| Text or controls are difficult to read | Use Settings > Appearance for text size, font, and colors, or a Windows contrast theme. F6 and Ctrl+1 through Ctrl+4 provide direct navigation without repeated tabbing. |
+| Enlarged text puts controls below the viewport | Scroll the page or sidebar. Use F6 for the command bar/current page and Tab to continue; paired controls stack when space is limited. |
 | The app says history cannot be opened | Close duplicate instances and check storage access, free space, and version compatibility. Existing data is not silently deleted. |
 | A finding seems routine, such as a browser update | Inspect before/after values and coverage. Mark that occurrence expected only when appropriate; timing/publisher identity alone is not proof of safety. |
 | JSON or CSV buttons are missing | Select Advanced. Text preview/copy/save remain available in Simple. |
@@ -290,4 +335,4 @@ Current local release artifacts are unsigned previews. They are not a trusted si
 
 Source changes marked **Unreleased** may be newer than existing installers. This guide is embedded when the application is built; it describes the source build that includes it. A release is not automatically rebuilt when source code or help changes.
 
-Still planned: broader collectors, persistent event timeline, richer tags/rules/notes, configurable retention, report import and encrypted bundles, HTML/PDF export, native-speaker localization qualification, and resource-approved background monitoring. Collection consumes resources; no literal zero-CPU collection or universally harmless-change promise is made.
+Still planned: broader collectors, persistent event timeline, richer tags/rules/notes, storage-budget retention and archive controls, report import and encrypted bundles, HTML/PDF export, native-speaker localization qualification, and resource-approved background monitoring. Age-based retention is available in Settings. Collection consumes resources; no literal zero-CPU collection or universally harmless-change promise is made.

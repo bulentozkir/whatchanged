@@ -20,8 +20,8 @@ public static class CollectorCatalog
         new(Category.DefaultApps, "Effective HTTP, HTTPS, PDF, image, media, archive, and CSV handlers. Nothing is changed."),
         new(Category.Audio, "Default playback, recording, and communications endpoints. No recording or microphone access."),
         new(Category.Protection, "Windows Firewall profile configuration only. No antivirus assessment or safety verdict."),
-        new(Category.Network, "Adapter DNS/DHCP and current-user proxy configuration. No packets, Wi-Fi passwords, or network probes.", false),
-        new(Category.Environment, "Persisted user and machine PATH only. No general environment variables or executable scanning.", false)
+        new(Category.Network, "Adapter DNS/DHCP and current-user proxy configuration. No packets, Wi-Fi passwords, or network probes."),
+        new(Category.Environment, "Persisted user and machine PATH only. No general environment variables or executable scanning.")
     ];
 
     public static bool Supports(Category category, CollectionScope scope) => scope switch

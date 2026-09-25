@@ -13,10 +13,12 @@ Program adları, sizin yazdığınız nokta adları, yollar, kimlikler ve özgü
 Gezinme menüsünden **Ayarlar** bölümünü açın. Tercihler geçerli geçmiş klasörüne kaydedilir ve yeniden açılışta geri yüklenir.
 
 - Dil anında uygulanır. Görünüm bölümünde açık/koyu tema, yazı tipi ve uygulama metni, etiketler, düğme arka planı ile düğme metni için bağımsız renkler vardır. Adlandırılmış renk örnekleri varsayılan, lacivert, orman yeşili, bordo ve mordur. Varsayılan, o öğenin tema rengini geri getirir; Windows yüksek karşıtlık renkleri önceliklidir.
-- Otomatik görüntü alma varsayılan olarak kapalıdır. Aralıklar 15 dakika, 1 saat, 6 saat, günlük veya haftalıktır. Uygulama açıkken, tepside de normal yetkiyle çalışır; iptal edilebilir, yönetici izni istemez ve bilgisayarı uyandırmaz. Zamanı gelen işler dakikada bir kontrol edilir; yeniden açıldıktan sonra gecikmiş bir kontrol yapılabilir, kaçırılan aralıklar tekrar oynatılmaz.
-- Saklama varsayılanı süresizdir. 30, 90, 180 veya 365 gün seçilirse yalnızca eski, adsız ve referans olmayan görüntüler silinir. Temizlik ilk zamanı geldiğinde, ardından uygulama açıkken günlük ve başarılı otomatik kontrollerden sonra çalışır; görüntü sıklığı kapalı olsa da işler. Adlandırılmış noktalar ve tüm kapsam/erişim referansları korunur.
+- Otomatik görüntü alma varsayılanı her 4 saatte birdir; Kapalı dahil kayıtlı seçimler korunur. Aralıklar 15 dakika, 1 saat, 4 saat, 6 saat, günlük veya haftalıktır; yalnızca elle kontrol için Kapalı seçin. Uygulama açıkken, tepside de normal yetkiyle çalışır ve iptal edilebilir. Kapsam onayından sonra ilk veya gecikmiş kontrol bir sonraki dakika denetiminde yapılabilir; sonraki kontroller seçilen aralıktadır. Yönetici izni istemez, bilgisayarı uyandırmaz ve kaçırılan aralıkları tekrarlamaz.
+- Saklama varsayılanı 30 gündür; süresiz dahil kayıtlı seçimler korunur. 30, 90, 180 veya 365 gün ya da süresiz seçilebilir. Yalnızca eski, adsız ve referans olmayan görüntüler silinir. Temizlik ilk zamanı geldiğinde, ardından uygulama açıkken günlük ve başarılı otomatik kontrollerden sonra çalışır; görüntü sıklığı kapalı olsa da işler. Adlandırılmış noktalar ve tüm kapsam/erişim referansları korunur.
 - Oturum açılışında başlatma isteğe bağlı ve varsayılan olarak kapalıdır. Yeniden başlatmadan sonraki oturum açılışını da kapsar; oturum öncesi toplama yapmaz. Yalnızca uygulamanın kendi kullanıcı başlangıç kaydı değişir; hizmet veya açılış görevi kurulmaz, başka uygulama ya da ilkeye dokunulmaz. Başarısız kayıt önceki seçimi korur.
-- Tepside çalıştırma isteğe bağlı ve varsayılan olarak kapalıdır. Küçült veya Kapat pencereyi gizler, kontroller sürer. Aç ya da uygulamayı tekrar başlatmak pencereyi getirir. Tepsideki Çıkış etkin toplamayı iptal eder ve uygulamayı kapatır. Tepsi kapalıysa Kapat da iptal edip çıkar.
+- Küçült veya Kapat pencereyi her zaman tepsiye gizler, kontroller sürer. Aç, tepsi simgesine çift tıklama veya uygulamayı tekrar başlatmak pencereyi getirir. Tepsideki Çıkış etkin toplamayı iptal eder ve uygulamayı sonlandırır. Normal başlatma tam ekran boyutuna büyütülmüş pencereyle açılır; tepsiden dönüş son görünür durumu korur. İsteğe bağlı oturum açma başlangıcı, Windows yeniden başladıktan sonra da gizlidir; oturumdan önce çalışmaz ve hizmet değildir.
+
+Basit görünüm, değişen açık alanları Önce/Sonra etiketleriyle daha büyük, seçilebilir ve salt okunur değerler olarak gösterir. Ayrıntılar kapanınca odak, varsa başlangıç düğmesine döner. Gelişmiş görünüm saklanan tarihleri kesin görüntü saatlerinden ayırır; kontrol noktası ve kapsam/erişim ayrı satırlardadır. Görünüm değişikliği seçili karşılaştırmayı korur.
 
 Yeni profilde iki kapsam da seçilidir; kayıtlı tercihler korunur. Tüm kapsamların saklanan geçmişi sorgulanabilir, ancak karşılaştırmanın iki ucu aynı kapsam ve erişimde olmalıdır. Hiçbir tercih yönetici yetkisi vermez. Kaynak kullanımı profillemesi ve kurulu paket yaşam döngüsü doğrulaması henüz tamamlanmamıştır.
 
@@ -24,10 +26,10 @@ Yeni profilde iki kapsam da seçilidir; kayıtlı tercihler korunur. Tüm kapsam
 
 1. Normal açın; yönetici olarak değil.
 2. Yeni profilde seçili gelen **Geçerli kullanıcı** ve **Bilgisayar geneli** kutularını inceleyin. Birini veya ikisini tutun; en az biri zorunludur. Onaylayın.
-3. Kaynaklar bölümünü inceleyin. Ağ ve PATH isteğe bağlıdır. Seçim yapmak kontrol başlatmaz.
+3. Kaynaklar bölümünü inceleyin. Ağ ve PATH dahil desteklenen tüm kontroller varsayılan olarak açıktır. Kayıtlı seçimler korunur; kaynakları kapatabilirsiniz. Seçim yapmak kontrol başlatmaz.
 4. Bugün ve Şimdi kontrol et seçeneklerini kullanın.
 
-İlk kullanılabilir gözlem kapsam ve erişim için referans olur. Bu bir envanterdir, geçmiş değişikliklerin yeniden oluşturulması değildir. Yeni profilde otomatik toplama kapalıdır; etkinleştirilen aralıklar yalnızca uygulama çalışırken uygulanır.
+İlk kullanılabilir gözlem kapsam ve erişim için referans olur. Bu bir envanterdir, geçmiş değişikliklerin yeniden oluşturulması değildir. Yeni profilde varsayılan aralık 4 saattir; kapsam onayından önce toplama başlamaz ve yalnızca uygulama çalışırken yapılır. Elle kontrol için sıklığı Kapalı yapın.
 
 ## Basit ve Gelişmiş
 
@@ -55,7 +57,7 @@ Görüntü olmayan gün yeniden oluşturulamaz; en yakın tarih sessizce seçilm
 
 Önceki görüntüyü ve Bugün'ü seçin. Şimdi kontrol et yeni gözlem oluşturur ve tam seçtiğiniz kayıtla karşılaştırır; başka referansa gizlice geçmez. Başarılı işlemden sonra panel kapanır, tekrar açılabilir.
 
-Yönetici referansı otomatik yetki yükseltmez. Ayrı yönetici kontrolünü kullanın veya yalnızca mevcut durum alın. İptal etkin kontrolü durdurur; eski geçmiş korunur. Tepsi etkinse Kapat toplamayı sürdürür; tepside Çıkış iptal edip kapatır.
+Yönetici referansı otomatik yetki yükseltmez. Ayrı yönetici kontrolünü kullanın veya yalnızca mevcut durum alın. İptal etkin kontrolü durdurur; eski geçmiş korunur. Kapat toplamayı tepside sürdürür; tepside Çıkış iptal edip sonlandırır.
 
 ## Yönetici erişimi
 
@@ -92,7 +94,9 @@ Sabit nokta sınırı yoktur. İsteğe bağlı saklama politikası eski adsız k
 | Güncelleme ve sürücü | Yerel başarılı geçmiş, en çok 5.000 olay (aşılırsa kısmi), WMI bilgisi; kurulum, firmware veya geri alma yok. |
 | Varsayılan ve ses | Desteklenen ilişkilendirmeler ve varsayılan cihazlar; ses kaydı veya değişiklik yok. |
 | Koruma | Güvenlik duvarı profilleri, antivirüs değerlendirmesi değil. |
-| Ağ ve PATH | İsteğe bağlı proxy veya DNS/DHCP ve kalıcı PATH; paket, parola, ağ taraması veya diğer değişkenler yok. |
+| Ağ ve PATH | Varsayılan olarak açık: proxy veya DNS/DHCP ve kalıcı PATH; paket, parola, ağ taraması veya diğer değişkenler yok. |
+
+Geçerli kayıtlı seçim yoksa desteklenen tüm kaynaklar varsayılan olarak açıktır. Daha önce kapattığınız kaynak güncellemeden sonra kapalı kalır; Kaynaklar bölümünden değiştirebilirsiniz. Açmak toplama başlatmaz veya yetki yükseltmez. Fark göstermek için iki uçta da kullanılabilir gözlem gerekir; eski görüntüler geriye dönük doldurulmaz.
 
 Kaynak başına 25 saniye sınır vardır. Envanter ekranı kaynak başına 1.000 kayıt gösterir, alınan bütün kayıtlar saklanır. Salt okunur, kendi geçmişini ve istenen çıktıları yazabilir; izlenen ayarları değiştiremez.
 
@@ -106,9 +110,28 @@ Anahtarlar, parmak izleri, başlatma değerleri, nokta adları ve ses uç kimlik
 
 Normal konum `%LOCALAPPDATA%\PCChangeTracker`; Ayarlar gerçek konumu gösterir. SQLite şifreli değildir. Anahtar geçerli kullanıcı DPAPI korumasını kullanır; başka hesaba kopyalamak çözülmesini sağlamaz. Yeni sürümden önce güvenli yedek alın.
 
+### Disk kullanımını yönetme
+
+1. Sol çubukta Yardım'ın üstündeki görüntü depolama boyutuna bakın. Her sayfada görünür ve geçerli geçmişin tüm kapsamlarını içerir.
+2. Bilgi için fareyi boyutun üzerine getirin. Tab ile etikete odaklanabilirsiniz; ekran okuyucular etiketin adını ve yardım metnini okuyabilir.
+3. Ayarlar'daki otomatik kontrollerin sıklığını değiştirin. Daha uzun aralık daha az yeni görüntü üretir. Kapalı, otomatik toplamayı durdurur; geçmişi silmez ve saklama temizliğini durdurmaz.
+4. Daha kısa saklama süresi uygun eski görüntüleri sonraki zamanı gelen temizlikte siler, seçim anında değil. Temizlik zamanı geldiğinde, sonra uygulama çalışırken günlük ve başarılı otomatik toplamalardan sonra yapılır. Tüm referanslar ve adlandırılmış kontrol noktaları korunur; bu kesin bir disk sınırı değildir.
+
+Boyut, varsa `history.db`, `history.db-wal` ve `history.db-shm` dosyalarını toplar. Yalnızca görüntüleri değil tercihleri, veritabanı ek alanını ve yeniden kullanılabilir boş alanı içerir; Windows'un bloklara yuvarlanmış disk üzerindeki boyutu değildir. Dışa aktarımlar, uygulama kurulumu ve anahtar dosyası dahil değildir. B, KiB, MiB, GiB ve TiB, 1.024'ün katlarını ve seçili dilin sayı biçimini kullanır.
+
+Değer toplama, silme veya temizlikten sonra geçmiş yenilendiğinde güncellenir; sürekli disk izlemesi değildir. Boyut alınamıyor, sıfır anlamına gelmez. Silme dosyayı küçültmeden yeniden kullanılabilir alan bırakabilir; boş geçmiş de yer kaplar. Otomatik veritabanı sıkıştırması yapılmaz. Uygulama çalışırken veritabanını veya geçici dosyalarını silmeyin.
+
 Geçmiş biçimi 2 eski kayıtları karma olarak korur ve eski okuyucuları engeller. Yardımcı yalnızca kategori ve geçici anahtar alır; geçmiş yolu veya serbest komut almaz. Normal arayüz kaydeder. MSIX veri yaşam döngüsü ayrıca test edilmelidir.
 
 ## Erişilebilirlik
+
+Ayarlar > Görünüm > Metin boyutu, 100%, 125%, 150% ve 200% seçeneklerini kaydeder; sayfaları, denetimleri, Yardım ve Rapor metnini büyütür. Alan çiftleri dar yerde alt alta gelir; sayfalar, yan çubuk ve iletişim kutuları kaydırılabilir. Yazı tipi seçimi yardım belgesine de uygulanır; Yardım'ın ayrı yakınlaştırması bu temel boyutun %160'ına kadar çıkabilir.
+
+Yan gezinti seçili sayfayı bildirir ve ok tuşlarını destekler. Ctrl+1 değişiklikleri, Ctrl+2 görüntüleri, Ctrl+3 kaynakları, Ctrl+4 ayarları açar. F6 ve Shift+F6 gezinti, komut çubuğu ve sayfa başlığı arasında dolaşır; Tab sayfa denetimlerine devam eder. Yardım'da F6 arama, konular ve belge arasında dolaşır; Ctrl+F aramaya gider.
+
+Kapsam seçimi ilk kutuya odaklanır; onay sonrasında Kapsamı değiştir'e döner. Modal paneller tüm yan çubuğu ve sayfa kısayollarını devre dışı bırakır; Tab panel içinde kalır. Escape ayrıntıları kapatır ve varsa başlangıç eylemine odak döner. Yardım aramayla, Rapor salt okunur önizlemeyle başlar. Görüntü satırları, konular, gruplar ve alanlar okunabilir adlar taşır; değerler alanı ve Önce/Sonra tarafını, kaynaklar durumu ve kapsamı bildirir. Ana denetimlerin etkileşim yüksekliği en az 44 cihazdan bağımsız birimdir.
+
+Bu özellikler evrensel uyumluluk sertifikası değildir. Ekran okuyucular, karşıtlık temaları, Windows ölçekleri ve engelli kullanıcılarla elle değerlendirme gerekir. Gerçek klavye testleri kilidi açık ve müdahale edilmeyen oturum ister.
 
 Tab/Shift+Tab, oklar ve boşluk ile gezinilir. Kapsamlar bağımsız kutular, modlar radyodur. Tür ve öncelik yalnızca renk değil metindir. Görünür odak ve Windows yüksek karşıtlık renkleri desteklenir.
 

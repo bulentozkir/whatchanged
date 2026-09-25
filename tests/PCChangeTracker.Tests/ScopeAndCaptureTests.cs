@@ -68,6 +68,12 @@ public sealed class ScopeAndCaptureTests
         Assert.Contains(row.ObservationDetails, detail => detail.Field == "Collector version" && detail.After == "1");
         Assert.Contains("cannot be reconstructed", row.HiddenComparison);
         Assert.DoesNotContain("SECRET-FINGERPRINT", row.AdvancedDetails);
+        Assert.Equal(3, row.ChangedFields.Count);
+        Assert.Contains(row.ChangedFields, detail => detail.Field == "Version" && detail.Before == "1" && detail.After == "2"
+            && detail.BeforeLabel == "Version, Before" && detail.AfterLabel == "Version, After");
+        Assert.DoesNotContain(row.ChangedFields, detail => detail.Field is "Record identity" or "Source" or "Endpoint" or "Long value");
+        Assert.Equal("", row.SimpleSummary);
+        Assert.DoesNotContain("SECRET-FINGERPRINT", string.Join("\n", row.ChangedFields));
     }
 
     [Fact]
@@ -268,6 +274,36 @@ public sealed class ScopeAndCaptureTests
         }
     }
 
+    [Theory]
+    [InlineData(null, "Retain30Days")]
+    [InlineData("unknown", "Retain30Days")]
+    [InlineData("Forever", "Forever")]
+    [InlineData("Retain30Days", "Retain30Days")]
+    [InlineData("Retain90Days", "Retain90Days")]
+    [InlineData("Retain180Days", "Retain180Days")]
+    [InlineData("Retain365Days", "Retain365Days")]
+    public void RetentionDefaultsToThirtyDaysAndHonorsSavedPreferences(string? savedRetention, string expectedRetention)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            if (savedRetention is not null) store.SetPreference("retention", savedRetention);
+            var service = new RecordingCaptureService();
+            model = new MainViewModel(store, service, directory);
+            Assert.Equal(expectedRetention, model.SelectedRetention);
+            Assert.Equal(savedRetention, store.GetPreference("retention"));
+            Assert.Equal("Every4Hours", model.SelectedScheduleInterval);
+            Assert.Empty(service.Requests);
+        }
+        finally
+        {
+            model?.StopBackgroundWork();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
     [Fact]
     public async Task RetentionCleanupRunsWithoutAutomaticCaptureAndProtectsCheckpointsAndBaselines()
     {
@@ -276,6 +312,7 @@ public sealed class ScopeAndCaptureTests
         {
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
             store.SetPreference("collection.scope", "CurrentUser");
+            store.SetPreference("schedule.interval", "Off");
             var baseline = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-90), "baseline");
             var expired = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-60), "expired");
             var checkpoint = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-45), "checkpoint");
@@ -284,7 +321,8 @@ public sealed class ScopeAndCaptureTests
             foreach (var snapshot in new[] { baseline, expired, checkpoint, recent, machineBaseline }) store.Save(snapshot);
             store.Rename(checkpoint.Id, "Keep this checkpoint");
             var service = new RecordingCaptureService();
-            var model = new MainViewModel(store, service, directory) { SelectedRetention = "Retain30Days" };
+            var model = new MainViewModel(store, service, directory);
+            Assert.Equal("Retain30Days", model.SelectedRetention);
             Assert.Equal("Off", model.SelectedScheduleInterval);
             model.CompareFrom = model.Snapshots.Single(snapshot => snapshot.Id == expired.Id);
             model.CompareTo = model.Snapshots.Single(snapshot => snapshot.Id == recent.Id);
@@ -309,6 +347,72 @@ public sealed class ScopeAndCaptureTests
     }
 
     [Theory]
+    [InlineData(null, "Every4Hours")]
+    [InlineData("unknown", "Every4Hours")]
+    [InlineData("Off", "Off")]
+    [InlineData("Every15Minutes", "Every15Minutes")]
+    [InlineData("EveryHour", "EveryHour")]
+    [InlineData("Every4Hours", "Every4Hours")]
+    [InlineData("Every6Hours", "Every6Hours")]
+    [InlineData("EveryDay", "EveryDay")]
+    [InlineData("EveryWeek", "EveryWeek")]
+    public async Task SnapshotFrequencyDefaultsToFourHoursAndHonorsSavedPreferences(string? savedInterval, string expectedInterval)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            if (savedInterval is not null) store.SetPreference("schedule.interval", savedInterval);
+            var service = new RecordingCaptureService();
+            model = new MainViewModel(store, service, directory);
+            Assert.Equal(expectedInterval, model.SelectedScheduleInterval);
+            Assert.Equal(savedInterval, store.GetPreference("schedule.interval"));
+            Assert.Equal("Every 4 hours", Assert.Single(model.ScheduleIntervals, option => option.Code == "Every4Hours").Display);
+            Assert.True(model.ChoosingScope);
+            await model.CheckScheduleAsync();
+            Assert.Empty(service.Requests);
+        }
+        finally
+        {
+            model?.StopBackgroundWork();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    [Theory]
+    [InlineData(CollectionScope.CurrentUser)]
+    [InlineData(CollectionScope.Machine)]
+    [InlineData(CollectionScope.Both)]
+    public async Task DefaultSnapshotFrequencyWaitsFourHoursBetweenSuccessfulChecks(CollectionScope scope)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            store.SetPreference("collection.scope", scope.ToString());
+            var service = new RecordingCaptureService();
+            model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            Assert.Equal("Every4Hours", model.SelectedScheduleInterval);
+            var lastRunKey = $"schedule.lastRun.{scope}";
+            store.SetPreference(lastRunKey, DateTimeOffset.UtcNow.AddMinutes(-239).ToString("O"));
+            await model.CheckScheduleAsync();
+            Assert.Empty(service.Requests);
+            store.SetPreference(lastRunKey, DateTimeOffset.UtcNow.AddMinutes(-241).ToString("O"));
+            await model.CheckScheduleAsync();
+            await model.CheckScheduleAsync();
+            Assert.Equal((scope, false), Assert.Single(service.Requests));
+            Assert.Single(store.List());
+        }
+        finally
+        {
+            model?.StopBackgroundWork();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    [Theory]
     [InlineData(CollectionScope.CurrentUser)]
     [InlineData(CollectionScope.Machine)]
     [InlineData(CollectionScope.Both)]
@@ -320,6 +424,7 @@ public sealed class ScopeAndCaptureTests
         {
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
             store.SetPreference("collection.scope", scope.ToString());
+            store.SetPreference("schedule.interval", "Off");
             var baseline = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-4), "baseline") with { Scope = scope };
             var reference = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-2), "reference") with { Scope = scope };
             store.Save(baseline);
@@ -345,8 +450,10 @@ public sealed class ScopeAndCaptureTests
         finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
-    [Fact]
-    public async Task AutomaticSnapshotCanBeCanceledWithoutSaving()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AutomaticSnapshotCanBeCanceledWithoutSaving(bool exiting)
     {
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
         MainViewModel? model = null;
@@ -359,11 +466,17 @@ public sealed class ScopeAndCaptureTests
             model = new MainViewModel(store, service, directory) { SelectedScheduleInterval = "EveryHour" };
             var check = model.CheckScheduleAsync();
             Assert.True(model.IsBusy);
-            model.CancelCapture();
+            if (exiting) model.StopBackgroundWork();
+            else model.CancelCapture();
             await check.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.True(model.IsIdle);
             Assert.Empty(store.List());
             Assert.Null(store.GetPreference("schedule.lastRun.CurrentUser"));
+            if (exiting)
+            {
+                await model.CheckScheduleAsync();
+                Assert.Single(service.Requests);
+            }
         }
         finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
@@ -392,32 +505,55 @@ public sealed class ScopeAndCaptureTests
         finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
-    [Fact]
-    public async Task RetainedHistoryCanBeBrowsedAndComparedOutsideTheCurrentCaptureScope()
+    [Theory]
+    [InlineData(CollectionScope.CurrentUser)]
+    [InlineData(CollectionScope.Machine)]
+    [InlineData(CollectionScope.Both)]
+    public async Task RetainedHistoryCanBeBrowsedAndComparedOutsideTheCurrentCaptureScope(CollectionScope captureScope)
     {
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
         try
         {
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
-            store.SetPreference("collection.scope", "CurrentUser");
-            var user = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-3), "user");
-            var machineBefore = user with { Id = Guid.NewGuid(), Scope = CollectionScope.Machine, Elevated = true };
-            var machineAfter = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-1), "machine") with { Scope = CollectionScope.Machine, Elevated = true };
-            foreach (var snapshot in new[] { user, machineBefore, machineAfter }) store.Save(snapshot);
+            store.SetPreference("collection.scope", captureScope.ToString());
+            store.SetPreference("schedule.interval", "Off");
+            store.SetPreference("retention", "Forever");
+            var contexts = new[]
+            {
+                (Scope: CollectionScope.CurrentUser, Elevated: false),
+                (Scope: CollectionScope.Machine, Elevated: false),
+                (Scope: CollectionScope.Machine, Elevated: true),
+                (Scope: CollectionScope.Both, Elevated: false),
+                (Scope: CollectionScope.Both, Elevated: true),
+                (Scope: CollectionScope.Legacy, Elevated: false)
+            };
+            var pairs = contexts.Select(context => (
+                Before: ComparisonSnapshot(DateTimeOffset.Now.AddDays(-3), "before") with { Scope = context.Scope, Elevated = context.Elevated },
+                After: ComparisonSnapshot(DateTimeOffset.Now.AddDays(-1), "after") with { Scope = context.Scope, Elevated = context.Elevated })).ToArray();
+            foreach (var pair in pairs) { store.Save(pair.Before); store.Save(pair.After); }
+            var reopenedStore = new HistoryStore(Path.Combine(directory, "history.db"));
             var service = new RecordingCaptureService();
-            var model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
-            Assert.Equal(3, model.Snapshots.Count);
-            model.CompareFrom = model.Snapshots.Single(snapshot => snapshot.Id == machineBefore.Id);
-            model.CompareTo = model.Snapshots.Single(snapshot => snapshot.Id == machineAfter.Id);
-            model.CompareWithToday = false;
-            await model.CaptureCommand.ExecuteAsync(null);
-            Assert.True(model.HasComparison);
-            Assert.Equal(CollectionScope.CurrentUser, model.SelectedScope);
+            model = new MainViewModel(reopenedStore, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            Assert.Equal(pairs.Length * 2, model.Snapshots.Count);
+            foreach (var pair in pairs)
+            {
+                model.CompareFrom = model.Snapshots.Single(snapshot => snapshot.Id == pair.Before.Id);
+                model.CompareTo = model.Snapshots.Single(snapshot => snapshot.Id == pair.After.Id);
+                model.CompareWithToday = false;
+                await model.CaptureCommand.ExecuteAsync(null);
+                Assert.True(model.HasComparison);
+                Assert.Equal(captureScope, model.SelectedScope);
+                Assert.Equal(pair.Before.Id, reopenedStore.GetBaselineId(pair.Before.Scope, pair.Before.Elevated));
+            }
             Assert.Empty(service.Requests);
-            Assert.Equal(user.Id, store.GetBaselineId(CollectionScope.CurrentUser));
-            Assert.Equal(machineBefore.Id, store.GetBaselineId(CollectionScope.Machine, true));
+            Assert.Equal(pairs.Length * 2, reopenedStore.List().Count);
         }
-        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+        finally
+        {
+            model?.StopBackgroundWork();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
     }
 
     [Fact]
@@ -435,24 +571,24 @@ public sealed class ScopeAndCaptureTests
             model = new MainViewModel(store, service, directory, setStartupEnabled: enabled => { registrations.Add(enabled); return true; });
             model.SelectedTheme = "Dark";
             model.SelectedFont = "Calibri";
+            model.SelectedTextSize = 150;
             model.SelectedButtonTextColor = "ButtonColorForest";
             model.SelectedAppTextColor = "ButtonColorNavy";
             model.SelectedButtonColor = "ButtonColorPurple";
             model.SelectedLabelColor = "ButtonColorMaroon";
             model.SelectedScheduleInterval = "Every6Hours";
             model.SelectedRetention = "Retain90Days";
-            model.MinimizeToTray = true;
             model.StartWithWindows = true;
             reopened = new MainViewModel(store, service, directory, setStartupEnabled: _ => throw new InvalidOperationException("Do not register on load."));
             Assert.Equal("Dark", reopened.SelectedTheme);
             Assert.Equal("Calibri", reopened.SelectedFont);
+            Assert.Equal(150, reopened.SelectedTextSize);
             Assert.Equal("ButtonColorForest", reopened.SelectedButtonTextColor);
             Assert.Equal("ButtonColorNavy", reopened.SelectedAppTextColor);
             Assert.Equal("ButtonColorPurple", reopened.SelectedButtonColor);
             Assert.Equal("ButtonColorMaroon", reopened.SelectedLabelColor);
             Assert.Equal("Every6Hours", reopened.SelectedScheduleInterval);
             Assert.Equal("Retain90Days", reopened.SelectedRetention);
-            Assert.True(reopened.MinimizeToTray);
             Assert.True(reopened.StartWithWindows);
             Assert.True(Assert.Single(registrations));
             Assert.Empty(service.Requests);
@@ -490,6 +626,152 @@ public sealed class ScopeAndCaptureTests
         var command = StartupRegistration.BuildCommand(@"C:\Program Files\ChangeTracker\PCChangeTracker.exe", @"C:\History With Spaces\");
         Assert.Equal("\"C:\\Program Files\\ChangeTracker\\PCChangeTracker.exe\" --start-minimized --data-dir \"C:\\History With Spaces\\\\\"", command);
         Assert.Throws<ArgumentException>(() => StartupRegistration.BuildCommand("C:\\bad\"path.exe"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("CurrentUser")]
+    [InlineData("Machine")]
+    [InlineData("Both")]
+    public async Task SourcesDefaultToAllSupportedChecksWithoutImplicitCapture(string? savedScope)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            if (savedScope is not null) store.SetPreference("collection.scope", savedScope);
+            store.SetPreference("schedule.interval", "Off");
+            store.SetPreference("retention", "Forever");
+            var service = new RecordingCaptureService();
+            model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            Assert.Equal(savedScope is null, model.ChoosingScope);
+            Assert.All(model.Sources, source =>
+            {
+                Assert.Equal(CollectorCatalog.Supports(source.Category, model.SelectedScope), source.Available);
+                Assert.Equal(source.Available, source.Enabled);
+                Assert.Null(store.GetPreference($"source.{model.SelectedScope}.{source.Category}"));
+            });
+            Assert.True(Assert.Single(model.Sources, source => source.Category == Category.Network).Enabled);
+            Assert.True(Assert.Single(model.Sources, source => source.Category == Category.Environment).Enabled);
+            Assert.Empty(service.Requests);
+            Assert.Empty(store.List());
+            if (model.ChoosingScope) model.ConfirmScopeCommand.Execute(null);
+            Assert.Empty(service.Requests);
+            await model.CaptureCommand.ExecuteAsync(null);
+            Assert.Equal((model.SelectedScope, false), Assert.Single(service.Requests));
+            var snapshot = store.Load(Assert.Single(store.List()).Id)!;
+            Assert.Equal(model.Sources.Where(source => source.Available).Select(source => source.Category).Order(),
+                snapshot.Results.Select(result => result.Category).Order());
+        }
+        finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
+    [Theory]
+    [InlineData(0L, "en-US", "0 B")]
+    [InlineData(512L, "en-US", "512 B")]
+    [InlineData(1536L, "en-US", "1.5 KiB")]
+    [InlineData(1572864L, "en-US", "1.5 MiB")]
+    [InlineData(1610612736L, "en-US", "1.5 GiB")]
+    [InlineData(1649267441664L, "en-US", "1.5 TiB")]
+    [InlineData(1572864L, "de-DE", "1,5 MiB")]
+    public void HistoryStorageSizeUsesReadableLocalizedUnits(long bytes, string culture, string expected)
+    {
+        Assert.Equal(expected, MainViewModel.FormatStorageSize(bytes, System.Globalization.CultureInfo.GetCultureInfo(culture)));
+    }
+
+    [Fact]
+    public async Task SidebarStorageIncludesHistoryFilesAcrossScopesAndRefreshesAfterCapture()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var database = Path.Combine(directory, "history.db");
+            var store = new HistoryStore(database);
+            store.SetPreference("collection.scope", "CurrentUser");
+            store.SetPreference("schedule.interval", "Off");
+            store.SetPreference("retention", "Forever");
+            store.Save(ComparisonSnapshot(DateTimeOffset.Now.AddDays(-2), new string('x', 128 * 1024)) with { Scope = CollectionScope.Machine });
+            var service = new RecordingCaptureService
+            {
+                CaptureResult = _ => Task.FromResult(ComparisonSnapshot(DateTimeOffset.Now, new string('y', 256 * 1024)))
+            };
+            model = new MainViewModel(store, service, directory);
+            Assert.Equal(new FileInfo(database).Length, model.HistoryStorageBytes);
+            Assert.True(model.HistoryStorageBytes > 128 * 1024);
+            var initialSize = model.HistoryStorageBytes;
+            var notifications = new List<string?>();
+            model.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+            using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={database};Pooling=False"))
+            {
+                connection.Open();
+                using var reader = connection.CreateCommand();
+                reader.CommandText = "SELECT COUNT(*) FROM snapshots;";
+                Assert.Equal(1L, reader.ExecuteScalar());
+                await model.CaptureCommand.ExecuteAsync(null);
+                Assert.Single(service.Requests);
+                Assert.True(store.List().Count == 2, model.Status);
+                Assert.True(File.Exists(database + "-wal"));
+                Assert.True(new FileInfo(database + "-wal").Length > 0);
+                var expectedBytes = new[] { database, database + "-wal", database + "-shm" }
+                    .Where(File.Exists).Sum(path => new FileInfo(path).Length);
+                Assert.Equal(expectedBytes, model.HistoryStorageBytes);
+                Assert.True(model.HistoryStorageBytes > initialSize);
+                Assert.Equal(model.Texts.Format("SnapshotStorageSize", model.StorageSize), model.SnapshotStorageLabel);
+            }
+            Assert.Equal(new FileInfo(database).Length, model.HistoryStorageBytes);
+            Assert.Contains(nameof(MainViewModel.SnapshotStorageLabel), notifications);
+            model.SelectedScope = CollectionScope.Machine;
+            Assert.Equal(new FileInfo(database).Length, model.HistoryStorageBytes);
+            Assert.Equal(2, store.List().Count);
+        }
+        finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
+    [Theory]
+    [InlineData(CollectionScope.CurrentUser)]
+    [InlineData(CollectionScope.Machine)]
+    [InlineData(CollectionScope.Both)]
+    public void SavedSourceChoicesOverrideDefaultsAcrossScopeChangesAndRestart(CollectionScope scope)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        MainViewModel? reopened = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            store.SetPreference("collection.scope", scope.ToString());
+            store.SetPreference("schedule.interval", "Off");
+            store.SetPreference("retention", "Forever");
+            store.SetPreference("source.Network", "False");
+            store.SetPreference("source.Environment", "True");
+            store.SetPreference($"source.{scope}.Environment", "False");
+            store.SetPreference("source.Applications", "False");
+            store.SetPreference($"source.{scope}.Applications", "True");
+            store.SetPreference($"source.{scope}.Startup", "invalid");
+            var service = new RecordingCaptureService();
+            model = new MainViewModel(store, service, directory);
+            model.SelectedScope = scope == CollectionScope.Both ? CollectionScope.CurrentUser : CollectionScope.Both;
+            model.SelectedScope = scope;
+            reopened = new MainViewModel(new HistoryStore(Path.Combine(directory, "history.db")), service, directory);
+            foreach (var current in new[] { model, reopened })
+                Assert.All(current.Sources, source => Assert.Equal(
+                    source.Available && source.Category is not Category.Network and not Category.Environment, source.Enabled));
+            Assert.Equal("False", store.GetPreference("source.Network"));
+            Assert.Equal("True", store.GetPreference("source.Environment"));
+            Assert.Equal("False", store.GetPreference($"source.{scope}.Environment"));
+            Assert.Equal("True", store.GetPreference($"source.{scope}.Applications"));
+            Assert.Equal("invalid", store.GetPreference($"source.{scope}.Startup"));
+            Assert.Empty(service.Requests);
+            Assert.Empty(store.List());
+        }
+        finally
+        {
+            model?.StopBackgroundWork();
+            reopened?.StopBackgroundWork();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
     }
 
     [Fact]
