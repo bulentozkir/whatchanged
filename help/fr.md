@@ -12,7 +12,7 @@ Noms d'applications, libellés saisis, chemins, identifiants et valeurs original
 
 Ouvrez Paramètres dans le menu. Les préférences sont enregistrées pour le dossier d'historique actuel et restaurées au redémarrage.
 
-- Apparence propose thème clair/sombre, police et couleurs indépendantes du texte, des libellés, du fond et du texte des boutons. Les échantillons nommés proposent Par défaut, Bleu marine, Vert forêt, Bordeaux et Violet. Par défaut rétablit la couleur du thème ; le contraste élevé de Windows prévaut et les actions principales conservent un texte contrastant.
+- Apparence propose thème clair/sombre, police et couleurs indépendantes du texte, des libellés, du fond et du texte des boutons. Les échantillons nommés proposent Par défaut, Bleu marine, Vert forêt, Bordeaux et Violet. Par défaut rétablit la couleur du thème ; le contraste élevé de Windows prévaut et les actions principales conservent un texte contrastant. Sans choix enregistré, le thème sombre s'applique. Les boutons suivent une hiérarchie claire : la vérification principale est turquoise, les suppressions sont rouges et les autres commandes sont neutres avec une icône colorée (par exemple Rapport, Changer la portée et Aide). Les listes déroulantes, cases à cocher et interrupteurs utilisent la couleur d'accent pour la flèche, la coche et le contour de focus. Les sections des Paramètres s'affichent en colonnes ; la page tient donc généralement sur un seul écran sans défilement.
 - Les captures automatiques ont lieu toutes les 4 heures par défaut ; les choix enregistrés, dont Désactivé, sont conservés. Intervalles : 15 minutes, 1 heure, 4 heures, 6 heures, chaque jour ou semaine. Choisissez Désactivé pour des vérifications manuelles uniquement. Elles fonctionnent seulement lorsque l'app est ouverte, même dans la zone de notification, sans élévation et avec annulation possible. Après confirmation de la portée, la première vérification ou une échéance dépassée peut démarrer au prochain contrôle par minute ; les suivantes respectent l'intervalle. Elles ne réveillent pas le PC et ne rejouent pas les intervalles manqués.
 - La conservation est de 30 jours par défaut ; les choix enregistrés, dont la conservation illimitée, sont préservés. Choisissez 30, 90, 180 ou 365 jours, ou une durée illimitée. Seuls les anciens relevés sans nom qui ne sont pas des références sont supprimés. Le nettoyage a lieu à la première échéance, puis quotidiennement pendant l'exécution et après les captures automatiques réussies, même si la fréquence automatique est désactivée. Points nommés et références de toutes les portées sont protégés.
 - Le démarrage à la connexion est facultatif et désactivé par défaut. Il inclut la connexion après redémarrage, pas une collecte avant connexion. Seule l'entrée de démarrage de l'app pour cet utilisateur change ; aucun service ou tâche au démarrage, aucune autre app ou politique ne sont modifiés. En cas d'échec, le choix précédent est conservé.
@@ -41,7 +41,7 @@ Changer de mode ne collecte pas, n'élève pas les droits, ne déplace pas la r�
 
 Utilisateur actuel lit ses applications enregistrées, Run/RunOnce, associations, audio, proxy et PATH. L'ordinateur lit registres partagés, services, tâches, mises à jour, pilotes, pare-feu, DNS/DHCP et PATH système. Aucun profil privé d'autrui n'est chargé.
 
-Avec les deux cases, les parties sont lues séparément puis combinées. Seule la partie machine peut être élevée sur demande ; l'utilisateur reste le compte normal d'origine. Choix existants et sources par portée sont mémorisés.
+Avec les deux cases, les parties sont lues séparément puis combinées. Les deux portées utilisent l'accès normal sous votre propre compte. Choix existants et sources par portée sont mémorisés.
 
 ## Dates et observations
 
@@ -57,14 +57,19 @@ Choisissez date et instantané antérieurs, puis **Instantané enregistré**, da
 
 Choisissez le relevé voulu et **Aujourd'hui (nouveau relevé)**. La vérification capture l'état neuf et le compare à cette sélection, pas à une référence remplacée en secret. Le panneau se replie après réussite ; rouvrez-le si besoin.
 
-Une référence administrateur ne provoque jamais d'élévation automatique. Utilisez l'action explicite ou l'état actuel seulement. Annuler arrête la capture et conserve l'historique. Fermer laisse la collecte continuer dans la zone de notification ; Quitter l'annule et termine l'app.
+Si le relevé antérieur utilisait l'accès administrateur dans une ancienne version, il ne peut pas servir de référence pour une nouvelle vérification, car les vérifications utilisent toujours l'accès normal. Choisissez un relevé en accès normal ou **État actuel seulement**. Deux relevés enregistrés peuvent toujours se comparer. Annuler arrête la capture et conserve l'historique. Fermer laisse la collecte continuer dans la zone de notification ; Quitter l'annule et termine l'app.
 
 ## Accès administrateur
 
-De nombreux paramètres machine sont lisibles normalement. Les autres restent des lacunes. **Vérifier en administrateur** exige votre clic, une confirmation par défaut sur Non, puis l'accord UAC pour une seule vérification.
+ChangeTracker ne demande jamais l'accès administrateur. Chaque vérification, manuelle ou automatique, s'exécute avec vos permissions Windows normales dans les deux portées ; Windows n'affiche donc jamais d'invite UAC pour une vérification. Il n'y a ni mode administrateur, ni auxiliaire élevé, ni service d'arrière-plan.
 
-La fenêtre principale reste non élevée. Un auxiliaire temporaire en lecture seule traite la machine, sans service ni droit permanent. Refuser ne change ni référence ni historique. Ne partagez pas de mots de passe et ne contournez pas les politiques. L'app ne peut pas fermer une invite UAC déjà affichée : répondez dans Windows.
+De nombreux paramètres machine sont lisibles avec des permissions normales. Quand une source contient un élément que ces permissions ne peuvent pas lire, ChangeTracker signale cette source comme incomplète au lieu d'élever les droits. Les sources incomplètes figurent dans les détails de couverture et ne suggèrent jamais de suppressions.
 
+Démarrer ChangeTracker avec **Exécuter en tant qu'administrateur** n'est pas pris en charge : l'app affiche un message et se ferme. Ouvrez-la normalement.
+
+Les relevés enregistrés avec accès administrateur par une version antérieure restent dans l'historique. Vous pouvez les afficher, les comparer entre eux et les inclure dans les rapports, mais ils ne peuvent pas être le relevé antérieur d'une nouvelle vérification, car les nouvelles vérifications utilisent toujours l'accès normal. Choisissez un relevé en accès normal ou **État actuel seulement**.
+
+L'installation MSI nécessite une approbation administrateur de Windows ; cette approbation concerne seulement l'installation, pas les vérifications de ChangeTracker. Le paquet Microsoft Store s'installe sans elle. Ne partagez jamais un mot de passe administrateur.
 ## Comprendre les changements
 
 Ajouté, Supprimé et Modifié décrivent les extrémités observées, pas un auteur, une cause ou un instant exact. Important/À vérifier sont des priorités, pas un verdict de malware. Activité habituelle/attendue et impact non évalué restent séparés. Le titre compte le filtre actif ; Voir tout expose les résultats au-delà des trois premiers.
@@ -121,7 +126,7 @@ La taille additionne `history.db`, `history.db-wal` et `history.db-shm` lorsqu'i
 
 La valeur s'actualise avec l'historique après capture, suppression ou nettoyage ; ce n'est pas une mesure continue. Taille indisponible ne signifie pas zéro. Une suppression peut laisser de l'espace réutilisable sans réduire le fichier ; même un historique vide occupe de l'espace. Aucune compactation automatique. Ne supprimez pas la base ni ses fichiers temporaires pendant l'exécution.
 
-Le format historique 2 conserve les anciens relevés comme mixtes et refuse les anciens lecteurs. L'auxiliaire reçoit catégories et copie temporaire de clé, jamais chemin d'historique ou commande libre ; seule l'interface normale enregistre. La gestion des données MSIX nécessite des essais distincts.
+Le format historique 2 conserve les anciens relevés comme mixtes et refuse les anciens lecteurs. Sauvegardez les données importantes avant d'utiliser une version non publiée. La redirection, réinitialisation et désinstallation des données MSIX nécessitent des essais distincts ; ne supposez pas que leur cycle est identique à la version MSI.
 
 ## Accessibilité
 
@@ -143,10 +148,10 @@ Les titres exposent des niveaux pour la navigation par lecteur d'écran. Les dé
 
 Date vide : choisissez un autre relevé. Comparaison refusée : vérifiez chronologie, portée et droits. Source partielle : ce n'est pas une suppression. Rapport ancien : exécutez le nouveau choix. Base inaccessible : vérifiez espace, droits et version avant de supprimer.
 
-Pour l'assistance, transmettez un rapport relu et les versions app/Windows, jamais mot de passe, base brute ou clé. Refuser les droits administrateur n'empêche pas les vérifications normales.
+Pour l'assistance, transmettez un rapport relu et les versions app/Windows, jamais mot de passe, base brute ou clé. Certains paramètres machine nécessitent des droits administrateur ; ChangeTracker les signale comme incomplets au lieu de demander une élévation, et compare les autres sources.
 
 ## Publication
 
 Préversion avec 11 catégories partielles, vérifications manuelles ou planifiées facultatives et conservation configurable. Pas de surveillance continue des événements, de notifications ou de chronologie complète. La collecte consomme des ressources ; aucune promesse de CPU nul.
 
-MSI/MSIX x64 locaux non signés ; l'installation MSI demande une autorisation séparée de la collecte. N'installez pas les deux formats. UAC réel, compte administrateur distinct, Windows 10/ARM64, installation et approbation Store `allowElevation` restent à qualifier. Modifier le code ne reconstruit pas les anciens paquets. Les logos ne remplacent ni vraies captures ni certification.
+La publication locale fournit des installateurs MSI x64 et ARM64 et un bundle MSIX x64, tous non signés ; l'installation MSI exige une approbation administrateur, mais l'app installée s'exécute toujours avec des permissions normales. Signature, certification Store, qualification Windows 10/ARM64 et qualification installation/mise à niveau/désinstallation restent à faire. Modifier le code ne reconstruit pas les anciens paquets. Les logos ne remplacent ni vraies captures ni certification.

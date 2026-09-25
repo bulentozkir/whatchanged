@@ -8,11 +8,11 @@ ChangeTracker is a native Windows utility for saving a local configuration basel
 
 ## Project Status
 
-**Working development build 0.1.0.** The WPF app, 11 scoped manual collectors, SQLite history, review-first comparisons, checkpoint management, expected-change annotations, and sanitized text/JSON/CSV reporting are implemented. This is an incremental development release, not the finished 20-category product or a Store-certified release.
+**Working development build 1.0.1.** The WPF app, 11 scoped manual collectors, SQLite history, review-first comparisons, checkpoint management, expected-change annotations, and sanitized text/JSON/CSV reporting are implemented. This is an incremental development release, not the finished 20-category product or a Store-certified release.
 
-**Unreleased source changes:** current-user/machine-wide selection, optional one-check administrator access, larger labeled before/after values, retained date/time comparison selection, formatted offline help, maximized startup, native-size taskbar/tray icons, and a reorganized **Settings** page (language, appearance, scheduling, retention, and optional sign-in startup) are implemented in source. Closing or minimizing always hides to the tray; tray Exit terminates the app. The existing installers under `releases/0.1.0/` predate these changes and have not been replaced. See [CHANGELOG.md](CHANGELOG.md).
+**Release 1.0.1** removes the optional administrator check so the app runs only with the signed-in user's standard permissions (Microsoft Store denied the `allowElevation` capability), and adds the redesigned interface (semantic command colors with icons, modern selectors, icon navigation, one-screen Settings), the Dark default theme, and maximized relaunch from the tray, on top of 1.0.0's current-user/machine-wide selection, retained date/time comparison selection, formatted offline help, scheduling, retention, and optional sign-in startup. Closing or minimizing always hides to the tray; tray Exit terminates the app. Local preview installers are built under `releases/1.0.1/`. See [CHANGELOG.md](CHANGELOG.md).
 
-The full roadmap remains in [productspec.md](productspec.md). The manifest now uses the owner-supplied Partner Center identity below. Signing, Windows 10/ARM64 qualification, and Store certification/publication remain outstanding. No application is installed or certificate trusted by the build scripts.
+The full roadmap remains in [productspec.md](productspec.md). The manifest now uses the owner-supplied Partner Center identity below and no longer declares `allowElevation`. Signing, Windows 10/ARM64 qualification, and Store certification/publication remain outstanding. No application is installed or certificate trusted by the build scripts.
 
 ## Store Identity
 
@@ -66,20 +66,17 @@ The **Comparison** picker is available in both modes. **Before date** selects an
 
 Selections do not run a check or move the baseline. Deleted or expired snapshots disappear from the choices. Missing, identical/reversed/overlapping, and incompatible scope/access selections are rejected. Both selectors and the history list include every retained scope, regardless of the current capture scope; saved administrator observations can be compared without elevation. An administrator reference never causes automatic elevation for a new capture. Reports describe the displayed result, not pending selections.
 
-## Scope And Administrator Access
+## Scope And Permissions
 
 - **Current user:** that user's desktop app registrations, Run/RunOnce entries, effective default apps, audio defaults, proxy configuration, and PATH. System services, scheduled tasks, driver/update inventory, firewall profiles, and adapter settings are outside this scope.
 - **Machine-wide:** shared system configuration, not other users' private profiles. Machine app/startup registrations, services, accessible tasks, updates, drivers, firewall profiles, adapter DNS/DHCP, and machine PATH are available. It does not load other users' registry hives or collect the administrator account's personal settings.
-- **Check now:** always standard access. Scope selection, app restart, source selection, and Simple/Advanced mode changes never request elevation. Inaccessible sources remain explicit coverage gaps.
-- **Check with administrator access:** available only in machine-wide scope. Requires an explicit click, an app confirmation defaulting to No, and Windows UAC authorization. Permission applies to that check only; it is never saved as a preference. Declining either prompt leaves the baseline and history unchanged.
+- **Every check uses standard access.** ChangeTracker runs only in the signed-in user's default, unelevated security context and never requests administrator access: there is no administrator mode, UAC prompt, elevated helper, or service. Machine-wide sources read what standard permissions allow; anything they cannot read is reported as an explicit coverage gap rather than retried with elevation. Scope selection, app restart, source selection, and Simple/Advanced mode changes never change permissions.
 
-The UI must run unelevated; an explicitly elevated main-window launch is rejected with a request to open normally. MSI installation is a separate machine-wide operation that requires administrator approval. No service, scheduled task, startup registration, or background monitor is installed by a scope change.
+The executable manifest requests `asInvoker`, and collector workers are started directly (not through the shell) so they inherit the app's unelevated token. A launch with **Run as administrator** is rejected with a request to open normally, and workers refuse to run elevated. MSI installation is a separate machine-wide operation that requires administrator approval; the Store (MSIX) package does not. No service, scheduled task, startup registration, or background monitor is installed by a scope change.
 
-The elevated helper has a fixed, read-only collector allowlist. A local named pipe restricts access to the initiating user and administrators, rejects network access, and verifies both peer process IDs; the helper also checks the parent executable path and disables pipe impersonation. Its request contains only category IDs and a transient comparison key, never an output path, command, user profile, or database location. Only the unelevated UI saves history. Each collector has a 25-second timeout; the helper has a five-minute bound and cancels workers on parent exit or pipe disconnect. Canceling in the app cannot dismiss the Windows secure-desktop UAC prompt; dismiss that prompt in Windows if it is still open.
+Snapshots and reports identify scope and access. User, machine, and old mixed-scope snapshots have separate baselines and are not compared across these boundaries. Snapshots saved with administrator access by version 1.0.0 remain readable: they can be viewed, compared with each other, and reported, but never serve as the reference for a new check. Legacy snapshots retain their original meaning and are not relabeled as user-only. The history metadata version is 2; older builds refuse to open this history. Keep a backup before using an unreleased build with important existing history.
 
-Snapshots and reports identify scope and access. User, standard machine, administrator machine, and old mixed-scope snapshots have separate baselines. They are not compared across these boundaries. Legacy snapshots retain their original meaning and are not relabeled as user-only. The history metadata version advances to 2 without rewriting snapshot payloads; older builds refuse to open this history. Keep a backup before using an unreleased build with important existing history.
-
-For MSIX, the source manifest declares the restricted `allowElevation` capability alongside `runFullTrust`. This does not elevate startup or replace UAC. Microsoft Store approval for `allowElevation` is a separate, strict requirement and has not been obtained; see [Microsoft's capability reference](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/app-capability-declarations#restricted-capability-list). Installed-MSIX and cross-account elevation still require manual qualification.
+For MSIX, the manifest declares only the `runFullTrust` capability that desktop (Win32) apps require. Version 1.0.1 removed the restricted `allowElevation` capability after Microsoft Store certification denied it (policy 10.6.3); see [Microsoft's capability reference](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/app-capability-declarations#restricted-capability-list).
 
 ## Implemented Collection
 
@@ -123,7 +120,9 @@ The app does not record microphone audio, execute collected commands, modify Win
 
 ## Settings Appearance
 
-Open **Settings > Appearance** for the Light/Dark theme, font family, and separate **App text color**, **Label color**, **Button background color**, and **Button text color** choices. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Selections apply immediately across the app and are saved independently. Default restores the theme's color for that role; shades adapt when the theme changes. Primary buttons retain automatically contrasting text, and Windows high contrast takes precedence over customization.
+Settings groups Language, Appearance, Automatic checks, Startup and tray, Local history, and privacy notes into cards that flow into up to three balanced columns, so the whole page fits one screen on typical displays (for example a maximized 1366×768 window at 100% text). Cards read top to bottom, then across, in the same order as Tab and screen readers. Review-only scope and comparison controls are hidden on Settings and return on the other pages. Narrow windows and larger text reduce the columns and scroll instead of hiding settings.
+
+Open **Settings > Appearance** for the Dark/Light theme (**Dark** for new profiles; a saved choice is kept), font family, and separate **App text color**, **Label color**, **Button background color**, and **Button text color** choices. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Selections apply immediately across the app and are saved independently. Default restores the theme's color for that role; shades adapt when the theme changes. With Default button colors, commands follow a semantic hierarchy instead of decoration: teal primary checks, red danger buttons for deletion, and neutral buttons with color-coded icons (blue reports/viewing, violet scope/navigation, gold Help), all at 7:1 text and 3:1 outline contrast. Choosing a custom button background or text color applies it to all buttons with a visible outline. Dropdowns and fields use a 3:1 outline with an accent arrow and focus outline; check boxes, the sign-in switch, and radio buttons fill with the accent when on. Navigation shows icons with a selection bar, scrollbars and tooltips follow the theme, and the title bar goes dark in the Dark theme where Windows allows it. Primary buttons retain automatically contrasting text, and Windows high contrast takes precedence over customization.
 
 **Text size** offers 100%, 125%, 150%, and 200%, saved per history directory and applied to all pages, controls, Help, and Report. Large text reflows paired controls and scrolls rather than hiding commands. Native selected-page navigation supports arrow keys; F6/Shift+F6 move between navigation, command bar, and page, and Ctrl+1 through Ctrl+4 open those pages directly. Help also supports F6 between search/topics/document and its separate document zoom. The offline guide describes modal focus behavior and screen-reader labels.
 
@@ -133,7 +132,7 @@ Open **Settings > Appearance** for the Light/Dark theme, font family, and separa
 
 Retention cleanup runs when first due and then daily while the app is open, including when automatic capture is Off; it also runs after automatic captures. It removes only unnamed, non-baseline snapshots past the selected age across all scopes. Named checkpoints and all scope/access baselines are protected. The app checks due work once a minute and does not wake a sleeping computer.
 
-**Start ChangeTracker when I sign in** registers only the app's per-user, unelevated `Run` entry with the same history directory and launches hidden in the tray. It includes sign-in after a reboot, not collection before anyone signs in. No service or boot-time scheduled task is installed. A failed registration leaves the previous choice intact and reports an error. Normal launches open maximized. Minimizing or closing always hides the window and keeps checks running; Open, tray double-click, or launching another copy restores its last visible state. Explicit tray Exit cancels active work and terminates the app.
+**Start ChangeTracker when I sign in** registers only the app's per-user, unelevated `Run` entry with the same history directory and launches hidden in the tray. It includes sign-in after a reboot, not collection before anyone signs in. No service or boot-time scheduled task is installed. A failed registration leaves the previous choice intact and reports an error. Normal launches open maximized, including starting the app again while it runs in the tray. Minimizing or closing always hides the window and keeps checks running; tray Open or double-click restores its last visible state. Explicit tray Exit cancels active work and terminates the app.
 
 These controls remain unqualified against `productspec.md`'s owner-approved resource budget and idle/active/OS/GPU profiling gate. Functional tests are not resource profiling. Tray Exit cancels any active check and exits when the worker stops; workers otherwise exist only during a requested or scheduled check.
 
@@ -142,7 +141,7 @@ Literal zero CPU during collection is impossible. Neither broad scope nor this m
 ## Tests
 
 ```powershell
-# Unit, SQLite, privacy, consent, IPC, and read-only collector boundary tests; no UAC.
+# Unit, SQLite, privacy, standard-permission, and read-only collector boundary tests; no UAC.
 dotnet test tests/PCChangeTracker.Tests --configuration Release --filter 'Category!=Desktop' -nodeReuse:false
 
 # Native UI automation: opens real windows and performs read-only live checks.
@@ -151,11 +150,11 @@ dotnet test tests/PCChangeTracker.Tests --configuration Release --filter 'Catego
 
 Desktop tests require an interactive unlocked Windows desktop. They use separate temporary databases, synthetic history for screenshots, and a real first/second capture test. They do not modify monitored settings. Test-created temporary history is deleted. Synthetic UI screenshots are written under `artifacts/screenshots/` and ignored by Git.
 
-The automated suite covers incomplete-source suppression, stable identity, PATH ordering, protected-key mismatch, classification/coverage safeguards, scoped baseline persistence and migration, SQLite rollback, occurrence-specific expectations, redaction, CSV formula safety, scope/mode switching, same-day snapshot selection, snapshot-versus-today comparisons, empty-date validation, offline-help resource/search/formatting, report preview, and high-DPI resizing. Consent and denial use a fake capture service; IPC tests run unelevated. No automated test approves UAC or launches an elevated process.
+The automated suite covers incomplete-source suppression, stable identity, PATH ordering, protected-key mismatch, classification/coverage safeguards, scoped baseline persistence and migration, SQLite rollback, occurrence-specific expectations, redaction, CSV formula safety, scope/mode switching, same-day snapshot selection, snapshot-versus-today comparisons, empty-date validation, offline-help resource/search/formatting, report preview, and high-DPI resizing. A source scan and manifest checks guard against reintroducing `allowElevation`, UAC launch verbs, or elevating manifests. No test launches an elevated process.
 
 Accessibility checks cover named controls and lists on every main page, Help and Report; native selected-page semantics; readable snapshot/source/topic names; text-size persistence; palette contrast; and sampled 100–200%/RTL layouts. Default text targets 7:1, primary-button text 4.5:1, and control boundaries 3:1. Modal panels disable sidebar actions, set initial focus and restore it on dismissal; Help and Report have explicit starting focus. A guarded keyboard test exercises F6, page shortcuts and Escape only while the test process owns foreground input. If the desktop is locked, it cannot qualify that workflow. Manual Narrator, Windows contrast-theme/DPI matrices and user accessibility evaluation remain required; automated checks are not universal certification.
 
-Manual qualification on an approved test machine remains required for real UAC approval, denial, cancellation during and after the prompt, a standard user supplying a different administrator account, parent exit during an elevated check, and installed-MSIX behavior. Confirm no administrator-profile data is collected, the main window remains unelevated, helpers exit, and subsequent normal checks retain standard access. Windows 10/ARM64, full Narrator/high-contrast qualification, MSI/MSIX installation/update/uninstall, and long-term resource profiling are also not yet verified.
+Manual qualification on an approved test machine remains required for installed-MSIX behavior, including machine-wide checks by a standard (non-administrator) user and the coverage gaps they report. Windows 10/ARM64, full Narrator/high-contrast qualification, MSI/MSIX installation/update/uninstall, and long-term resource profiling are also not yet verified.
 
 ## MSIX Build
 
@@ -163,7 +162,7 @@ Manual qualification on an approved test machine remains required for real UAC a
 ./packaging/Build-Package.ps1
 ```
 
-This first checks the manifest against the supplied Partner Center identity and validates the PNG assets documented in [logos/README.md](logos/README.md), restores Microsoft Windows SDK BuildTools from the approved NuGet feed, publishes self-contained `win-x64`, copies the three manifest-named logos, and runs MakeAppx validation. Output: `artifacts/ChangeTracker-0.1.0-x64.msix`. Older packages are not updated by this build. The [logos/](logos/) folder holds nine flat, named files at fixed sizes (44 through 1920x1080), each showing the ChangeTracker name; these do not replace genuine screenshots or certification.
+This first checks the manifest against the supplied Partner Center identity and validates the PNG assets documented in [logos/README.md](logos/README.md), restores Microsoft Windows SDK BuildTools from the approved NuGet feed, publishes self-contained `win-x64`, copies the three manifest-named logos, and runs MakeAppx validation. Output: `artifacts/ChangeTracker-<version>-x64.msix` (for example `ChangeTracker-1.0.1-x64.msix`). Older packages are not updated by this build. The [logos/](logos/) folder holds nine flat, named files at fixed sizes (44 through 1920x1080), each showing the ChangeTracker name; these do not replace genuine screenshots or certification.
 
 The package is **unsigned and uses the supplied Partner Center identity** from [packaging/AppxManifest.xml](packaging/AppxManifest.xml). A local build does not establish Store acceptance or make it a trusted sideload package. Complete the appropriate signing and certification workflow separately; a sideload signing certificate must match the manifest Publisher, not merely its display name. The script does not generate a certificate, alter trust stores, sideload, or submit the app.
 
@@ -175,12 +174,12 @@ After running the tests, create a versioned local release bundle:
 ./packaging/Build-Package.ps1 -CreateRelease
 ```
 
-For version 0.1.0, output is `releases/0.1.0/` in the repository root and includes:
+For version 1.0.1, output is `releases/1.0.1/` in the repository root and includes:
 
-- `ChangeTracker-0.1.0-x64.msixbundle`: an unsigned bundle containing the x64 package with the supplied Store identity.
-- `ChangeTracker-0.1.0-x64.msi`: an unsigned, self-contained x64 installer for all users, with a Start menu shortcut. Installation requires administrator approval; the app itself does not. No separate .NET installation is required.
+- `ChangeTracker-1.0.1-x64.msixbundle`: an unsigned bundle containing the x64 package with the supplied Store identity.
+- `ChangeTracker-1.0.1-x64.msi` and `ChangeTracker-1.0.1-arm64.msi`: unsigned, self-contained installers for all users, with a Start menu shortcut, each built from its own `win-x64`/`win-arm64` publish. Installation requires administrator approval; the app itself does not. No separate .NET installation is required.
 - `RELEASE_NOTES.md`: copied from [CHANGELOG.md](CHANGELOG.md).
-- `SHA256SUMS.txt`: SHA-256 integrity hashes of both installers and external release notes, not a publisher signature.
+- `SHA256SUMS.txt`: SHA-256 integrity hashes of the installers and external release notes, not a publisher signature.
 
 No portable ZIP is generated. The MSI installs under `%ProgramFiles%\ChangeTracker` and leaves per-user history intact on uninstall. Use one installation format, not both; close the app before installing or upgrading. The MSI definition is [packaging/Msi/Package.wxs](packaging/Msi/Package.wxs), built with pinned WiX SDK 5.0.2 from the approved NuGet feed.
 

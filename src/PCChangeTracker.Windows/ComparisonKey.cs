@@ -37,6 +37,5 @@ public sealed class ComparisonKey : IDisposable
     }
 
     public string Fingerprint(string value) => Convert.ToHexString(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(value)));
-    public byte[] Export() => key.ToArray();
     public void Dispose() => CryptographicOperations.ZeroMemory(key);
 }

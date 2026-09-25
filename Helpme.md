@@ -10,20 +10,20 @@ Arabic, Egyptian Arabic, and Urdu use right-to-left content. The selector stays 
 
 ## Settings
 
-Open **Settings** in the navigation menu. Preferences are saved for the current history directory and restored when you reopen the app.
+Open **Settings** in the navigation menu. Preferences are saved for the current history directory and restored when you reopen the app. Sections appear as cards in up to three columns, read top to bottom and then across, so the page usually fits one screen without scrolling. Scope and Comparison controls are hidden on Settings; they remain on the other pages.
 
 - **Language** changes the interface and offline help immediately.
-- **Appearance** offers Light/Dark, a font family, **Text size** (100%, 125%, 150%, or 200%), and independent app-text, label, button-background, and button-text colors. Text size applies immediately to the main pages, controls, Help, and Report; the choice is saved. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Default restores that role's theme color. Shades adapt to Light/Dark; Windows high contrast overrides them. Primary actions retain contrasting text.
+- **Appearance** offers Dark/Light (Dark for new profiles; a saved choice is kept), a font family, **Text size** (100%, 125%, 150%, or 200%), and independent app-text, label, button-background, and button-text colors. Text size applies immediately to the main pages, controls, Help, and Report; the choice is saved. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Default restores that role's theme color. With Default button colors, buttons follow a clear hierarchy: the main check is teal, deletions are red, and every other command is a neutral button with a color-coded icon (blue for reports and viewing, violet for scope and navigation, gold for Help). A custom button background or text color applies to every button instead. Shades adapt to Dark/Light; Windows high contrast overrides them. Primary actions retain contrasting text.
 - **Snapshot frequency** defaults to every 4 hours when no valid preference is saved. Existing choices, including Off, are preserved. Choose Off, every 15 minutes, hour, 4 hours, 6 hours, day, or week. Checks run only while the app is open, including in the tray, use standard access, and can be canceled. After scope confirmation, a first or overdue check can run at the next minute check; subsequent checks follow the chosen interval. The app does not wake a sleeping PC or replay missed intervals.
 - **Data retention** defaults to 30 days when no valid preference is saved. Existing choices, including Forever, are preserved. Choose 30, 90, 180, or 365 days, or Forever. Cleanup deletes only older unnamed, non-baseline snapshots, runs when first due and then daily while open, even when automatic snapshots are Off, and after successful automatic checks. Named checkpoints and every scope/access baseline are protected. Deleted timestamps leave the selectors.
-- **Start ChangeTracker when I sign in** is optional and off by default. It includes sign-in after a reboot, not collection before sign-in. Only this app's per-user startup entry is changed; no service or boot task is installed, and no other app or policy is changed. A failed registration restores the previous choice.
-- **Tray operation** is always enabled. Minimize, Close, and Alt+F4 hide the main window while checks continue. **Open ChangeTracker**, double-clicking its tray icon, or launching another copy restores it. Use the tray's **Exit** command to cancel active work and quit. Turning off sign-in startup does not change this behavior.
+- **Start ChangeTracker when I sign in** is an optional switch, off by default. It includes sign-in after a reboot, not collection before sign-in. Only this app's per-user startup entry is changed; no service or boot task is installed, and no other app or policy is changed. A failed registration restores the previous choice.
+- **Tray operation** is always enabled. Minimize, Close, and Alt+F4 hide the main window while checks continue. **Open ChangeTracker** or double-clicking its tray icon restores it as you left it; starting ChangeTracker again (for example from the Start menu) opens it maximized. Use the tray's **Exit** command to cancel active work and quit. Turning off sign-in startup does not change this behavior.
 
 Both **Current user** and **Machine-wide** start selected for new profiles; saved scope choices are preserved. All retained scopes remain browsable from the same history, but comparison endpoints must have matching scope and access. No preference grants administrator access. Resource profiling and installed-package lifecycle qualification remain outstanding.
 
 ## Getting Started
 
-1. Open ChangeTracker normally, without **Run as administrator**. It starts maximized. You can restore and resize it; reopening it from the tray keeps the last visible state. Sign-in startup stays hidden in the tray.
+1. Open ChangeTracker normally, without **Run as administrator**. It starts maximized, including when you start it again while it runs in the tray. You can restore and resize it; **Open ChangeTracker** in the tray keeps the last visible state. Sign-in startup stays hidden in the tray.
 2. Review the **Current user** and **Machine-wide** checkboxes, both selected for a new profile. Keep either or both, never neither, then confirm. Your previous choice is remembered. Selecting scopes does not start collection or request administrator access.
 3. Open **Sources** and review the selected sources. All supported checks, including Network and PATH, start enabled when no valid choice is saved. Saved choices, including disabled checks, are preserved. Turn off any sources you do not want; unsupported sources stay disabled for the selected scope.
 4. In **Comparison**, leave **Today (new check)** selected. If there is no earlier snapshot, the next check saves current state only.
@@ -32,7 +32,7 @@ Both **Current user** and **Machine-wide** start selected for new profiles; save
 
 Your first usable snapshot becomes the baseline for that scope and access level. A first snapshot is inventory, not evidence of earlier changes. Subsequent captures do not automatically move the baseline.
 
-Normal capture happens when you select **Check now**, or when an enabled automatic interval is due while the app is running. Both use standard access; administrator capture requires its separate explicit action. A new profile starts with a four-hour schedule, but no capture occurs before scope confirmation. Choose Off in Settings for manual checks only. Closing hides the window; use tray Exit to stop the app. Changes that happen and disappear between checks can be missed.
+Normal capture happens when you select **Check now**, or when an enabled automatic interval is due while the app is running. Both use standard access; ChangeTracker never asks for administrator access. A new profile starts with a four-hour schedule, but no capture occurs before scope confirmation. Choose Off in Settings for manual checks only. Closing hides the window; use tray Exit to stop the app. Changes that happen and disappear between checks can be missed.
 
 ## Simple And Advanced
 
@@ -45,7 +45,7 @@ These are **presentation modes**, not separate editions, permissions, or levels 
 | Date comparisons | Two saved snapshots or a saved snapshot versus today, selected by their exact timestamps. | Separate retained-date filters and capture-time lists, with checkpoint and scope/access on separate lines. |
 | Sources, scope, and history | Available. | Available; no extra collection is enabled by switching modes. |
 | Reports | Preview, copy, and save sanitized text. | Text plus JSON and CSV export. |
-| Administrator access | Only the separate explicit machine-wide administrator-check action. | Exactly the same rule. Advanced is not administrator mode. |
+| Administrator access | Never requested. | Never requested. Advanced is not administrator mode. |
 
 Switching modes does not run a check, create or delete a snapshot, reset a comparison, move a baseline, enable a source, or grant elevation. Both modes are included in the planned one-time **$0.99** price. This development build has no purchase flow.
 
@@ -65,7 +65,7 @@ Switching modes does not run a check, create or delete a snapshot, reset a compa
 
 Use **Change scope** to select another scope. An unavailable source is labeled outside scope and cannot be enabled there. Source selections are remembered separately for each scope. Changing scope never starts a capture or an elevation prompt.
 
-With both scopes selected, user and machine observations are read separately and combined into one snapshot. Both use standard access unless you explicitly request an administrator check. Only the machine portion can elevate; the user portion stays under the original unelevated account. If either portion is incomplete, the combined category is incomplete and cannot infer removals. Combined snapshots have their own baselines and cannot be compared to old single-scope snapshots.
+With both scopes selected, user and machine observations are read separately and combined into one snapshot. Both use standard access under your own account. If either portion is incomplete, the combined category is incomplete and cannot infer removals. Combined snapshots have their own baselines and cannot be compared to old single-scope snapshots.
 
 History stays local to the initiating user even for machine-wide checks. The app does not provide shared multi-user history or logged-out monitoring.
 
@@ -106,29 +106,21 @@ Saved comparisons do not need an administrator prompt, including comparisons of 
 
 The fresh snapshot is saved and compared against the selected earlier snapshot, even when that snapshot is not the baseline. The selected reference is not replaced by a baseline behind the scenes.
 
-If the earlier snapshot used administrator access, use the separate **Check with administrator access** action and grant the requested approval for this check. The app will not elevate automatically because a date or an administrator snapshot was selected. Use **Current state only** to make a new observation without a compatible earlier reference.
+If the earlier snapshot used administrator access (saved by an earlier version), it cannot be the reference for a new check, because checks always use standard access. Choose a standard-access snapshot, or use **Current state only** to make a new observation without a compatible earlier reference. Two saved snapshots can still be compared.
 
 **Cancel** stops an in-progress manual or automatic check and leaves previously saved history and baselines unchanged. Closing during collection hides the window and lets collection continue in the tray. The tray's **Exit** command cancels active collection and exits after the worker stops. Changing selectors does not run a check.
 
 ## Administrator Access
 
-Many machine-wide settings are readable with ordinary user permissions. **Check now** therefore uses standard access in both scopes. Missing access is a coverage limitation, not a reason to silently elevate.
+ChangeTracker never asks for administrator access. Every check, manual or automatic, runs with your standard Windows permissions in both scopes, so Windows never shows a UAC prompt for a check. There is no administrator mode, elevated helper, or background service.
 
-For protected machine sources:
+Many machine-wide settings are readable with standard permissions. When a source contains something those permissions cannot read, the check reports that source as incomplete instead of elevating. Incomplete sources are listed in the coverage details and never suggest removals.
 
-1. Select machine-wide scope and the sources you want checked.
-2. Use a matching earlier administrator snapshot, or select **Current state only** for the first administrator observation.
-3. Select **Check with administrator access**.
-4. Confirm the app's one-check request. The confirmation defaults to **No**.
-5. Respond to Windows UAC yourself. Never share an administrator password through an app report, help search, chat, or log.
+Starting ChangeTracker with **Run as administrator** is not supported: the app shows a message and closes. Open it normally from the Start menu.
 
-Approval is for one check only. The main window stays unelevated. A short-lived read-only helper performs the requested machine checks and returns observations to the initiating app. Only that app saves history. It is not a Windows service and does not create a permanent administrator grant.
+Snapshots saved with administrator access by an earlier version stay in history. You can view them, compare two of them, and include them in reports, but they cannot be the earlier snapshot for a new check, because new checks always use standard access. Choose a standard-access snapshot, or select **Current state only**.
 
-Declining or canceling approval leaves history unchanged. A later normal check remains standard access. Device policy may prevent elevation even after you request it; do not disable organizational protections to make a check run.
-
-Canceling in the app cannot dismiss a secure-desktop UAC prompt that Windows is already showing. Dismiss that prompt in Windows. The helper is bounded and cancels on parent exit or loss of its local connection.
-
-Actual UAC approval/denial, alternate administrator credentials, cancellation, and installed-MSIX behavior still require manual qualification. The MSIX source manifest declares restricted `allowElevation`; Microsoft Store approval for that capability has not been obtained. Compilation is not proof of Store approval or successful installed-package elevation.
+Installing the MSI requires administrator approval from Windows; that approval is part of installation, not of ChangeTracker's checks. The Microsoft Store package installs without it. Never share an administrator password through an app report, help search, chat, or log.
 
 ## Reading Changes
 
@@ -252,7 +244,6 @@ Deleting snapshots may leave reusable space inside SQLite instead of shrinking t
 | --- | --- |
 | Snapshot history and preferences | Local SQLite storage. The database itself is not encrypted. |
 | Comparison key | Protected with current-user Windows DPAPI. Sensitive launch/proxy values use keyed fingerprints rather than plaintext storage. |
-| Administrator helper exchange | A bounded local named pipe carries only fixed collector requests, an ephemeral key copy, and results. The helper is not given the history path or an arbitrary command/output path. |
 | Exported reports | Saved only on request. Redacted, but potentially identifying; not encrypted by this app. |
 
 Do not move only the database and assume hidden values will remain comparable under another account or a different key. A missing/incompatible key makes those comparisons unavailable. Back up app-owned history and key material securely, and retain the Windows user protection context; copying a DPAPI file does not make it decryptable elsewhere.
@@ -267,9 +258,9 @@ The app has no telemetry, account requirement, invisible uploads, ads, automatic
 
 Open **Settings > Appearance > Text size** to choose 100%, 125%, 150%, or 200%. This enlarges interface text, labels, buttons, details, Help, and Report without changing Windows settings. The font-family choice also applies to the Help document. The Help window's own Text size slider adds document-only zoom up to 160% of that base size.
 
-Larger text makes settings and before/after columns stack when needed. The main pane, sidebar, dialogs, and long field values can scroll; use the scrollbars or keyboard to reach content below the visible area. Selecting a page brings its heading into view. Collapsing Comparison provides more room for findings. Windows display scaling can enlarge the entire interface further.
+Larger text makes settings columns and before/after columns stack when needed. The main pane, sidebar, dialogs, and long field values can scroll; use the scrollbars or keyboard to reach content below the visible area. Selecting a page brings its heading into view. Collapsing Comparison provides more room for findings. Windows display scaling can enlarge the entire interface further.
 
-Light/Dark themes, named color swatches, and Windows high-contrast overrides are supported. Default colors target at least 7:1 text contrast, 4.5:1 primary-button text, and 3:1 control boundaries; available custom presets are contrast-tested. Change kind and priority use words, radio choices show selected circles, and the active page is a selected list item, so color is not the only indicator. Buttons, checkboxes, radios, text fields, and list rows have a minimum 44-device-independent-pixel interaction height; fonts can make them taller.
+Dark (the default) and Light themes, named color swatches, and Windows high-contrast overrides are supported. Default colors target at least 7:1 text contrast, 4.5:1 primary-button text, and 3:1 control boundaries; available custom presets are contrast-tested. Buttons use semantic roles rather than decoration: teal primary and red danger buttons have at least 7:1 text and a 3:1 outline, and neutral buttons carry a color-coded icon with at least 4.5:1 contrast. Dropdowns and text fields have a 3:1 outline, an accent arrow, and an accent outline while focused or open; check boxes, switches, and radio buttons fill with the accent color when on. Every keyboard focus shows a solid 2-pixel ring. Change kind and priority use words, radio choices show selected circles, check boxes show check marks, switches move their knob, button labels stay visible, and the active page shows a selection bar and bold label, so color is not the only indicator. The window title bar follows the Dark theme where Windows allows it. Buttons, checkboxes, switches, radios, text fields, and list rows have a minimum 44-device-independent-pixel interaction height; fonts can make them taller.
 
 ### Keyboard Navigation
 
@@ -306,10 +297,10 @@ These are implemented accessibility supports, not a certification. Automated che
 | Nothing happens until scope is selected | Confirm at least one of Current user and Machine-wide. Both start selected. Launching alone does not capture data. |
 | A date shows no snapshots | There was no saved observation that day. Choose another date; the app cannot reconstruct an earlier state. |
 | Compare is rejected | Choose distinct, chronological snapshots with the same scope and access. Use separate times for two observations on one day. |
-| Today cannot match an administrator snapshot | Use the explicit administrator-check action, or choose a standard-access reference. No automatic elevation occurs. |
+| Today cannot match an administrator snapshot | Snapshots saved with administrator access by an earlier version can only be compared with each other. Choose a standard-access reference or **Current state only**. |
 | The current capture succeeded but coverage has gaps | Inspect the earlier snapshot's coverage, format, and key compatibility. Current success does not establish comparison coverage. |
 | A source is outside scope | It belongs to the other scope. Changing scope is separate from granting administrator rights. |
-| Administrator access was denied or blocked | Continue with standard access and accept documented gaps. Ask the device administrator about policy; do not bypass protection. |
+| A machine-wide source is incomplete | Some settings need administrator rights. ChangeTracker reports them as incomplete instead of asking for elevation; other sources are still compared. |
 | A source times out | It is recorded as incomplete. Try a later manual check, with a smaller selected source set if needed. |
 | No baseline exists | Complete at least one usable check for that scope/access. All-failed captures are not saved. |
 | Reports show older results after changing dates | Execute the comparison/check first. Reports describe the currently displayed observation, not pending selections. |
@@ -329,9 +320,9 @@ When requesting support, share a previewed sanitized report and the app/Windows 
 
 The planned product is one app at **$0.99 one-time**, including both modes and all features. This preview is incomplete and has no purchase flow.
 
-The repository provides local x64 MSI and MSIX bundle packaging, not a portable ZIP. The MSI is a conventional machine-wide installer under Program Files; installation requires administrator approval, separate from runtime collection consent. The MSIX bundle uses the supplied Partner Center identity. Use one installation format, not both on the same computer.
+The repository provides local x64 and ARM64 MSI installers and an x64 MSIX bundle, not a portable ZIP. The MSI is a conventional machine-wide installer under Program Files; installation requires administrator approval, but the installed app always runs with standard permissions. The MSIX bundle uses the supplied Partner Center identity. Use one installation format, not both on the same computer.
 
-Current local release artifacts are unsigned previews. They are not a trusted sideload distribution or proof of Microsoft Store publication. Signing, Store certification/capability approval, Windows 10/ARM64 qualification, real elevated workflows, and install/upgrade/uninstall qualification remain outstanding. MSI ICE validation was blocked by the build machine's policy. Do not disable SmartScreen or managed-device protection to run a preview.
+Current local release artifacts are unsigned previews. They are not a trusted sideload distribution or proof of Microsoft Store publication. Signing, Store certification, Windows 10/ARM64 qualification, and install/upgrade/uninstall qualification remain outstanding. MSI ICE validation was blocked by the build machine's policy. Do not disable SmartScreen or managed-device protection to run a preview.
 
 Source changes marked **Unreleased** may be newer than existing installers. This guide is embedded when the application is built; it describes the source build that includes it. A release is not automatically rebuilt when source code or help changes.
 

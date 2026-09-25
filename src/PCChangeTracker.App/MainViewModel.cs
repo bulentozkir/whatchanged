@@ -158,7 +158,6 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly HistoryStore store;
     private readonly ICaptureService captureService;
-    private readonly Func<bool> confirmAdministratorAccess;
     private readonly Func<bool, bool> setStartupEnabled;
     private readonly DiffEngine diffEngine = new();
     private CancellationTokenSource? captureCancellation;
@@ -204,10 +203,10 @@ public sealed partial class MainViewModel : ObservableObject
     public IReadOnlyList<NamedOption> ButtonColors { get; private set; } = [];
     public IReadOnlyList<NamedOption> ScheduleIntervals { get; private set; } = [];
     public IReadOnlyList<NamedOption> RetentionOptions { get; private set; } = [];
-    [ObservableProperty] private string selectedTheme = "Light";
+    [ObservableProperty] private string selectedTheme = Appearance.DefaultTheme;
     [ObservableProperty] private string selectedFont = "Segoe UI";
     [ObservableProperty] private int selectedTextSize = 100;
-    public IReadOnlyList<int> TextSizes => App.TextSizePercentages;
+    public IReadOnlyList<int> TextSizes => Appearance.TextSizePercentages;
     [ObservableProperty] private string selectedButtonTextColor = "ButtonColorDefault";
     [ObservableProperty] private string selectedAppTextColor = "ButtonColorDefault";
     [ObservableProperty] private string selectedButtonColor = "ButtonColorDefault";
@@ -264,7 +263,6 @@ public sealed partial class MainViewModel : ObservableObject
     public bool BackgroundInteractive => ScopeChosen && SelectedChange is null;
     public bool CanConfirmScope => IsIdle && SelectedScope is CollectionScope.CurrentUser or CollectionScope.Machine or CollectionScope.Both;
     public bool CanCapture => CanConfirmScope && !ChoosingScope;
-    public bool CanCaptureWithAdministrator => CanCapture && CompareWithToday && MachineScope;
     public bool CompareSavedSnapshots { get => !CompareWithToday; set { if (value) CompareWithToday = false; } }
     public string CheckActionLabel => Texts[CompareWithToday ? "CheckNow" : "Compare"];
     public string CheckActionHelp => CheckActionLabel;
@@ -275,7 +273,7 @@ public sealed partial class MainViewModel : ObservableObject
     public string ComparisonSelectionIssue => !CompareWithToday ? SavedComparisonIssue()
         : CompareFrom is null ? BeforeDate is null ? "" : Texts["NoMatchingDate"]
         : CompareFrom.Scope != SelectedScope ? Texts["ScopeMismatch"]
-        : CompareFrom.Elevated ? Texts["AdminReference"]
+        : CompareFrom.Elevated ? Texts["ReferenceMismatch"]
         : "";
     public bool CurrentUserScope
     {
@@ -287,7 +285,7 @@ public sealed partial class MainViewModel : ObservableObject
         get => SelectedScope is CollectionScope.Machine or CollectionScope.Both;
         set { if (IsIdle) SelectedScope = (CollectionScope)(value ? (int)SelectedScope | 2 : (int)SelectedScope & ~2); }
     }
-    public string ScopeLabel => Texts.Format("StandardDefault", Texts.ScopeName(SelectedScope));
+    public string ScopeLabel => Texts.Context(SelectedScope, false);
     public bool Simple { get => !Advanced; set { if (value) Advanced = false; } }
     public string SelectedChangeDetails => SelectedChange is null ? "" : Advanced ? SelectedChange.AdvancedDetails : SelectedChange.Details;
     public bool IsFirstRun => !HasSnapshot;
@@ -327,15 +325,11 @@ public sealed partial class MainViewModel : ObservableObject
         return size.ToString(unit == 0 ? "0" : "0.0", culture) + " " + units[unit];
     }
 
-    public MainViewModel(HistoryStore store, ICaptureService captureService, string dataDirectory, Func<bool>? confirmAdministratorAccess = null,
-        Func<bool, bool>? setStartupEnabled = null)
+    public MainViewModel(HistoryStore store, ICaptureService captureService, string dataDirectory, Func<bool, bool>? setStartupEnabled = null)
     {
         this.store = store;
         this.captureService = captureService;
         Texts = new UiText(store.GetPreference("language"));
-        this.confirmAdministratorAccess = confirmAdministratorAccess ?? (() => System.Windows.MessageBox.Show(
-            Texts["AdminConfirm"], Texts["AdminConfirmTitle"], System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question,
-            System.Windows.MessageBoxResult.No) == System.Windows.MessageBoxResult.Yes);
         DataDirectory = dataDirectory;
         this.setStartupEnabled = setStartupEnabled ?? (enabled => Environment.ProcessPath is { } executable &&
             StartupRegistration.TrySetEnabled(enabled, executable, DataDirectory));
@@ -359,7 +353,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshHistory();
         if ((Snapshots.FirstOrDefault(snapshot => snapshot.Scope == SelectedScope && !snapshot.Elevated) ?? Snapshots.FirstOrDefault()) is { } latest)
             ShowSnapshot(latest.Id);
-        selectedTheme = store.GetPreference("theme") == "Dark" ? "Dark" : "Light";
+        selectedTheme = Appearance.ThemeOrDefault(store.GetPreference("theme"));
         selectedFont = Fonts.Contains(store.GetPreference("font")) ? store.GetPreference("font")! : "Segoe UI";
         selectedTextSize = int.TryParse(store.GetPreference("textSize"), out var textSize) && TextSizes.Contains(textSize) ? textSize : 100;
         selectedButtonTextColor = RestoreColorPreference("buttonTextColor");
@@ -382,9 +376,9 @@ public sealed partial class MainViewModel : ObservableObject
         CategoryFilters = new[] { Texts["AllCategories"] }.Concat(Enum.GetValues<Category>().Select(Texts.Category)).ToArray();
         CategoryFilter = CategoryFilters[Math.Max(0, filterIndex)];
         ButtonTextColors = ButtonTextColorCodes.Select(code => new NamedOption(code, code, Texts)
-            { Swatch = new(App.ColorForChoice(SelectedTheme, code)) }).ToArray();
+            { Swatch = new(Appearance.ColorForChoice(SelectedTheme, code)) }).ToArray();
         ButtonColors = ButtonTextColorCodes.Select(code => new NamedOption(code, code, Texts)
-            { Swatch = new(App.ColorForChoice(SelectedTheme, code, true)) }).ToArray();
+            { Swatch = new(Appearance.ColorForChoice(SelectedTheme, code, true)) }).ToArray();
         ScheduleIntervals = ScheduleMinutes.Select(entry => new NamedOption(entry.Code, entry.Code, Texts)).ToArray();
         RetentionOptions = RetentionDays.Select(entry => new NamedOption(entry.Code, entry.Code, Texts)).ToArray();
         Themes = new[] { new NamedOption("Light", "ThemeLight", Texts), new NamedOption("Dark", "ThemeDark", Texts) };
@@ -426,9 +420,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void NotifyCaptureCommands()
     {
         OnPropertyChanged(nameof(CanCapture));
-        OnPropertyChanged(nameof(CanCaptureWithAdministrator));
         CaptureCommand.NotifyCanExecuteChanged();
-        CaptureAsAdministratorCommand.NotifyCanExecuteChanged();
         CompareSelectedCommand.NotifyCanExecuteChanged();
     }
 
@@ -491,8 +483,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         RunSafely(() => store.SetPreference("theme", value));
         (System.Windows.Application.Current as App)?.SetTheme(value);
-        foreach (var choice in ButtonTextColors) choice.Swatch!.Color = App.ColorForChoice(value, choice.Code);
-        foreach (var choice in ButtonColors) choice.Swatch!.Color = App.ColorForChoice(value, choice.Code, true);
+        foreach (var choice in ButtonTextColors) choice.Swatch!.Color = Appearance.ColorForChoice(value, choice.Code);
+        foreach (var choice in ButtonColors) choice.Swatch!.Color = Appearance.ColorForChoice(value, choice.Code, true);
     }
     partial void OnSelectedFontChanged(string value)
     {
@@ -687,37 +679,25 @@ public sealed partial class MainViewModel : ObservableObject
     private Task CaptureAsync()
     {
         if (!CompareWithToday) { if (CanCapture) CompareSelected(); return Task.CompletedTask; }
-        return CaptureSelectedAsync(false);
+        return CaptureSelectedAsync();
     }
 
-    [RelayCommand(CanExecute = nameof(CanCaptureWithAdministrator))]
-    private async Task CaptureAsAdministratorAsync()
-    {
-        if (!CanCaptureWithAdministrator) return;
-        if (!Sources.Any(source => source.Enabled && source.Available))
-        { SetStatus("ChooseSource"); Page = "Sources"; return; }
-        if (!TryGetCaptureReference(true, out _)) return;
-        if (!confirmAdministratorAccess())
-        { SetStatus("AdminNotRequested"); return; }
-        await CaptureSelectedAsync(true);
-    }
-
-    private async Task CaptureSelectedAsync(bool requestAdministratorAccess)
+    private async Task CaptureSelectedAsync()
     {
         if (!CanCapture || !CompareWithToday) return;
-        if (!TryGetCaptureReference(requestAdministratorAccess, out var before)) return;
+        if (!TryGetCaptureReference(out var before)) return;
         if (!Sources.Any(source => source.Enabled && source.Available)) { SetStatus("ChooseSource"); Page = "Sources"; return; }
         var scope = SelectedScope;
         IsBusy = true;
         captureCancellation = new CancellationTokenSource();
         try
         {
-            SetStatus(requestAdministratorAccess ? "WaitingApproval" : "CheckingStandard");
+            SetStatus("CheckingStandard");
             var enabled = Sources.Where(source => source.Enabled && source.Available).Select(source => source.Category).ToHashSet();
             var snapshot = await captureService.CaptureAsync(enabled, new Progress<string>(message => SetStatus("Checking", Texts.ProgressSource(message))), captureCancellation.Token,
-                scope, requestAdministratorAccess);
+                scope);
             captureCancellation.Token.ThrowIfCancellationRequested();
-            if (snapshot.Scope != scope || snapshot.Elevated != requestAdministratorAccess)
+            if (snapshot.Scope != scope || snapshot.Elevated)
                 throw new CaptureAccessException("The result did not match the requested scope and access. Nothing was saved.");
             var result = before is null ? null : diffEngine.Compare(before, snapshot);
             await Task.Run(() => store.Save(snapshot));
@@ -728,13 +708,13 @@ public sealed partial class MainViewModel : ObservableObject
             SetStatus("CheckSaved", Texts.Context(snapshot.Scope, snapshot.Elevated), Texts.Date(snapshot.FinishedAt, "t"));
         }
         catch (OperationCanceledException) { SetStatus("CheckCanceled"); }
-        catch (CaptureAccessException exception) { SetStatus(exception.Message.Contains("not granted", StringComparison.OrdinalIgnoreCase) ? "AdminDenied" : "AdminUnavailable"); }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         { SetStatus("SaveFailed"); }
         finally { captureCancellation.Dispose(); captureCancellation = null; IsBusy = false; }
     }
 
-    private bool TryGetCaptureReference(bool administratorAccess, out Snapshot? before)
+    /// <summary>A new check always uses standard access, so only a standard-access snapshot of the same scope can be its reference.</summary>
+    private bool TryGetCaptureReference(out Snapshot? before)
     {
         before = null;
         if (CompareFrom is null)
@@ -745,7 +725,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         before = store.Load(CompareFrom.Id);
         if (before is null) { SetStatus("MissingReference"); return false; }
-        if (before.Scope != SelectedScope || before.Elevated != administratorAccess)
+        if (before.Scope != SelectedScope || before.Elevated)
         {
             SetStatus("ReferenceMismatch");
             return false;
@@ -1036,7 +1016,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var enabled = Sources.Where(source => source.Enabled && source.Available).Select(source => source.Category).ToHashSet();
-            var snapshot = await captureService.CaptureAsync(enabled, new Progress<string>(_ => { }), captureCancellation.Token, scope, false);
+            var snapshot = await captureService.CaptureAsync(enabled, new Progress<string>(_ => { }), captureCancellation.Token, scope);
             captureCancellation.Token.ThrowIfCancellationRequested();
             if (snapshot.Scope != scope || snapshot.Elevated)
                 throw new CaptureAccessException("The result did not match the requested scope and access. Nothing was saved.");

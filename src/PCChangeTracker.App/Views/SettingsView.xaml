@@ -1,0 +1,128 @@
+<UserControl x:Class="PCChangeTracker.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
+             xmlns:controls="clr-namespace:PCChangeTracker.App.Controls"
+             Focusable="False" IsTabStop="False">
+    <UserControl.Resources>
+        <Style x:Key="SettingsChoiceStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Display}"/>
+        </Style>
+        <DataTemplate x:Key="ColorChoiceTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Border Width="18" Height="18" Margin="0,0,10,0" CornerRadius="4" Background="{Binding Swatch}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Display}" VerticalAlignment="Center"/>
+            </Grid>
+        </DataTemplate>
+        <!-- A labeled field whose label sits directly above its control; labels bottom-align so controls in a row line up. -->
+        <Style x:Key="FieldLabel" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="FontSize" Value="{DynamicResource AppFont14}"/>
+        </Style>
+    </UserControl.Resources>
+    <StackPanel IsEnabled="{Binding IsIdle}">
+        <TextBlock x:Name="SettingsHeading" Text="{loc:Loc SettingsPrivacy}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" Margin="0,0,0,10"
+                   AutomationProperties.HeadingLevel="Level1" Focusable="True" KeyboardNavigation.IsTabStop="False"/>
+        <!-- Cards flow into balanced columns (top to bottom, then across) so the page fits one screen on typical displays. -->
+        <controls:ColumnFlowPanel MinColumnEms="20" MaxColumns="3" ColumnSpacing="12" RowSpacing="10">
+            <controls:SettingsCard Header="{loc:Loc SettingsLanguageHeading}" controls:Icon.Glyph="&#xE774;">
+                <ComboBox x:Name="LanguagePicker" ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"
+                          FlowDirection="LeftToRight" AutomationProperties.AutomationId="LanguagePicker" AutomationProperties.Name="{loc:Loc Language}" MaxDropDownHeight="420">
+                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" TextWrapping="Wrap" FontSize="{DynamicResource AppFont14}"/></DataTemplate></ComboBox.ItemTemplate>
+                    <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}"><Setter Property="AutomationProperties.Name" Value="{Binding Display}"/></Style></ComboBox.ItemContainerStyle>
+                </ComboBox>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="{loc:Loc SettingsAppearance}" controls:Icon.Glyph="&#xE771;">
+                <StackPanel>
+                    <controls:ColumnFlowPanel MinColumnEms="7" MaxColumns="3" ColumnSpacing="8" RowSpacing="8" FillRowsFirst="True">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc Theme}" Target="{Binding ElementName=ThemePicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="ThemePicker" ItemsSource="{Binding Themes}" SelectedValue="{Binding SelectedTheme}" SelectedValuePath="Code"
+                                      DisplayMemberPath="Display" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="ThemePicker" AutomationProperties.Name="{loc:Loc Theme}"/>
+                        </Grid>
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc FontLabel}" Target="{Binding ElementName=FontPicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="FontPicker" ItemsSource="{Binding Fonts}" SelectedItem="{Binding SelectedFont}" AutomationProperties.AutomationId="FontPicker" AutomationProperties.Name="{loc:Loc FontLabel}"/>
+                        </Grid>
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc TextSize}" Target="{Binding ElementName=AppTextSizePicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="AppTextSizePicker" ItemsSource="{Binding TextSizes}" SelectedItem="{Binding SelectedTextSize}" ItemStringFormat="{}{0}%"
+                                      AutomationProperties.Name="{loc:Loc TextSize}" AutomationProperties.AutomationId="AppTextSize">
+                                <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}"><Setter Property="AutomationProperties.Name" Value="{Binding StringFormat={}{0}%}"/></Style></ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                        </Grid>
+                    </controls:ColumnFlowPanel>
+                    <controls:ColumnFlowPanel MinColumnEms="8.5" MaxColumns="2" RowSpacing="8" FillRowsFirst="True" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc AppTextColorLabel}" Target="{Binding ElementName=AppTextColorPicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="AppTextColorPicker" ItemsSource="{Binding ButtonTextColors}" SelectedValue="{Binding SelectedAppTextColor}" SelectedValuePath="Code"
+                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
+                                      AutomationProperties.AutomationId="AppTextColorPicker" AutomationProperties.Name="{loc:Loc AppTextColorLabel}"/>
+                        </Grid>
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc LabelColorLabel}" Target="{Binding ElementName=LabelColorPicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="LabelColorPicker" ItemsSource="{Binding ButtonTextColors}" SelectedValue="{Binding SelectedLabelColor}" SelectedValuePath="Code"
+                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
+                                      AutomationProperties.AutomationId="LabelColorPicker" AutomationProperties.Name="{loc:Loc LabelColorLabel}"/>
+                        </Grid>
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc ButtonColorLabel}" Target="{Binding ElementName=ButtonColorPicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="ButtonColorPicker" ItemsSource="{Binding ButtonColors}" SelectedValue="{Binding SelectedButtonColor}" SelectedValuePath="Code"
+                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
+                                      AutomationProperties.AutomationId="ButtonColorPicker" AutomationProperties.Name="{loc:Loc ButtonColorLabel}"/>
+                        </Grid>
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <Label Content="{loc:Loc ButtonTextColorLabel}" Target="{Binding ElementName=ButtonTextColorPicker}" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="1" x:Name="ButtonTextColorPicker" ItemsSource="{Binding ButtonTextColors}" SelectedValue="{Binding SelectedButtonTextColor}" SelectedValuePath="Code"
+                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
+                                      AutomationProperties.AutomationId="ButtonTextColorPicker" AutomationProperties.Name="{loc:Loc ButtonTextColorLabel}"/>
+                        </Grid>
+                    </controls:ColumnFlowPanel>
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="{loc:Loc SettingsAutomatic}" Description="{loc:Loc AutomaticHelp}" controls:Icon.Glyph="&#xE823;">
+                <controls:ColumnFlowPanel MinColumnEms="13" MaxColumns="2" RowSpacing="8" FillRowsFirst="True">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Label Content="{loc:Loc SnapshotFrequency}" Target="{Binding ElementName=FrequencyPicker}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox Grid.Row="1" x:Name="FrequencyPicker" ItemsSource="{Binding ScheduleIntervals}" SelectedValue="{Binding SelectedScheduleInterval}" SelectedValuePath="Code"
+                                  DisplayMemberPath="Display" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="FrequencyPicker"
+                                  AutomationProperties.Name="{loc:Loc SnapshotFrequency}" AutomationProperties.HelpText="{loc:Loc AutomaticHelp}"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Label Content="{loc:Loc DataRetention}" Target="{Binding ElementName=RetentionPicker}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox Grid.Row="1" x:Name="RetentionPicker" ItemsSource="{Binding RetentionOptions}" SelectedValue="{Binding SelectedRetention}" SelectedValuePath="Code"
+                                  DisplayMemberPath="Display" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="RetentionPicker" AutomationProperties.Name="{loc:Loc DataRetention}"/>
+                    </Grid>
+                </controls:ColumnFlowPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="{loc:Loc SettingsStartup}" Description="{loc:Loc StartupHelp}" controls:Icon.Glyph="&#xE7E8;">
+                <CheckBox Content="{loc:Loc StartWithWindows}" IsChecked="{Binding StartWithWindows}" Style="{StaticResource ToggleSwitch}" Margin="0"
+                          AutomationProperties.AutomationId="StartWithWindows" AutomationProperties.HelpText="{loc:Loc StartupHelp}"/>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="{loc:Loc LocalHistory}" controls:Icon.Glyph="&#xEDA2;">
+                <StackPanel>
+                    <TextBox Text="{Binding DataDirectory, Mode=OneWay}" FlowDirection="LeftToRight" Style="{StaticResource ReadOnlyValue}" AutomationProperties.Name="{loc:Loc DataFolder}"/>
+                    <DockPanel Margin="0,10,0,0" LastChildFill="True">
+                        <Button DockPanel.Dock="Right" Content="{loc:Loc ClearHistory}" Command="{Binding ClearHistoryCommand}" IsEnabled="{Binding IsIdle}" Margin="12,0,0,0"
+                                Style="{StaticResource DangerButton}" controls:Icon.Glyph="&#xE74D;"/>
+                        <TextBlock Text="{Binding StorageText}" Style="{StaticResource HelpText}" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="{loc:Loc StoredData}" Description="{loc:Loc StorageHelp}" controls:Icon.Glyph="&#xE72E;"/>
+            <controls:SettingsCard Header="{loc:Loc Sharing}" Description="{loc:Loc SharingHelp}" controls:Icon.Glyph="&#xE72D;">
+                <TextBlock Text="{loc:Loc PriceHelp}" Style="{StaticResource HelpText}"/>
+            </controls:SettingsCard>
+        </controls:ColumnFlowPanel>
+    </StackPanel>
+</UserControl>

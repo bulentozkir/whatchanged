@@ -12,7 +12,7 @@ Tên ứng dụng, nhãn do bạn nhập, đường dẫn, ID và giá trị g�
 
 Mở Cài đặt trong menu. Tùy chọn được lưu cho thư mục lịch sử hiện tại và khôi phục khi mở lại.
 
-- Giao diện có chủ đề sáng/tối, phông chữ và màu riêng cho chữ ứng dụng, nhãn, nền nút và chữ nút. Mẫu màu có tên: Mặc định, Xanh hải quân, Xanh lá rừng, Đỏ sẫm và Tím. Mặc định khôi phục màu chủ đề; tương phản cao của Windows được ưu tiên và nút hành động chính giữ chữ tương phản.
+- Giao diện có chủ đề sáng/tối, phông chữ và màu riêng cho chữ ứng dụng, nhãn, nền nút và chữ nút. Mẫu màu có tên: Mặc định, Xanh hải quân, Xanh lá rừng, Đỏ sẫm và Tím. Mặc định khôi phục màu chủ đề; tương phản cao của Windows được ưu tiên và nút hành động chính giữ chữ tương phản. Nếu chưa lưu lựa chọn nào, chủ đề tối là mặc định. Các nút theo thứ bậc rõ ràng: kiểm tra chính màu xanh mòng két, thao tác xóa màu đỏ, còn mọi lệnh khác màu trung tính kèm biểu tượng có màu (ví dụ Báo cáo, Đổi phạm vi và Trợ giúp). Danh sách thả xuống, hộp kiểm và công tắc dùng màu nhấn cho mũi tên, dấu chọn và viền tiêu điểm. Các phần Cài đặt hiển thị theo cột nên trang thường vừa một màn hình mà không cần cuộn.
 - Chụp tự động mặc định mỗi 4 giờ; lựa chọn đã lưu, kể cả Tắt, được giữ nguyên. Chọn mỗi 15 phút, 1 giờ, 4 giờ, 6 giờ, ngày hoặc tuần; chọn Tắt để chỉ kiểm tra thủ công. Chỉ chạy khi ứng dụng đang mở, kể cả trong khay hệ thống, dùng quyền thường và có thể hủy. Sau khi xác nhận phạm vi, lần đầu hoặc lần quá hạn có thể chạy ở lượt kiểm tra phút tiếp theo; các lần sau theo khoảng đã chọn. Không xin quản trị, đánh thức máy hay chạy lại mọi khoảng đã bỏ lỡ.
 - Mặc định giữ dữ liệu 30 ngày; lựa chọn đã lưu, kể cả giữ mãi mãi, được giữ nguyên. Chọn 30, 90, 180 hoặc 365 ngày, hoặc mãi mãi. Chỉ xóa ảnh cũ không tên và không phải mốc chuẩn. Dọn dẹp chạy khi đến hạn lần đầu, sau đó hằng ngày khi ứng dụng mở và sau kiểm tra tự động thành công, kể cả khi chụp tự động tắt. Điểm có tên và mọi mốc chuẩn đều được bảo vệ.
 - Khởi động khi đăng nhập là tùy chọn, mặc định tắt. Bao gồm đăng nhập sau khi khởi động lại, không thu thập trước đăng nhập. Chỉ sửa mục khởi động riêng của ứng dụng cho người dùng này; không cài dịch vụ hoặc tác vụ lúc máy khởi động, không sửa ứng dụng khác hay chính sách. Nếu thất bại, giữ lựa chọn cũ.
@@ -41,7 +41,7 @@ Quan sát hữu ích đầu tiên làm mốc cho phạm vi/quyền đó. Đây l
 
 Người dùng đọc đăng ký app, Run/RunOnce, liên kết mặc định, âm thanh, proxy, PATH của mình. Máy đọc đăng ký chung, dịch vụ, tác vụ, cập nhật, driver, firewall, DNS/DHCP, PATH hệ thống. Không tải hồ sơ riêng tư người khác.
 
-Chọn cả hai sẽ đọc riêng rồi gộp thành một ảnh. Chỉ phần máy có thể nâng quyền theo yêu cầu rõ ràng; phần người dùng giữ tài khoản thường ban đầu. Tôn trọng lựa chọn và nguồn đã lưu.
+Chọn cả hai sẽ đọc riêng bằng quyền thường trong chính tài khoản của bạn rồi gộp thành một ảnh. Không phạm vi nào được cấp quyền quản trị. Tôn trọng lựa chọn và nguồn đã lưu.
 
 ## Ngày và quan sát
 
@@ -57,13 +57,15 @@ Chọn ngày/ảnh trước, rồi Ảnh chụp đã lưu và ngày/ảnh sau. S
 
 Chọn ảnh cũ và Hôm nay. Kiểm tra ngay tạo quan sát mới và so với đúng lựa chọn, không bí mật đổi mốc. Bảng chọn thu gọn sau thành công và có thể mở lại.
 
-Ảnh quản trị không tự nâng quyền. Dùng thao tác quản trị riêng hoặc chỉ hiện trạng. Hủy dừng thu thập và giữ lịch sử. Đóng vẫn tiếp tục thu thập trong khay; Thoát từ khay hủy và kết thúc ứng dụng.
+Ảnh do phiên bản cũ lưu bằng quyền quản trị không thể làm mốc cho kiểm tra mới vì mọi kiểm tra luôn dùng quyền thường. Chọn ảnh quyền thường hoặc Chỉ trạng thái hiện tại. Hai ảnh đã lưu vẫn so sánh được với nhau. Hủy dừng thu thập và giữ lịch sử. Đóng vẫn tiếp tục thu thập trong khay; Thoát từ khay hủy và kết thúc ứng dụng.
 
 ## Quyền quản trị
 
-Nhiều thiết lập máy đọc được với quyền thường. Phần bị chặn là khoảng trống phạm vi. Thao tác quản trị cần bấm rõ ràng, xác nhận mặc định Không và Windows UAC cho đúng một lần.
+ChangeTracker không bao giờ xin quyền quản trị. Mọi kiểm tra, thủ công hay tự động, đều chạy bằng quyền Windows thường trong cả hai phạm vi, nên Windows không hiện lời nhắc UAC cho một kiểm tra. Không có chế độ quản trị, trình phụ nâng quyền hay dịch vụ nền.
 
-Cửa sổ chính vẫn quyền thường. Trình phụ tạm thời chỉ đọc phần máy, không cài dịch vụ hay giữ quyền vĩnh viễn. Từ chối không đổi mốc/lịch sử. Không chia sẻ mật khẩu hoặc tắt chính sách bảo vệ. UAC đã hiện phải được trả lời trong Windows.
+Nhiều thiết lập toàn máy đọc được bằng quyền thường. Khi một nguồn có nội dung quyền thường không đọc được, nguồn đó được báo không đầy đủ (liệt kê trong chi tiết phạm vi, không bao giờ gợi ý xóa) thay vì nâng quyền. Không hỗ trợ khởi động ChangeTracker bằng “Chạy với tư cách quản trị viên”: ứng dụng hiện thông báo rồi đóng; hãy mở bình thường.
+
+Ảnh do phiên bản cũ lưu bằng quyền quản trị vẫn nằm trong lịch sử: có thể xem, so sánh với nhau và đưa vào báo cáo, nhưng không thể làm ảnh trước cho kiểm tra mới; hãy chọn ảnh quyền thường hoặc “Chỉ trạng thái hiện tại”. Cài MSI cần Windows phê duyệt quản trị (chỉ cài đặt, không phải kiểm tra); gói Microsoft Store cài không cần điều đó. Đừng bao giờ chia sẻ mật khẩu quản trị.
 
 ## Chi tiết thay đổi
 
@@ -121,7 +123,7 @@ Dung lượng cộng các tệp `history.db`, `history.db-wal` và `history.db-s
 
 Giá trị cập nhật cùng lịch sử sau chụp, xóa hoặc dọn dẹp, không theo dõi liên tục. Không đọc được dung lượng không có nghĩa là không chiếm chỗ. Xóa có thể để lại chỗ dùng lại mà không làm tệp nhỏ hơn; lịch sử trống vẫn có phần phụ trợ. Không tự nén cơ sở dữ liệu. Đừng xóa cơ sở dữ liệu hoặc tệp tạm khi ứng dụng đang chạy.
 
-Lịch sử phiên bản 2 giữ ảnh cũ là hỗn hợp và chặn trình đọc cũ. Trình phụ chỉ nhận danh mục và khóa tạm, không đường dẫn lịch sử hay lệnh tùy ý. Giao diện quyền thường lưu dữ liệu. Vòng đời MSIX cần kiểm tra riêng.
+Lịch sử phiên bản 2 giữ ảnh cũ là hỗn hợp và chặn trình đọc cũ. Chỉ giao diện quyền thường lưu lịch sử. Vòng đời MSIX cần kiểm tra riêng.
 
 ## Trợ năng
 
@@ -143,10 +145,10 @@ Tiêu đề có cấp độ cho trình đọc màn hình. Mở chi tiết đưa 
 
 Ngày trống: chọn quan sát khác. Từ chối so sánh: kiểm tra thứ tự, phạm vi/quyền. Một phần không có nghĩa bị xóa. Báo cáo cũ: chạy lựa chọn mới. Không mở cơ sở dữ liệu: kiểm tra dung lượng, quyền, phiên bản trước xóa.
 
-Gửi hỗ trợ báo cáo đã xem cùng phiên bản app/Windows, không mật khẩu, cơ sở dữ liệu thô hay khóa. Từ chối quản trị không chặn kiểm tra thường.
+Một số thiết lập toàn máy cần quyền quản trị; ChangeTracker báo chúng không đầy đủ thay vì xin nâng quyền, còn các nguồn khác vẫn được so sánh. Gửi hỗ trợ báo cáo đã xem cùng phiên bản app/Windows, không mật khẩu, cơ sở dữ liệu thô hay khóa.
 
 ## Phát hành
 
 Bản xem trước có 11 nhóm giới hạn, kiểm tra thủ công hoặc theo lịch tùy chọn và thời hạn lưu tùy chỉnh. Chưa có giám sát sự kiện liên tục, thông báo hay dòng thời gian đầy đủ. Thu thập tốn tài nguyên, không hứa CPU bằng không.
 
-MSI/MSIX x64 cục bộ chưa ký. Cài MSI xin phép riêng, không cài hai dạng cùng lúc. UAC thật, tài khoản quản trị khác, Windows 10/ARM64, cài đặt và Store `allowElevation` chưa được kiểm định. Đổi nguồn không xây lại gói cũ. Logo không thay ảnh chụp thực tế hay chứng nhận.
+Bản phát hành cục bộ có bộ cài MSI x64 và ARM64 cùng gói MSIX x64, tất cả chưa ký. Cài MSI cần phê duyệt quản trị, nhưng ứng dụng đã cài luôn chạy bằng quyền thường. Ký số, chứng nhận Store, kiểm định Windows 10/ARM64 và kiểm định cài đặt/nâng cấp/gỡ cài đặt vẫn còn thiếu. Đổi nguồn không xây lại gói cũ. Logo không thay ảnh chụp thực tế hay chứng nhận.

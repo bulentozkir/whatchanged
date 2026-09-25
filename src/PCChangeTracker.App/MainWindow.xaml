@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
+        xmlns:controls="clr-namespace:PCChangeTracker.App.Controls"
+        xmlns:views="clr-namespace:PCChangeTracker.App.Views"
         Title="ChangeTracker" Width="1240" Height="820" MinWidth="900" MinHeight="620" WindowState="Maximized" ShowInTaskbar="True"
         WindowStartupLocation="CenterScreen" Language="{Binding Texts.XmlLanguage}" Style="{StaticResource {x:Type Window}}">
     <Window.CommandBindings>
@@ -28,6 +30,13 @@
             <Setter Property="Visibility" Value="Collapsed" />
             <Style.Triggers><DataTrigger Binding="{Binding Page}" Value="Settings"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
         </Style>
+        <!-- Scope and comparison controls belong to the review workflow; hiding them keeps Settings on one screen. -->
+        <Style x:Key="HiddenOnSettings" TargetType="FrameworkElement">
+            <Style.Triggers><DataTrigger Binding="{Binding Page}" Value="Settings"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers>
+        </Style>
+        <Style x:Key="ComparisonExpander" TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
+            <Style.Triggers><DataTrigger Binding="{Binding Page}" Value="Settings"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers>
+        </Style>
         <DataTemplate x:Key="SnapshotChoiceTemplate">
             <StackPanel MaxWidth="520">
                 <TextBlock FontWeight="SemiBold" FontSize="{DynamicResource AppFont16}" Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
@@ -50,16 +59,6 @@
         <Style x:Key="SnapshotDayStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
             <Setter Property="AutomationProperties.Name"><Setter.Value><MultiBinding Converter="{StaticResource SnapshotText}"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></Setter.Value></Setter>
         </Style>
-        <Style x:Key="SettingsChoiceStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
-            <Setter Property="AutomationProperties.Name" Value="{Binding Display}"/>
-        </Style>
-        <DataTemplate x:Key="ColorChoiceTemplate">
-            <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <Border Width="18" Height="18" Margin="0,0,10,0" Background="{Binding Swatch}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding Display}" VerticalAlignment="Center"/>
-            </Grid>
-        </DataTemplate>
         <Style x:Key="SnapshotChoiceStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
             <Setter Property="AutomationProperties.Name"><Setter.Value><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Compact"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></Setter.Value></Setter>
         </Style>
@@ -96,7 +95,7 @@
             <Setter Property="AutomationProperties.Name" Value="{Binding Field}"/>
         </Style>
         <DataTemplate x:Key="ChangeTemplate">
-            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="18" Margin="0,0,0,12">
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,12">
                 <Grid>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                     <DockPanel LastChildFill="True">
@@ -116,9 +115,9 @@
                     <TextBlock Grid.Row="4" Text="{Binding TechnicalSummary}" FontSize="{DynamicResource AppFont14}" Margin="0,0,0,12"
                                Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}"/>
                     <WrapPanel Grid.Row="5">
-                        <Button Content="{loc:Loc BeforeAfter}" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc BeforeAfter}" Click="RememberDetailOrigin" AutomationProperties.AutomationId="InspectChange"/>
-                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc OpenSettings}"/>
-                        <Button Content="{Binding ExpectedAction}" Command="{Binding DataContext.ToggleExpectedCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc MarkExpected}"/>
+                        <Button Content="{loc:Loc BeforeAfter}" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc BeforeAfter}" Click="RememberDetailOrigin" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE890;" AutomationProperties.AutomationId="InspectChange"/>
+                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc OpenSettings}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8A7;"/>
+                        <Button Content="{Binding ExpectedAction}" Command="{Binding DataContext.ToggleExpectedCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc MarkExpected}" controls:Icon.Glyph="&#xE73E;"/>
                     </WrapPanel>
                     <StackPanel Grid.Row="6" Margin="0,14,0,0" Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
                         <Expander Header="{loc:Loc AllFields}" IsExpanded="True" AutomationProperties.AutomationId="AdvancedFields">
@@ -139,14 +138,16 @@
     <Grid>
         <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid.ColumnDefinitions><ColumnDefinition Width="232"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-        <Border Grid.RowSpan="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="16,22,12,16">
+        <Border Grid.RowSpan="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,1,0" Padding="14,22,12,16">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
             <Grid IsEnabled="{Binding BackgroundInteractive}" MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                <StackPanel Margin="0,0,0,24">
-                    <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="27" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,12"/>
-                    <TextBlock Text="ChangeTracker" FontSize="{DynamicResource AppFont20}" FontWeight="SemiBold"/>
-                </StackPanel>
+                <DockPanel Margin="4,0,0,28">
+                    <Border DockPanel.Dock="Left" Width="36" Height="36" CornerRadius="8" Background="{DynamicResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource IconFontFamily}" FontSize="20" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="ChangeTracker" FontSize="{DynamicResource AppFont20}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </DockPanel>
                 <StackPanel Grid.Row="2" FlowDirection="{Binding Texts.Direction}" KeyboardNavigation.TabIndex="1">
                     <TextBlock Text="{Binding SnapshotStorageLabel}" FontSize="{DynamicResource AppFont16}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,18"
                                Focusable="{Binding BackgroundInteractive}" FocusVisualStyle="{StaticResource KeyboardFocus}"
@@ -159,7 +160,7 @@
                             </ToolTip>
                         </TextBlock.ToolTip>
                     </TextBlock>
-                    <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" Margin="0,0,0,14" AutomationProperties.AutomationId="HelpMe" ToolTip="F1"/>
+                    <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" Margin="0,0,0,14" Style="{StaticResource HelpButton}" controls:Icon.Glyph="&#xE897;" AutomationProperties.AutomationId="HelpMe" ToolTip="F1"/>
                     <TextBlock Text="{loc:Loc LocalReadOnly}" FontSize="{DynamicResource AppFont14}" Foreground="{DynamicResource MutedBrush}"/>
                     <TextBlock Text="{loc:Loc Preview}" FontSize="{DynamicResource AppFont14}" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0"/>
                 </StackPanel>
@@ -167,10 +168,10 @@
                          Grid.Row="1" VerticalAlignment="Top" KeyboardNavigation.TabIndex="0"
                          BorderThickness="0" Padding="3" IsEnabled="{Binding BackgroundInteractive}" FlowDirection="{Binding Texts.Direction}"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Loc Navigation}" AutomationProperties.AutomationId="PageNavigation">
-                    <ListBoxItem Tag="Review" Margin="0,0,0,10" AutomationProperties.AutomationId="ReviewPage" AutomationProperties.Name="{loc:Loc NavReview}"><TextBlock Text="{loc:Loc NavReview}"/></ListBoxItem>
-                    <ListBoxItem Tag="History" Margin="0,0,0,10" AutomationProperties.AutomationId="HistoryPage" AutomationProperties.Name="{loc:Loc NavHistory}"><TextBlock Text="{loc:Loc NavHistory}"/></ListBoxItem>
-                    <ListBoxItem Tag="Sources" Margin="0,0,0,10" AutomationProperties.AutomationId="SourcesPage" AutomationProperties.Name="{loc:Loc NavSources}"><TextBlock Text="{loc:Loc NavSources}"/></ListBoxItem>
-                    <ListBoxItem Tag="Settings" Margin="0,0,0,10" AutomationProperties.AutomationId="SettingsPage" AutomationProperties.Name="{loc:Loc NavSettings}"><TextBlock Text="{loc:Loc NavSettings}"/></ListBoxItem>
+                    <ListBoxItem Tag="Review" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE9D5;" AutomationProperties.AutomationId="ReviewPage" AutomationProperties.Name="{loc:Loc NavReview}"><TextBlock Text="{loc:Loc NavReview}"/></ListBoxItem>
+                    <ListBoxItem Tag="History" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE81C;" AutomationProperties.AutomationId="HistoryPage" AutomationProperties.Name="{loc:Loc NavHistory}"><TextBlock Text="{loc:Loc NavHistory}"/></ListBoxItem>
+                    <ListBoxItem Tag="Sources" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE8B7;" AutomationProperties.AutomationId="SourcesPage" AutomationProperties.Name="{loc:Loc NavSources}"><TextBlock Text="{loc:Loc NavSources}"/></ListBoxItem>
+                    <ListBoxItem Tag="Settings" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE713;" AutomationProperties.AutomationId="SettingsPage" AutomationProperties.Name="{loc:Loc NavSettings}"><TextBlock Text="{loc:Loc NavSettings}"/></ListBoxItem>
                 </ListBox>
             </Grid>
             </ScrollViewer>
@@ -187,25 +188,18 @@
                     </WrapPanel>
                 </WrapPanel>
                 <WrapPanel Margin="0,6,0,0">
-                    <Button Command="{Binding PreviewReportCommand}" IsEnabled="{Binding HasSnapshot}" ToolTip="{loc:Loc ReportPreview}" AutomationProperties.Name="{loc:Loc Report}" AutomationProperties.AutomationId="Report">
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0"/><TextBlock Text="{loc:Loc Report}"/></StackPanel>
-                    </Button>
-                    <Button x:Name="CheckNowButton" Command="{Binding CaptureCommand}" Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="CheckNow" ToolTip="{Binding CheckActionHelp}" AutomationProperties.Name="{Binding CheckActionLabel}">
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0"/><TextBlock Text="{Binding CheckActionLabel}"/></StackPanel>
-                    </Button>
-                    <Button Content="{loc:Loc Cancel}" Command="{Binding CancelCaptureCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolVisibility}}"/>
+                    <Button Content="{loc:Loc Report}" Command="{Binding PreviewReportCommand}" IsEnabled="{Binding HasSnapshot}" ToolTip="{loc:Loc ReportPreview}" Style="{StaticResource InfoButton}"
+                            controls:Icon.Glyph="&#xE8A5;" AutomationProperties.Name="{loc:Loc Report}" AutomationProperties.AutomationId="Report"/>
+                    <Button x:Name="CheckNowButton" Content="{Binding CheckActionLabel}" Command="{Binding CaptureCommand}" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE72C;"
+                            AutomationProperties.AutomationId="CheckNow" ToolTip="{Binding CheckActionHelp}" AutomationProperties.Name="{Binding CheckActionLabel}"/>
+                    <Button Content="{loc:Loc Cancel}" Command="{Binding CancelCaptureCommand}" controls:Icon.Glyph="&#xE711;" Visibility="{Binding IsBusy, Converter={StaticResource BoolVisibility}}"/>
                 </WrapPanel>
             </WrapPanel>
-            <WrapPanel Grid.Row="1" Margin="0,0,0,12">
+            <WrapPanel Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource HiddenOnSettings}">
                 <TextBlock Text="{Binding ScopeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="0,0,12,8" AutomationProperties.AutomationId="ScopeLabel"/>
-                <Button x:Name="ChangeScopeButton" Content="{loc:Loc ChangeScope}" Command="{Binding ChangeScopeCommand}" Margin="0,0,8,8" AutomationProperties.AutomationId="ChangeScope"/>
-                <Button Command="{Binding CaptureAsAdministratorCommand}" Visibility="{Binding MachineScope, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,8"
-                        MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=WrapPanel}}"
-                        ToolTip="{loc:Loc ConsentHelp}" AutomationProperties.AutomationId="CheckAsAdministrator" AutomationProperties.Name="{loc:Loc AdminCheck}">
-                    <DockPanel><TextBlock DockPanel.Dock="Left" Text="&#xEA18;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0"/><TextBlock Text="{loc:Loc AdminCheck}"/></DockPanel>
-                </Button>
+                <Button x:Name="ChangeScopeButton" Content="{loc:Loc ChangeScope}" Command="{Binding ChangeScopeCommand}" Margin="0,0,8,8" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8AB;" AutomationProperties.AutomationId="ChangeScope"/>
             </WrapPanel>
-            <Expander Grid.Row="2" Header="{loc:Loc Comparison}" IsExpanded="{Binding ComparisonPickerExpanded}" Margin="0,0,0,12" AutomationProperties.AutomationId="ComparisonOptions">
+            <Expander Grid.Row="2" Header="{loc:Loc Comparison}" IsExpanded="{Binding ComparisonPickerExpanded}" Margin="0,0,0,12" Style="{StaticResource ComparisonExpander}" AutomationProperties.AutomationId="ComparisonOptions">
                 <StackPanel IsEnabled="{Binding IsIdle}" Margin="0,12,0,0">
                     <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged">
                         <StackPanel Margin="0,0,16,0">
@@ -220,8 +214,8 @@
                                       IsEditable="False" IsSynchronizedWithCurrentItem="False" MinHeight="44" MaxDropDownHeight="420"
                                       ItemContainerStyle="{StaticResource SnapshotChoiceStyle}" AutomationProperties.Name="{loc:Loc EarlierSnapshot}" AutomationProperties.AutomationId="BeforeSnapshot" MinWidth="0"/>
                             <WrapPanel Margin="0,8,0,0">
-                                <Button Content="{loc:Loc Baseline}" Command="{Binding SelectBaselineCommand}" ToolTip="{loc:Loc Baseline}" Margin="0,0,8,0" FontSize="{DynamicResource AppFont14}" AutomationProperties.Name="{loc:Loc Baseline}"/>
-                                <Button Content="&#xE711;" FontFamily="Segoe MDL2 Assets" Width="44" Height="44" Padding="6" Margin="0"
+                                <Button Content="{loc:Loc Baseline}" Command="{Binding SelectBaselineCommand}" ToolTip="{loc:Loc Baseline}" Margin="0,0,8,0" FontSize="{DynamicResource AppFont14}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE718;" AutomationProperties.Name="{loc:Loc Baseline}"/>
+                                <Button Content="&#xE711;" FontFamily="{StaticResource IconFontFamily}" Width="44" Height="44" Padding="6" Margin="0"
                                         Command="{Binding CurrentStateOnlyCommand}" ToolTip="{loc:Loc CurrentState}" AutomationProperties.Name="{loc:Loc CurrentState}"/>
                             </WrapPanel>
                             <TextBlock Text="{Binding BeforeSelectionSummary}" FontSize="{DynamicResource AppFont14}" Margin="0,6,0,0"/>
@@ -260,9 +254,9 @@
                         <TextBlock Text="{loc:Loc FirstBaseline}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
                         <TextBlock Text="{loc:Loc PrivacyIntro}" MaxWidth="650" HorizontalAlignment="Left" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,14"/>
                         <TextBlock Text="{loc:Loc BaselineIntro}" MaxWidth="650" HorizontalAlignment="Left" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,20"/>
-                        <Button Content="{loc:Loc CollectionSources}" Command="{Binding NavigateCommand}" CommandParameter="Sources" HorizontalAlignment="Left"/>
+                        <Button Content="{loc:Loc CollectionSources}" Command="{Binding NavigateCommand}" CommandParameter="Sources" HorizontalAlignment="Left" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8B7;"/>
                     </StackPanel>
-                    <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,1" Padding="0,10" Margin="0,0,0,12">
+                    <Border BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,1" Padding="0,10" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock Text="{Binding Coverage}" FontWeight="SemiBold"/>
                             <Expander Header="{loc:Loc CoverageDetails}" Margin="0,6,0,0" AutomationProperties.AutomationId="CoverageDetails">
@@ -281,11 +275,11 @@
                         <WrapPanel Margin="0,0,0,12">
                             <StackPanel Margin="0,0,8,6"><Label Content="{loc:Loc Category}" Target="{Binding ElementName=CategoryPicker}" FontSize="{DynamicResource AppFont14}"/><ComboBox x:Name="CategoryPicker" ItemsSource="{Binding CategoryFilters}" SelectedItem="{Binding CategoryFilter}" Width="180" AutomationProperties.Name="{loc:Loc Category}"/></StackPanel>
                             <StackPanel Margin="0,0,8,6"><Label Content="{loc:Loc SearchChanges}" Target="{Binding ElementName=ChangesSearch}" FontSize="{DynamicResource AppFont14}"/><TextBox x:Name="ChangesSearch" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="240" ToolTip="{loc:Loc SearchChanges}" AutomationProperties.Name="{loc:Loc SearchChanges}"/></StackPanel>
-                            <Button Content="{loc:Loc ClearFilters}" Command="{Binding ClearFiltersCommand}" Margin="0,0,0,6" VerticalAlignment="Bottom"/>
+                            <Button Content="{loc:Loc ClearFilters}" Command="{Binding ClearFiltersCommand}" Margin="0,0,0,6" VerticalAlignment="Bottom" controls:Icon.Glyph="&#xE894;"/>
                         </WrapPanel>
                         <TextBlock Text="{loc:Loc ReviewFirst}" Foreground="{DynamicResource TextBrush}" FontSize="{DynamicResource AppFont16}" FontWeight="Bold" Margin="0,0,0,12" AutomationProperties.HeadingLevel="Level2"/>
                         <ItemsControl ItemsSource="{Binding ReviewItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" AutomationProperties.Name="{loc:Loc ReviewFirst}"/>
-                        <Button Content="{loc:Loc ViewAll}" Command="{Binding ShowAllCommand}" Visibility="{Binding HasMoreReviews, Converter={StaticResource BoolVisibility}}" HorizontalAlignment="Left" Margin="0,0,0,14"/>
+                        <Button Content="{loc:Loc ViewAll}" Command="{Binding ShowAllCommand}" Visibility="{Binding HasMoreReviews, Converter={StaticResource BoolVisibility}}" HorizontalAlignment="Left" Margin="0,0,0,14" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8FD;"/>
                         <TextBlock Text="{loc:Loc NoReviewsHelp}" Visibility="{Binding HasNoReviews, Converter={StaticResource BoolVisibility}}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,20"/>
                         <Expander Margin="0,0,0,16" Header="{Binding RoutineHeading}" AutomationProperties.Name="{Binding RoutineHeading}" AutomationProperties.AutomationId="RoutineGroup">
                             <ItemsControl ItemsSource="{Binding RoutineItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" Margin="0,12,0,0" AutomationProperties.Name="{Binding RoutineHeading}"/>
@@ -320,12 +314,12 @@
                     <Label Content="{loc:Loc CheckpointName}" Target="{Binding ElementName=CheckpointNameInput}"/>
                     <WrapPanel Margin="0,0,0,10">
                         <TextBox x:Name="CheckpointNameInput" Text="{Binding CheckpointName, UpdateSourceTrigger=PropertyChanged}" Width="290" Margin="0,0,8,0" MaxLength="120" AutomationProperties.Name="{loc:Loc CheckpointName}"/>
-                        <Button Content="{loc:Loc NameCheckpoint}" Command="{Binding NameCheckpointCommand}"/>
+                        <Button Content="{loc:Loc NameCheckpoint}" Command="{Binding NameCheckpointCommand}" controls:Icon.Glyph="&#xE8EC;"/>
                     </WrapPanel>
                     <WrapPanel>
-                        <Button Content="{loc:Loc ViewSelected}" Command="{Binding ViewSnapshotCommand}"/>
-                        <Button Content="{loc:Loc UseBaseline}" Command="{Binding UseBaselineCommand}"/>
-                        <Button Content="{loc:Loc DeleteSelected}" Command="{Binding DeleteSnapshotCommand}"/>
+                        <Button Content="{loc:Loc ViewSelected}" Command="{Binding ViewSnapshotCommand}" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE890;"/>
+                        <Button Content="{loc:Loc UseBaseline}" Command="{Binding UseBaselineCommand}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE718;"/>
+                        <Button Content="{loc:Loc DeleteSelected}" Command="{Binding DeleteSnapshotCommand}" Style="{StaticResource DangerButton}" controls:Icon.Glyph="&#xE74D;"/>
                     </WrapPanel>
                 </StackPanel>
             </Grid>
@@ -336,16 +330,16 @@
                     <ItemsControl ItemsSource="{Binding Sources}" AutomationProperties.Name="{loc:Loc CollectionSources}">
                         <ItemsControl.ItemContainerStyle><Style TargetType="ContentPresenter"><Setter Property="AutomationProperties.Name" Value="{Binding Name}"/></Style></ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate><DataTemplate>
-                            <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,12">
+                            <Border BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,0,1" Padding="0,12">
                                 <StackPanel>
                                     <StackPanel>
                                         <CheckBox Content="{Binding Name}" IsChecked="{Binding Enabled}" IsEnabled="{Binding Available}" FontWeight="SemiBold"
                                                   AutomationProperties.Name="{Binding Name}" AutomationProperties.HelpText="{Binding AccessibilityDescription}" AutomationProperties.ItemStatus="{Binding StatusDisplay}"
                                                   AutomationProperties.AutomationId="{Binding Category, StringFormat=Source{0}}"/>
-                                        <TextBlock Text="{Binding Scope}" Margin="20,3,16,0" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}"/>
-                                        <TextBlock Text="{Binding DetailDisplay}" Margin="20,5,16,0" Foreground="{DynamicResource ReviewBrush}" FontSize="{DynamicResource AppFont14}"/>
+                                        <TextBlock Text="{Binding Scope}" Margin="32,3,16,0" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}"/>
+                                        <TextBlock Text="{Binding DetailDisplay}" Margin="32,5,16,0" Foreground="{DynamicResource ReviewBrush}" FontSize="{DynamicResource AppFont14}"/>
                                     </StackPanel>
-                                    <WrapPanel Margin="20,6,0,0">
+                                    <WrapPanel Margin="32,6,0,0">
                                         <TextBlock Text="{Binding StatusDisplay}" FontWeight="SemiBold" Margin="0,5,16,0"/>
                                         <TextBlock Text="{Binding CountDisplay}" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}" Margin="0,5,0,0"/>
                                     </WrapPanel>
@@ -355,98 +349,10 @@
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
-            <ScrollViewer x:Name="SettingsContent" Grid.Row="4" Style="{StaticResource SettingsPage}" VerticalScrollBarVisibility="Disabled" Focusable="False"
-                          HorizontalScrollBarVisibility="Disabled" AutomationProperties.AutomationId="SettingsContent">
-                <StackPanel IsEnabled="{Binding IsIdle}">
-                    <TextBlock x:Name="SettingsHeading" Text="{loc:Loc SettingsPrivacy}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" Margin="0,8,0,24" AutomationProperties.HeadingLevel="Level1" Focusable="True" KeyboardNavigation.IsTabStop="False"/>
-
-                    <TextBlock Text="{loc:Loc SettingsLanguageHeading}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <Label Content="{loc:Loc Language}" Target="{Binding ElementName=LanguagePicker}" FontSize="{DynamicResource AppFont14}"/>
-                    <ComboBox x:Name="LanguagePicker" ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"
-                              FlowDirection="LeftToRight" HorizontalAlignment="Left" MinWidth="260" AutomationProperties.AutomationId="LanguagePicker" AutomationProperties.Name="{loc:Loc Language}" Margin="0,0,0,28" MaxDropDownHeight="420">
-                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" TextWrapping="Wrap" MaxWidth="240" FontSize="{DynamicResource AppFont14}"/></DataTemplate></ComboBox.ItemTemplate>
-                        <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}"><Setter Property="AutomationProperties.Name" Value="{Binding Display}"/></Style></ComboBox.ItemContainerStyle>
-                    </ComboBox>
-
-                    <TextBlock Text="{loc:Loc SettingsAppearance}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged" Margin="0,0,0,16">
-                        <StackPanel Margin="0,0,16,0">
-                            <Label Content="{loc:Loc Theme}" Target="{Binding ElementName=ThemePicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="ThemePicker" ItemsSource="{Binding Themes}" SelectedValue="{Binding SelectedTheme}" SelectedValuePath="Code"
-                                      DisplayMemberPath="Display" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="ThemePicker" AutomationProperties.Name="{loc:Loc Theme}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,16,0">
-                            <Label Content="{loc:Loc FontLabel}" Target="{Binding ElementName=FontPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="FontPicker" ItemsSource="{Binding Fonts}" SelectedItem="{Binding SelectedFont}" AutomationProperties.AutomationId="FontPicker" AutomationProperties.Name="{loc:Loc FontLabel}"/>
-                        </StackPanel>
-                    </UniformGrid>
-                    <StackPanel Margin="0,0,0,20">
-                        <Label Content="{loc:Loc TextSize}" Target="{Binding ElementName=AppTextSizePicker}"/>
-                        <ComboBox x:Name="AppTextSizePicker" ItemsSource="{Binding TextSizes}" SelectedItem="{Binding SelectedTextSize}"
-                                  ItemStringFormat="{}{0}%" MinWidth="130" HorizontalAlignment="Left"
-                                  AutomationProperties.Name="{loc:Loc TextSize}" AutomationProperties.AutomationId="AppTextSize">
-                            <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}"><Setter Property="AutomationProperties.Name" Value="{Binding StringFormat={}{0}%}"/></Style></ComboBox.ItemContainerStyle>
-                        </ComboBox>
-                    </StackPanel>
-                    <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged" Margin="0,0,0,12">
-                        <StackPanel Margin="0,0,16,16">
-                            <Label Content="{loc:Loc AppTextColorLabel}" Target="{Binding ElementName=AppTextColorPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="AppTextColorPicker" ItemsSource="{Binding ButtonTextColors}" SelectedValue="{Binding SelectedAppTextColor}" SelectedValuePath="Code"
-                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
-                                      AutomationProperties.AutomationId="AppTextColorPicker" AutomationProperties.Name="{loc:Loc AppTextColorLabel}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,0,16">
-                            <Label Content="{loc:Loc LabelColorLabel}" Target="{Binding ElementName=LabelColorPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="LabelColorPicker" ItemsSource="{Binding ButtonTextColors}" SelectedValue="{Binding SelectedLabelColor}" SelectedValuePath="Code"
-                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
-                                      AutomationProperties.AutomationId="LabelColorPicker" AutomationProperties.Name="{loc:Loc LabelColorLabel}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,16,16">
-                            <Label Content="{loc:Loc ButtonColorLabel}" Target="{Binding ElementName=ButtonColorPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="ButtonColorPicker" ItemsSource="{Binding ButtonColors}" SelectedValue="{Binding SelectedButtonColor}" SelectedValuePath="Code"
-                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}"
-                                      AutomationProperties.AutomationId="ButtonColorPicker" AutomationProperties.Name="{loc:Loc ButtonColorLabel}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,0,16">
-                            <Label Content="{loc:Loc ButtonTextColorLabel}" Target="{Binding ElementName=ButtonTextColorPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="ButtonTextColorPicker" ItemsSource="{Binding ButtonTextColors}" SelectedValue="{Binding SelectedButtonTextColor}" SelectedValuePath="Code"
-                                      ItemTemplate="{StaticResource ColorChoiceTemplate}" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="ButtonTextColorPicker" AutomationProperties.Name="{loc:Loc ButtonTextColorLabel}"/>
-                        </StackPanel>
-                    </UniformGrid>
-
-                    <TextBlock Text="{loc:Loc SettingsAutomatic}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <TextBlock Text="{loc:Loc AutomaticHelp}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,14"/>
-                    <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged" Margin="0,0,0,28">
-                        <StackPanel Margin="0,0,16,0">
-                            <Label Content="{loc:Loc SnapshotFrequency}" Target="{Binding ElementName=FrequencyPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="FrequencyPicker" ItemsSource="{Binding ScheduleIntervals}" SelectedValue="{Binding SelectedScheduleInterval}" SelectedValuePath="Code"
-                                      DisplayMemberPath="Display" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="FrequencyPicker" AutomationProperties.Name="{loc:Loc SnapshotFrequency}"/>
-                        </StackPanel>
-                        <StackPanel>
-                            <Label Content="{loc:Loc DataRetention}" Target="{Binding ElementName=RetentionPicker}" FontSize="{DynamicResource AppFont14}"/>
-                            <ComboBox x:Name="RetentionPicker" ItemsSource="{Binding RetentionOptions}" SelectedValue="{Binding SelectedRetention}" SelectedValuePath="Code"
-                                      DisplayMemberPath="Display" ItemContainerStyle="{StaticResource SettingsChoiceStyle}" AutomationProperties.AutomationId="RetentionPicker" AutomationProperties.Name="{loc:Loc DataRetention}"/>
-                        </StackPanel>
-                    </UniformGrid>
-
-                    <TextBlock Text="{loc:Loc SettingsStartup}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <CheckBox Content="{loc:Loc StartWithWindows}" IsChecked="{Binding StartWithWindows}" AutomationProperties.AutomationId="StartWithWindows"/>
-                    <TextBlock Text="{loc:Loc StartupHelp}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,28"/>
-
-                    <TextBlock Text="{loc:Loc LocalHistory}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <TextBox Text="{Binding DataDirectory, Mode=OneWay}" FlowDirection="LeftToRight" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,10" AutomationProperties.Name="{loc:Loc DataFolder}"/>
-                    <TextBlock Text="{Binding StorageText}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,14"/>
-                    <Button Content="{loc:Loc ClearHistory}" Command="{Binding ClearHistoryCommand}" IsEnabled="{Binding IsIdle}" HorizontalAlignment="Left" Margin="0,0,0,28"/>
-                    <TextBlock Text="{loc:Loc StoredData}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <TextBlock Text="{loc:Loc StorageHelp}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,22"/>
-                    <TextBlock Text="{loc:Loc Sharing}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                    <TextBlock Text="{loc:Loc SharingHelp}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,22"/>
-                    <TextBlock Text="{loc:Loc PriceHelp}" Foreground="{DynamicResource MutedBrush}"/>
-                </StackPanel>
-            </ScrollViewer>
+            <views:SettingsView x:Name="SettingsContent" Grid.Row="4" Style="{StaticResource SettingsPage}" AutomationProperties.AutomationId="SettingsContent"/>
         </Grid>
         </ScrollViewer>
-        <Border Grid.Row="1" Grid.Column="1" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="28,12" Background="{DynamicResource SurfaceBrush}">
+        <Border Grid.Row="1" Grid.Column="1" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,0" Padding="28,12" Background="{DynamicResource SurfaceBrush}">
             <TextBlock x:Name="StatusText" Text="{Binding Status}" FlowDirection="{Binding Texts.Direction}" Foreground="{DynamicResource TextBrush}" FontSize="{DynamicResource AppFont14}" AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="StatusText"/>
         </Border>
         <Border Grid.Column="1" Grid.RowSpan="2" Background="#60000000" FlowDirection="{Binding Texts.Direction}">
@@ -477,9 +383,9 @@
                         </StackPanel>
                     </ScrollViewer>
                     <WrapPanel Grid.Row="3" Margin="0,18,0,0">
-                        <Button Content="{loc:Loc CopyDetails}" Command="{Binding CopyDetailsCommand}" CommandParameter="{Binding SelectedChange}"/>
-                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding OpenSettingsCommand}" CommandParameter="{Binding SelectedChange}"/>
-                        <Button Content="{Binding SelectedChange.ExpectedAction}" Command="{Binding ToggleExpectedCommand}" CommandParameter="{Binding SelectedChange}"/>
+                        <Button Content="{loc:Loc CopyDetails}" Command="{Binding CopyDetailsCommand}" CommandParameter="{Binding SelectedChange}" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8C8;"/>
+                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding OpenSettingsCommand}" CommandParameter="{Binding SelectedChange}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8A7;"/>
+                        <Button Content="{Binding SelectedChange.ExpectedAction}" Command="{Binding ToggleExpectedCommand}" CommandParameter="{Binding SelectedChange}" controls:Icon.Glyph="&#xE73E;"/>
                     </WrapPanel>
                 </Grid>
                 </ScrollViewer>
@@ -493,15 +399,15 @@
                     <TextBlock Text="{loc:Loc ScopeQuestion}" FontSize="{DynamicResource AppFont22}" FontWeight="SemiBold" Margin="0,0,0,24" AutomationProperties.HeadingLevel="Level1"/>
                     <CheckBox x:Name="CurrentUserScopeCheckBox" Content="{loc:Loc UserScope}" IsChecked="{Binding CurrentUserScope}" FontWeight="SemiBold"
                                  AutomationProperties.AutomationId="CurrentUserScope" Margin="0,0,0,6"/>
-                    <TextBlock Text="{loc:Loc UserScopeHelp}" Foreground="{DynamicResource MutedBrush}" Margin="22,0,0,20"/>
+                    <TextBlock Text="{loc:Loc UserScopeHelp}" Foreground="{DynamicResource MutedBrush}" Margin="32,0,0,20"/>
                     <CheckBox Content="{loc:Loc MachineScope}" IsChecked="{Binding MachineScope}" FontWeight="SemiBold"
                                  AutomationProperties.AutomationId="MachineScope" Margin="0,0,0,6"/>
-                    <TextBlock Text="{loc:Loc MachineScopeHelp}" Foreground="{DynamicResource MutedBrush}" Margin="22,0,0,20"/>
+                    <TextBlock Text="{loc:Loc MachineScopeHelp}" Foreground="{DynamicResource MutedBrush}" Margin="32,0,0,20"/>
                     <TextBlock Text="{loc:Loc ConsentHelp}"
                                Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,24"/>
                         <WrapPanel HorizontalAlignment="Right">
-                        <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" ToolTip="F1" AutomationProperties.AutomationId="ScopeHelpMe"/>
-                        <Button Content="{loc:Loc UseScope}" Command="{Binding ConfirmScopeCommand}" Style="{StaticResource PrimaryButton}"
+                        <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" ToolTip="F1" Style="{StaticResource HelpButton}" controls:Icon.Glyph="&#xE897;" AutomationProperties.AutomationId="ScopeHelpMe"/>
+                        <Button Content="{loc:Loc UseScope}" Command="{Binding ConfirmScopeCommand}" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE73E;"
                             AutomationProperties.AutomationId="ConfirmScope"/>
                         </WrapPanel>
                 </StackPanel>

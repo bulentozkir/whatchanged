@@ -12,7 +12,7 @@ App names, names you type, paths, IDs and original values no dey translate. JSON
 
 Open Settings for menu. Preferences dey save for the history folder wey you dey use and return when you reopen app.
 
-- Appearance get Light/Dark theme, font and separate colours for app text, labels, button background and button text. Named colour samples get Default, Navy, Forest green, Maroon and Purple. Default return that part to theme colour. Windows high contrast get priority; main action buttons keep text wey contrast well.
+- Appearance get Light/Dark theme, font and separate colours for app text, labels, button background and button text. Named colour samples get Default, Navy, Forest green, Maroon and Purple. Default return that part to theme colour. Windows high contrast get priority; main action buttons keep text wey contrast well. If you never save any choice, Dark na the default. Buttons get clear order: the main check na teal, delete actions na red, and all other commands na neutral with colour-coded icon (like Report, Change wetin to check and Help me). Dropdowns, checkboxes and switches use accent colour for the arrow, tick and focus border. Settings sections show for columns, so the page fit one screen most times without scrolling.
 - Automatic snapshots default na every 4 hours; saved choices, including Off, remain. Choose every 15 minutes, 1 hour, 4 hours, 6 hours, day or week, or Off for manual checks only. Checks work only while app dey open, including for tray, with normal access and cancellation. After scope confirmation, first or overdue check fit run for next minute check; later checks follow the interval. E no ask admin, wake sleeping PC or replay all missed intervals.
 - Retention default na 30 days; saved choices, including Forever, remain. Choose 30, 90, 180 or 365 days, or Forever. Cleanup removes only old snapshots wey no get name and no be reference. E run when e first due, then daily while app dey open and after successful automatic checks, even if automatic snapshots dey Off. Named checkpoints and all scope/access references dey protected.
 - Start when you sign in dey optional and Off by default. E include sign-in after restart, no collection before sign-in. Only this app own per-user startup entry go change; no service or boot task, no other app or policy change. If registration fail, old choice remain.
@@ -41,7 +41,7 @@ Changing mode no collect, raise permission, move reference or charge extra. Plan
 
 Current user get your app registrations, Run/RunOnce, defaults, sound, proxy and PATH. Computer get shared registrations, services, tasks, updates, drivers, firewall, DNS/DHCP and machine PATH. App no load other people private profiles.
 
-If both dey selected, app read each part separately and save one combined snapshot. Only computer part fit use admin after explicit request. User part stay with original normal user. App respect old saved choices and sources per scope.
+If both dey selected, app read each part separately with normal access under your own account and save one combined snapshot. No scope get administrator rights. App respect old saved choices and sources per scope.
 
 ## Dates and observations
 
@@ -57,13 +57,15 @@ Pick earlier date and snapshot, then Saved snapshot and later date/snapshot. Com
 
 Choose earlier snapshot and Today. Check now make fresh observation and compare exactly wetin you choose, no hidden switch to another reference. Panel go fold after success; you fit open am again.
 
-Admin reference no automatically raise permissions. Use separate admin action or only current state. Cancel stop capture and keep previous history. Close allow collection continue for tray; tray Exit cancel am and quit app.
+Snapshot wey old version save with administrator access no fit be reference for new check, because checks always use normal access. Choose normal-access snapshot or Only current state. Two saved snapshots still fit compare with each other. Cancel stop capture and keep previous history. Close allow collection continue for tray; tray Exit cancel am and quit app.
 
 ## Administrator access
 
-Many machine settings dey readable with normal access. Protected sources remain visible gaps. Admin action need your click, app confirmation wey default to No, and Windows UAC permission for one check.
+ChangeTracker no ever ask for administrator access. Every check, whether by hand or automatic, dey run with normal Windows permissions for both scopes, so Windows no show UAC prompt for check. No administrator mode, no elevated helper, no background service.
 
-Main window stay normal. Temporary read-only helper checks machine part, no permanent service or permission. If you refuse, history/reference no change. No share passwords or disable organisation policy. If UAC don show, answer am for Windows; app Cancel no fit dismiss secure desktop.
+Plenty whole-computer settings dey readable with normal access. If source get wetin normal permissions no fit read, app report that source as incomplete (e dey coverage details and never suggest removal) instead of elevation. Starting ChangeTracker with “Run as administrator” no dey supported: app go show message and close; open am normally.
+
+Snapshots wey old version save with administrator access stay for history: you fit view them, compare them with each other, and include them for reports, but dem no fit be earlier snapshot for new check; choose normal-access snapshot or “Only current state”. MSI install needs administrator approval from Windows (installation only, no be checks); Microsoft Store package installs without am. Never share administrator password.
 
 ## Understand full details
 
@@ -121,7 +123,7 @@ Size na total of `history.db`, `history.db-wal` and `history.db-shm` when dem de
 
 Size update when history refresh after capture, delete or cleanup; e no monitor disk all the time. Size no dey available no mean zero. Deleting fit leave reusable space without shrinking files; empty history still get overhead. App no compact database automatically. No delete database or temporary files while app dey run.
 
-History format 2 keep old records as mixed scope and block old readers. Helper get fixed categories and temporary key only, no history path or arbitrary command. Only normal UI save data. MSIX data lifecycle still need separate testing.
+History format 2 keep old records as mixed scope and block old readers. Only normal-access UI save history. MSIX data lifecycle still need separate testing.
 
 ## Accessibility
 
@@ -143,10 +145,10 @@ Headings get levels for screen-reader navigation. Opening details move focus ins
 
 Empty date: choose another observation. Comparison refused: check order, scope/access. Partial source no mean removal. Old report: run new selection first. Database no open: check space, rights and version before deleting anything.
 
-For support share reviewed report and app/Windows versions, no password, raw database or comparison key. If you deny admin, normal check still works.
+Some whole-computer settings need administrator rights; ChangeTracker report them as incomplete instead of asking for elevation, and other sources still compare. For support share reviewed report and app/Windows versions, no password, raw database or comparison key.
 
 ## Release status
 
 Preview get 11 limited categories, manual or optional scheduled checks and retention rules. No continuous event monitor, notifications or complete timeline. Collection uses resources; no promise of zero CPU.
 
-Local x64 MSI/MSIX no signed. MSI install needs separate approval; no install both formats together. Real UAC, different admin account, Windows 10/ARM64, install/update/remove and Store `allowElevation` approval still pending. Source change no automatically rebuild old releases. Logos no replace real screenshots or certification.
+Local release get x64 and ARM64 MSI installers plus x64 MSIX bundle, all unsigned. MSI installation needs administrator approval, but installed app always runs with normal permissions. Signing, Store certification, Windows 10/ARM64 qualification, and install/upgrade/uninstall qualification still pending. Source change no automatically rebuild old releases. Logos no replace real screenshots or certification.

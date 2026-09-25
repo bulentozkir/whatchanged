@@ -1,8 +1,4 @@
 using System.Security.Cryptography;
-using System.Buffers.Binary;
-using System.IO.Pipes;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using PCChangeTracker.App;
 using PCChangeTracker.Core;
 using PCChangeTracker.Windows;
@@ -12,31 +8,28 @@ namespace PCChangeTracker.Tests;
 
 public sealed class ScopeAndCaptureTests
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void CombinedCaptureKeepsUserUnelevatedAndBothInventories(bool machineElevated)
+    [Fact]
+    public void CombinedCaptureKeepsBothInventoriesAndRejectsElevatedObservations()
     {
-        static Snapshot Fixture(CollectionScope scope, bool elevated)
+        static Snapshot Fixture(CollectionScope scope)
         {
             var now = DateTimeOffset.UtcNow;
             return new Snapshot(Guid.NewGuid(), now, now, Enum.GetValues<Category>().Select(category =>
                 new CollectionResult(category, PCChangeTracker.Windows.CollectorCatalog.Supports(category, scope) ? CollectionStatus.Success : CollectionStatus.Disabled,
                     now, now, category == Category.Applications ? [new(scope.ToString(), scope.ToString(), new())] : [])).ToArray())
-                    { Scope = scope, Elevated = elevated };
+                    { Scope = scope };
         }
-        var user = Fixture(CollectionScope.CurrentUser, false);
-        var machine = Fixture(CollectionScope.Machine, machineElevated);
+        var user = Fixture(CollectionScope.CurrentUser);
+        var machine = Fixture(CollectionScope.Machine);
         var combined = CaptureService.Combine(user, machine);
         Assert.Equal(CollectionScope.Both, combined.Scope);
-        Assert.Equal(machineElevated, combined.Elevated);
+        Assert.False(combined.Elevated);
         Assert.Equal(2, combined.Results.Single(result => result.Category == Category.Applications).Items.Count);
         Assert.All(combined.Results, result => Assert.Equal(CollectionStatus.Success, result.Status));
         Assert.Throws<InvalidDataException>(() => CaptureService.Combine(user with { Elevated = true }, machine));
+        Assert.Throws<InvalidDataException>(() => CaptureService.Combine(user, machine with { Elevated = true }));
         var partial = machine with { Results = machine.Results.Select(result => result.Category == Category.Applications ? result with { Status = CollectionStatus.Failed, Items = [] } : result).ToArray() };
         Assert.Equal(CollectionStatus.Partial, CaptureService.Combine(user, partial).Results.Single(result => result.Category == Category.Applications).Status);
-        CaptureService.ValidateRequest(CollectionScope.Both, true);
-        CaptureService.ValidateRequest(CollectionScope.Both, false);
     }
 
     [Fact]
@@ -89,7 +82,7 @@ public sealed class ScopeAndCaptureTests
             store.Save(baseline);
             store.Save(reference);
             var service = new RecordingCaptureService();
-            var model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            var model = new MainViewModel(store, service, directory);
             model.BeforeDate = reference.FinishedAt.ToLocalTime().Date;
             Assert.Equal(reference.Id, model.CompareFrom!.Id);
             Assert.Empty(service.Requests);
@@ -154,7 +147,7 @@ public sealed class ScopeAndCaptureTests
             store.Save(user);
             store.Save(machine);
             var service = new RecordingCaptureService();
-            var model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            var model = new MainViewModel(store, service, directory);
             model.BeforeDate = user.StartedAt.AddDays(-5).ToLocalTime().Date;
             Assert.Empty(model.BeforeSnapshots);
             Assert.Null(model.CompareFrom);
@@ -189,8 +182,7 @@ public sealed class ScopeAndCaptureTests
         {
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
             var service = new RecordingCaptureService();
-            var confirmations = 0;
-            var model = new MainViewModel(store, service, directory, () => { confirmations++; return true; });
+            var model = new MainViewModel(store, service, directory);
             Assert.True(model.ChoosingScope);
             Assert.True(model.CurrentUserScope);
             Assert.True(model.MachineScope);
@@ -203,11 +195,9 @@ public sealed class ScopeAndCaptureTests
             model.ConfirmScopeCommand.Execute(null);
             Assert.Equal("Machine", store.GetPreference("collection.scope"));
             Assert.Empty(service.Requests);
-            Assert.Equal(0, confirmations);
             await model.CaptureCommand.ExecuteAsync(null);
-            Assert.Equal((CollectionScope.Machine, false), Assert.Single(service.Requests));
-            Assert.Equal(0, confirmations);
-            var reopened = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("Unexpected consent prompt."));
+            Assert.Equal(CollectionScope.Machine, Assert.Single(service.Requests));
+            var reopened = new MainViewModel(store, service, directory);
             Assert.False(reopened.ChoosingScope);
             Assert.True(reopened.MachineScope);
             Assert.Single(service.Requests);
@@ -217,60 +207,86 @@ public sealed class ScopeAndCaptureTests
     }
 
     [Fact]
-    public async Task AdministratorConsentIsOneCheckOnlyAndDenialPreservesHistory()
+    public async Task ElevatedSnapshotsFromEarlierVersionsStayBrowsableButNeverSeedNewChecks()
     {
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
         try
         {
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
             store.SetPreference("collection.scope", "Machine");
+            store.SetPreference("schedule.interval", "Off");
+            var elevatedBefore = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-3), "before") with { Scope = CollectionScope.Machine, Elevated = true };
+            var elevatedAfter = ComparisonSnapshot(DateTimeOffset.Now.AddDays(-1), "after") with { Scope = CollectionScope.Machine, Elevated = true };
+            store.Save(elevatedBefore);
+            store.Save(elevatedAfter);
             var service = new RecordingCaptureService();
-            var consent = false;
-            var confirmations = 0;
-            var model = new MainViewModel(store, service, directory, () => { confirmations++; return consent; });
-            await model.CaptureAsAdministratorCommand.ExecuteAsync(null);
-            Assert.Empty(service.Requests);
-            Assert.Empty(store.List());
-            consent = true;
-            service.DenyAdministrator = true;
-            await model.CaptureAsAdministratorCommand.ExecuteAsync(null);
-            Assert.Empty(store.List());
-            Assert.Null(store.GetBaselineId(CollectionScope.Machine, true));
-            Assert.Contains("not granted", model.Status);
-            service.DenyAdministrator = false;
-            await model.CaptureAsAdministratorCommand.ExecuteAsync(null);
-            Assert.True(store.Load(Assert.Single(store.List()).Id)!.Elevated);
+            model = new MainViewModel(store, service, directory);
+            model.CompareFrom = model.Snapshots.Single(snapshot => snapshot.Id == elevatedBefore.Id);
+            Assert.Equal(model.Texts["ReferenceMismatch"], model.ComparisonSelectionIssue);
             await model.CaptureCommand.ExecuteAsync(null);
-            Assert.False(service.Requests[^1].Elevated);
-            Assert.Equal(3, confirmations);
-            Assert.Equal(2, store.List().Count);
+            Assert.Equal(model.Texts["ReferenceMismatch"], model.Status);
+            Assert.Empty(service.Requests);
+            model.CompareWithToday = false;
+            model.CompareTo = model.Snapshots.Single(snapshot => snapshot.Id == elevatedAfter.Id);
+            await model.CaptureCommand.ExecuteAsync(null);
+            Assert.True(model.HasComparison);
+            Assert.Empty(service.Requests);
+            model.CompareWithToday = true;
+            model.CurrentStateOnlyCommand.Execute(null);
+            await model.CaptureCommand.ExecuteAsync(null);
+            Assert.Equal(CollectionScope.Machine, Assert.Single(service.Requests));
+            var saved = store.List().Where(snapshot => snapshot.Id != elevatedBefore.Id && snapshot.Id != elevatedAfter.Id).Select(snapshot => store.Load(snapshot.Id)!).ToArray();
+            Assert.False(Assert.Single(saved).Elevated);
             Assert.NotNull(store.GetBaselineId(CollectionScope.Machine));
-            Assert.NotNull(store.GetBaselineId(CollectionScope.Machine, true));
-            model.CurrentUserScope = true;
-            model.MachineScope = false;
-            Assert.False(model.CaptureAsAdministratorCommand.CanExecute(null));
-            await model.CaptureAsAdministratorCommand.ExecuteAsync(null);
-            Assert.Equal(3, confirmations);
+            Assert.Equal(elevatedBefore.Id, store.GetBaselineId(CollectionScope.Machine, true));
         }
-        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+        finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
     private sealed class RecordingCaptureService : ICaptureService
     {
-        public List<(CollectionScope Scope, bool Elevated)> Requests { get; } = [];
-        public bool DenyAdministrator { get; set; }
+        public List<CollectionScope> Requests { get; } = [];
         public Func<CancellationToken, Task<Snapshot>>? CaptureResult { get; set; }
 
         public Task<Snapshot> CaptureAsync(IReadOnlySet<Category> enabled, IProgress<string> progress, CancellationToken cancellationToken,
-            CollectionScope scope = CollectionScope.CurrentUser, bool requestAdministratorAccess = false)
+            CollectionScope scope = CollectionScope.CurrentUser)
         {
-            Requests.Add((scope, requestAdministratorAccess));
-            if (requestAdministratorAccess && DenyAdministrator) throw new CaptureAccessException("Administrator access was not granted.");
+            Requests.Add(scope);
             if (CaptureResult is not null) return CaptureResult(cancellationToken);
             var now = DateTimeOffset.UtcNow;
             return Task.FromResult(new Snapshot(Guid.NewGuid(), now, now,
                 enabled.Select(category => new CollectionResult(category, CollectionStatus.Success, now, now, [])).ToArray())
-                { Scope = scope, Elevated = requestAdministratorAccess });
+                { Scope = scope });
+        }
+    }
+
+    [Theory]
+    [InlineData(null, "Dark")]
+    [InlineData("unknown", "Dark")]
+    [InlineData("Dark", "Dark")]
+    [InlineData("Light", "Light")]
+    public void ThemeDefaultsToDarkAndHonorsSavedPreferences(string? savedTheme, string expectedTheme)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            if (savedTheme is not null) store.SetPreference("theme", savedTheme);
+            var service = new RecordingCaptureService();
+            model = new MainViewModel(store, service, directory);
+            Assert.Equal(expectedTheme, model.SelectedTheme);
+            Assert.Equal(expectedTheme, PCChangeTracker.App.Appearance.ThemeOrDefault(savedTheme));
+            Assert.Equal(savedTheme, store.GetPreference("theme"));
+            Assert.All(model.ButtonColors.Where(choice => choice.Code != "ButtonColorDefault"),
+                choice => Assert.Equal(PCChangeTracker.App.Appearance.ColorForChoice(expectedTheme, choice.Code, true), choice.Swatch!.Color));
+            Assert.Empty(service.Requests);
+        }
+        finally
+        {
+            model?.StopBackgroundWork();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
         }
     }
 
@@ -393,7 +409,7 @@ public sealed class ScopeAndCaptureTests
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
             store.SetPreference("collection.scope", scope.ToString());
             var service = new RecordingCaptureService();
-            model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            model = new MainViewModel(store, service, directory);
             Assert.Equal("Every4Hours", model.SelectedScheduleInterval);
             var lastRunKey = $"schedule.lastRun.{scope}";
             store.SetPreference(lastRunKey, DateTimeOffset.UtcNow.AddMinutes(-239).ToString("O"));
@@ -402,7 +418,7 @@ public sealed class ScopeAndCaptureTests
             store.SetPreference(lastRunKey, DateTimeOffset.UtcNow.AddMinutes(-241).ToString("O"));
             await model.CheckScheduleAsync();
             await model.CheckScheduleAsync();
-            Assert.Equal((scope, false), Assert.Single(service.Requests));
+            Assert.Equal(scope, Assert.Single(service.Requests));
             Assert.Single(store.List());
         }
         finally
@@ -430,14 +446,14 @@ public sealed class ScopeAndCaptureTests
             store.Save(baseline);
             store.Save(reference);
             var service = new RecordingCaptureService();
-            model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            model = new MainViewModel(store, service, directory);
             model.CompareFrom = model.Snapshots.Single(snapshot => snapshot.Id == reference.Id);
             await model.CheckScheduleAsync();
             Assert.Empty(service.Requests);
             model.SelectedScheduleInterval = "EveryHour";
             await model.CheckScheduleAsync();
             await model.CheckScheduleAsync();
-            Assert.Equal((scope, false), Assert.Single(service.Requests));
+            Assert.Equal(scope, Assert.Single(service.Requests));
             Assert.Equal(reference.Id, model.CompareFrom!.Id);
             Assert.Equal(baseline.Id, store.GetBaselineId(scope));
             model.CurrentStateOnlyCommand.Execute(null);
@@ -534,7 +550,7 @@ public sealed class ScopeAndCaptureTests
             foreach (var pair in pairs) { store.Save(pair.Before); store.Save(pair.After); }
             var reopenedStore = new HistoryStore(Path.Combine(directory, "history.db"));
             var service = new RecordingCaptureService();
-            model = new MainViewModel(reopenedStore, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            model = new MainViewModel(reopenedStore, service, directory);
             Assert.Equal(pairs.Length * 2, model.Snapshots.Count);
             foreach (var pair in pairs)
             {
@@ -569,7 +585,7 @@ public sealed class ScopeAndCaptureTests
             var service = new RecordingCaptureService();
             var registrations = new List<bool>();
             model = new MainViewModel(store, service, directory, setStartupEnabled: enabled => { registrations.Add(enabled); return true; });
-            model.SelectedTheme = "Dark";
+            model.SelectedTheme = "Light";
             model.SelectedFont = "Calibri";
             model.SelectedTextSize = 150;
             model.SelectedButtonTextColor = "ButtonColorForest";
@@ -580,7 +596,7 @@ public sealed class ScopeAndCaptureTests
             model.SelectedRetention = "Retain90Days";
             model.StartWithWindows = true;
             reopened = new MainViewModel(store, service, directory, setStartupEnabled: _ => throw new InvalidOperationException("Do not register on load."));
-            Assert.Equal("Dark", reopened.SelectedTheme);
+            Assert.Equal("Light", reopened.SelectedTheme);
             Assert.Equal("Calibri", reopened.SelectedFont);
             Assert.Equal(150, reopened.SelectedTextSize);
             Assert.Equal("ButtonColorForest", reopened.SelectedButtonTextColor);
@@ -644,7 +660,7 @@ public sealed class ScopeAndCaptureTests
             store.SetPreference("schedule.interval", "Off");
             store.SetPreference("retention", "Forever");
             var service = new RecordingCaptureService();
-            model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            model = new MainViewModel(store, service, directory);
             Assert.Equal(savedScope is null, model.ChoosingScope);
             Assert.All(model.Sources, source =>
             {
@@ -659,7 +675,7 @@ public sealed class ScopeAndCaptureTests
             if (model.ChoosingScope) model.ConfirmScopeCommand.Execute(null);
             Assert.Empty(service.Requests);
             await model.CaptureCommand.ExecuteAsync(null);
-            Assert.Equal((model.SelectedScope, false), Assert.Single(service.Requests));
+            Assert.Equal(model.SelectedScope, Assert.Single(service.Requests));
             var snapshot = store.Load(Assert.Single(store.List()).Id)!;
             Assert.Equal(model.Sources.Where(source => source.Available).Select(source => source.Category).Order(),
                 snapshot.Results.Select(result => result.Category).Order());
@@ -782,7 +798,7 @@ public sealed class ScopeAndCaptureTests
         {
             var store = new HistoryStore(Path.Combine(directory, "history.db"));
             var service = new RecordingCaptureService();
-            var model = new MainViewModel(store, service, directory, () => throw new InvalidOperationException("No elevation expected."));
+            var model = new MainViewModel(store, service, directory);
             Assert.Equal(CollectionScope.Both, model.SelectedScope);
             Assert.True(model.CurrentUserScope);
             Assert.True(model.MachineScope);
@@ -797,7 +813,7 @@ public sealed class ScopeAndCaptureTests
             model.ConfirmScopeCommand.Execute(null);
             Assert.Equal("Both", store.GetPreference("collection.scope"));
             await model.CaptureCommand.ExecuteAsync(null);
-            Assert.Equal((CollectionScope.Both, false), Assert.Single(service.Requests));
+            Assert.Equal(CollectionScope.Both, Assert.Single(service.Requests));
             Assert.NotNull(store.GetBaselineId(CollectionScope.Both));
             Assert.Null(store.GetBaselineId(CollectionScope.CurrentUser));
             Assert.Null(store.GetBaselineId(CollectionScope.Machine));
@@ -806,92 +822,28 @@ public sealed class ScopeAndCaptureTests
     }
 
     [Fact]
-    public void ElevationRequiresMachineScopeAndUsesOnlyFixedArguments()
+    public void ChecksStartCollectorWorkersDirectlyWithoutElevation()
     {
-        Assert.Throws<ArgumentException>(() => CaptureService.ValidateRequest(CollectionScope.CurrentUser, true));
-        Assert.Throws<ArgumentException>(() => CaptureService.ValidateRequest(CollectionScope.Legacy, false));
-        CaptureService.ValidateRequest(CollectionScope.Machine, false);
-        CaptureService.ValidateRequest(CollectionScope.Machine, true);
-        var start = CollectorTransport.ElevationStartInfo(@"C:\Program Files\ChangeTracker\PCChangeTracker.exe", "example-pipe", 42);
-        Assert.True(start.UseShellExecute);
-        Assert.Equal("runas", start.Verb);
-        Assert.Equal(new[] { "--machine-check", "example-pipe", "42" }, start.ArgumentList);
-        Assert.False(start.RedirectStandardOutput);
+        Assert.Throws<ArgumentException>(() => CaptureService.ValidateRequest(CollectionScope.Legacy));
+        foreach (var scope in new[] { CollectionScope.CurrentUser, CollectionScope.Machine, CollectionScope.Both })
+            CaptureService.ValidateRequest(scope);
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        var start = new CaptureService(directory).WorkerStartInfo(Category.Services, CollectionScope.Machine);
+        Assert.False(start.UseShellExecute);
+        Assert.True(string.IsNullOrEmpty(start.Verb));
+        Assert.False(start.RedirectStandardInput);
+        Assert.True(start.RedirectStandardOutput);
+        Assert.Equal(new[] { "--collect", "Services", "--scope", "Machine", "--data-dir", directory }, start.ArgumentList.TakeLast(6));
+        Assert.DoesNotContain(start.ArgumentList, argument => argument is "--key-stdin" or "--machine-check");
     }
 
     [Fact]
-    public async Task CanceledAdministratorRequestStopsBeforeAnyLaunchOrDataAccess()
+    public async Task CollectorOutputIsBounded()
     {
-        using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            CollectorTransport.CaptureElevatedAsync("", new HashSet<Category> { Category.Services }, cancellation.Token));
-    }
-
-    [Fact]
-    public void ElevatedRequestRejectsUserSourcesInvalidKeysAndDuplicates()
-    {
-        var material = RandomNumberGenerator.GetBytes(32);
-        try
-        {
-            CollectorTransport.ValidateMachineRequest(new([Category.Services], material));
-            Assert.Throws<InvalidDataException>(() => CollectorTransport.ValidateMachineRequest(new([Category.DefaultApps], material)));
-            Assert.Throws<InvalidDataException>(() => CollectorTransport.ValidateMachineRequest(new([Category.Services, Category.Services], material)));
-            Assert.Throws<InvalidDataException>(() => CollectorTransport.ValidateMachineRequest(new([Category.Services], [])));
-            Assert.Throws<InvalidDataException>(() => CollectorTransport.ValidateMachineRequest(new([], material)));
-        }
-        finally { CryptographicOperations.ZeroMemory(material); }
-    }
-
-    [Fact]
-    public async Task CollectorProtocolRejectsOversizedAndTruncatedMessages()
-    {
-        using var oversized = new MemoryStream();
-        var header = new byte[4];
-        BinaryPrimitives.WriteInt32LittleEndian(header, 5000);
-        oversized.Write(header);
-        oversized.Position = 0;
-        await Assert.ThrowsAsync<InvalidDataException>(() => CollectorTransport.ReadAsync<MachineCaptureRequest>(oversized, 4096, CancellationToken.None));
-        using var truncated = new MemoryStream([10, 0, 0, 0, 123]);
-        await Assert.ThrowsAsync<EndOfStreamException>(() => CollectorTransport.ReadAsync<MachineCaptureRequest>(truncated, 4096, CancellationToken.None));
         using var text = new StreamReader(new MemoryStream(System.Text.Encoding.UTF8.GetBytes("too long")));
         await Assert.ThrowsAsync<InvalidDataException>(() => CollectorTransport.ReadTextAsync(text, 3, CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task CollectorPipeAllowsBoundedLocalRoundTripWithoutElevation()
-    {
-        var name = "PCChangeTracker.capture." + Guid.NewGuid().ToString("N");
-        using var server = CollectorTransport.CreateServer(name);
-        using var client = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var connected = server.WaitForConnectionAsync(deadline.Token);
-        await client.ConnectAsync(deadline.Token);
-        await connected;
-        var material = RandomNumberGenerator.GetBytes(32);
-        try
-        {
-            await CollectorTransport.WriteAsync(server, new MachineCaptureRequest([Category.Services], material), deadline.Token);
-            var request = await CollectorTransport.ReadAsync<MachineCaptureRequest>(client, 4096, deadline.Token);
-            Assert.Equal(material, request.ComparisonKey);
-            Assert.Equal(new[] { Category.Services }, request.Categories);
-            CryptographicOperations.ZeroMemory(request.ComparisonKey);
-        }
-        finally { CryptographicOperations.ZeroMemory(material); }
-    }
-
-    [Fact]
-    public void CollectorPipeAllowsAdministratorGenericReadWriteButNotPermissionChanges()
-    {
-        using var server = CollectorTransport.CreateServer("PCChangeTracker.capture." + Guid.NewGuid().ToString("N"));
-        var rules = server.GetAccessControl().GetAccessRules(true, false, typeof(SecurityIdentifier)).Cast<PipeAccessRule>().ToArray();
-        var administrators = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
-        var rule = Assert.Single(rules, entry => entry.IdentityReference.Equals(administrators) && entry.AccessControlType == AccessControlType.Allow);
-        var required = PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance | PipeAccessRights.Synchronize;
-        Assert.Equal(required, rule.PipeAccessRights & required);
-        Assert.Equal((PipeAccessRights)0, rule.PipeAccessRights & (PipeAccessRights.ChangePermissions | PipeAccessRights.TakeOwnership));
-        var network = new SecurityIdentifier(WellKnownSidType.NetworkSid, null);
-        Assert.Contains(rules, entry => entry.IdentityReference.Equals(network) && entry.AccessControlType == AccessControlType.Deny);
+        using var fits = new StreamReader(new MemoryStream(System.Text.Encoding.UTF8.GetBytes("fits")));
+        Assert.Equal("fits", await CollectorTransport.ReadTextAsync(fits, 4, CancellationToken.None));
     }
 
     [Theory]
@@ -950,7 +902,7 @@ public sealed class ScopeAndCaptureTests
     }
 
     [Fact]
-    public void TransferredComparisonKeyDoesNotNeedAnAdministratorProfile()
+    public void SuppliedComparisonKeyMaterialIsDeterministicAndValidated()
     {
         var material = RandomNumberGenerator.GetBytes(32);
         try

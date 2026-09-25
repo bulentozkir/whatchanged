@@ -12,7 +12,7 @@ Program adları, sizin yazdığınız nokta adları, yollar, kimlikler ve özgü
 
 Gezinme menüsünden **Ayarlar** bölümünü açın. Tercihler geçerli geçmiş klasörüne kaydedilir ve yeniden açılışta geri yüklenir.
 
-- Dil anında uygulanır. Görünüm bölümünde açık/koyu tema, yazı tipi ve uygulama metni, etiketler, düğme arka planı ile düğme metni için bağımsız renkler vardır. Adlandırılmış renk örnekleri varsayılan, lacivert, orman yeşili, bordo ve mordur. Varsayılan, o öğenin tema rengini geri getirir; Windows yüksek karşıtlık renkleri önceliklidir.
+- Dil anında uygulanır. Görünüm bölümünde açık/koyu tema, yazı tipi ve uygulama metni, etiketler, düğme arka planı ile düğme metni için bağımsız renkler vardır. Adlandırılmış renk örnekleri varsayılan, lacivert, orman yeşili, bordo ve mordur. Varsayılan, o öğenin tema rengini geri getirir; Windows yüksek karşıtlık renkleri önceliklidir. Kayıtlı bir seçim yoksa koyu tema varsayılandır. Düğmeler net bir hiyerarşi izler: ana kontrol turkuaz, silme işlemleri kırmızıdır; diğer komutlar renkli bir simgeyle nötrdür (ör. Rapor, Kapsamı değiştir ve Yardım). Açılır listeler, onay kutuları ve anahtarlar ok, onay işareti ve odak çerçevesi için vurgu rengini kullanır. Ayarlar bölümleri sütunlarda görünür, bu yüzden sayfa genellikle kaydırmadan tek ekrana sığar.
 - Otomatik görüntü alma varsayılanı her 4 saatte birdir; Kapalı dahil kayıtlı seçimler korunur. Aralıklar 15 dakika, 1 saat, 4 saat, 6 saat, günlük veya haftalıktır; yalnızca elle kontrol için Kapalı seçin. Uygulama açıkken, tepside de normal yetkiyle çalışır ve iptal edilebilir. Kapsam onayından sonra ilk veya gecikmiş kontrol bir sonraki dakika denetiminde yapılabilir; sonraki kontroller seçilen aralıktadır. Yönetici izni istemez, bilgisayarı uyandırmaz ve kaçırılan aralıkları tekrarlamaz.
 - Saklama varsayılanı 30 gündür; süresiz dahil kayıtlı seçimler korunur. 30, 90, 180 veya 365 gün ya da süresiz seçilebilir. Yalnızca eski, adsız ve referans olmayan görüntüler silinir. Temizlik ilk zamanı geldiğinde, ardından uygulama açıkken günlük ve başarılı otomatik kontrollerden sonra çalışır; görüntü sıklığı kapalı olsa da işler. Adlandırılmış noktalar ve tüm kapsam/erişim referansları korunur.
 - Oturum açılışında başlatma isteğe bağlı ve varsayılan olarak kapalıdır. Yeniden başlatmadan sonraki oturum açılışını da kapsar; oturum öncesi toplama yapmaz. Yalnızca uygulamanın kendi kullanıcı başlangıç kaydı değişir; hizmet veya açılış görevi kurulmaz, başka uygulama ya da ilkeye dokunulmaz. Başarısız kayıt önceki seçimi korur.
@@ -41,7 +41,7 @@ Mod değiştirmek toplamaz, yetki yükseltmez, referansı değiştirmez ve ek ü
 
 Kullanıcı kapsamı kendi uygulama kayıtları, Run/RunOnce, varsayılanlar, ses, proxy ve PATH'i içerir. Bilgisayar kapsamı ortak kayıtlar, hizmetler, görevler, güncellemeler, sürücüler, güvenlik duvarı, DNS/DHCP ve makine PATH'ini içerir. Başkalarının özel profilleri yüklenmez.
 
-İki kutu seçilince parçalar ayrı okunur ve birleşik görüntüye kaydedilir. Yalnızca makine kısmı açık istekle yönetici olabilir. Kullanıcı kısmı özgün normal hesapta kalır. Kaydedilmiş kapsam ve kaynak tercihleri korunur.
+İki kutu seçilince parçalar ayrı okunur ve birleşik görüntüye kaydedilir. İki kapsam da kendi hesabınız altında standart erişim kullanır. Kaydedilmiş kapsam ve kaynak tercihleri korunur.
 
 ## Tarihler ve gözlemler
 
@@ -57,14 +57,19 @@ Görüntü olmayan gün yeniden oluşturulamaz; en yakın tarih sessizce seçilm
 
 Önceki görüntüyü ve Bugün'ü seçin. Şimdi kontrol et yeni gözlem oluşturur ve tam seçtiğiniz kayıtla karşılaştırır; başka referansa gizlice geçmez. Başarılı işlemden sonra panel kapanır, tekrar açılabilir.
 
-Yönetici referansı otomatik yetki yükseltmez. Ayrı yönetici kontrolünü kullanın veya yalnızca mevcut durum alın. İptal etkin kontrolü durdurur; eski geçmiş korunur. Kapat toplamayı tepside sürdürür; tepside Çıkış iptal edip sonlandırır.
+Önceki görüntü eski bir sürümde yönetici erişimiyle kaydedildiyse yeni bir kontrol için referans olamaz, çünkü kontroller her zaman standart erişim kullanır. Standart erişimli bir görüntü seçin veya **Yalnızca mevcut durum** kullanın. İki kayıtlı görüntü yine karşılaştırılabilir. İptal etkin kontrolü durdurur; eski geçmiş korunur. Kapat toplamayı tepside sürdürür; tepside Çıkış iptal edip sonlandırır.
 
 ## Yönetici erişimi
 
-Birçok makine ayarı normal izinle okunur; korumalı alanlar eksik kapsam olarak görünür. Yönetici eylemi açık tıklama, varsayılanı Hayır olan onay ve tek kontrol için Windows UAC izni gerektirir.
+ChangeTracker hiçbir zaman yönetici erişimi istemez. Elle veya otomatik her kontrol, iki kapsamda da standart Windows izinlerinizle çalışır; bu yüzden Windows bir kontrol için asla UAC istemi göstermez. Yönetici modu, yükseltilmiş yardımcı veya arka plan hizmeti yoktur.
 
-Ana pencere normal kalır. Geçici salt okunur yardımcı makineyi kontrol eder; hizmet kurmaz, kalıcı izin bırakmaz. Reddetmek geçmişi veya referansı değiştirmez. Parola paylaşmayın, cihaz ilkelerini kapatmayın. Açık UAC istemini uygulama kapatamaz; Windows'ta yanıtlayın.
+Makine genelindeki birçok ayar standart izinlerle okunabilir. Bir kaynak bu izinlerin okuyamadığı bir şey içerirse ChangeTracker izin yükseltmek yerine o kaynağı eksik bildirir. Eksik kaynaklar kapsam ayrıntılarında listelenir ve hiçbir zaman kaldırma önermez.
 
+ChangeTracker'ı **Yönetici olarak çalıştır** ile başlatmak desteklenmez: uygulama bir ileti gösterip kapanır. Normal şekilde açın.
+
+Eski bir sürümün yönetici erişimiyle kaydettiği görüntüler geçmişte kalır. Bunları görüntüleyebilir, birbirleriyle karşılaştırabilir ve raporlara ekleyebilirsiniz; ancak yeni bir kontrol için önceki görüntü olamazlar, çünkü yeni kontroller her zaman standart erişim kullanır. Standart erişimli bir görüntü seçin veya **Yalnızca mevcut durum** seçeneğini kullanın.
+
+MSI kurulumu Windows'tan yönetici onayı gerektirir; bu onay yalnızca kurulum içindir, ChangeTracker kontrolleri için değildir. Microsoft Store paketi onsuz kurulur. Yönetici parolasını asla paylaşmayın.
 ## Değişiklik ayrıntıları
 
 Eklendi, Kaldırıldı ve Değiştirildi gözlenen uçları açıklar; yapan kişiyi, kesin zamanı veya nedeni kanıtlamaz. Önemli/İncele önceliktir, zararlı yazılım kararı değildir. Olağan/beklenen ve etkisi bilinmeyen değişiklikler ayrı gruplardadır. Başlık etkin filtreyi sayar; Tümünü göster ilk üçün devamını açar.
@@ -121,7 +126,7 @@ Boyut, varsa `history.db`, `history.db-wal` ve `history.db-shm` dosyalarını to
 
 Değer toplama, silme veya temizlikten sonra geçmiş yenilendiğinde güncellenir; sürekli disk izlemesi değildir. Boyut alınamıyor, sıfır anlamına gelmez. Silme dosyayı küçültmeden yeniden kullanılabilir alan bırakabilir; boş geçmiş de yer kaplar. Otomatik veritabanı sıkıştırması yapılmaz. Uygulama çalışırken veritabanını veya geçici dosyalarını silmeyin.
 
-Geçmiş biçimi 2 eski kayıtları karma olarak korur ve eski okuyucuları engeller. Yardımcı yalnızca kategori ve geçici anahtar alır; geçmiş yolu veya serbest komut almaz. Normal arayüz kaydeder. MSIX veri yaşam döngüsü ayrıca test edilmelidir.
+Geçmiş biçimi 2 eski kayıtları karma olarak korur ve eski okuyucuları engeller. Yayınlanmamış bir derlemeyi kullanmadan önce önemli verileri yedekleyin. MSIX veri yönlendirme, sıfırlama ve kaldırma davranışları ayrıca test edilmelidir; yaşam döngüsünün MSI derlemesiyle aynı olduğunu varsaymayın.
 
 ## Erişilebilirlik
 
@@ -143,10 +148,10 @@ Başlıklar ekran okuyucu gezinmesine açıktır. Ayrıntılar açılınca odak 
 
 Boş tarih: başka gözlem seçin. Reddedilen karşılaştırma: sıra, kapsam, erişim kontrol edin. Kısmi kaynak silinme demek değildir. Eski rapor: yeni seçimi önce çalıştırın. Açılmayan veritabanı: silmeden önce alan, izin, sürüm kontrol edin.
 
-Destek için incelenmiş rapor ve uygulama/Windows sürümlerini paylaşın; parola, ham veritabanı, anahtar paylaşmayın. Yönetici iznini reddetmek normal kontrolü engellemez.
+Destek için incelenmiş rapor ve uygulama/Windows sürümlerini paylaşın; parola, ham veritabanı, anahtar paylaşmayın. Bazı makine geneli ayarlar yönetici hakları gerektirir; ChangeTracker yükseltme istemek yerine bunları eksik bildirir ve diğer kaynakları karşılaştırmaya devam eder.
 
 ## Yayın durumu
 
 11 sınırlı kategori, elle veya isteğe bağlı zamanlanmış kontroller ve saklama ayarları içeren önizlemedir. Sürekli olay izleme, bildirim ve tam zaman çizelgesi yoktur. Toplama kaynak kullanır; sıfır CPU sözü verilmez.
 
-Yerel x64 MSI/MSIX imzasızdır. MSI kurulumu ayrıca izin ister; iki biçimi birlikte kurmayın. Gerçek UAC, farklı yönetici hesabı, Windows 10/ARM64, kurulum ve Store `allowElevation` onayı beklemektedir. Kod değişince eski paket otomatik yenilenmez. Logolar gerçek ekran görüntülerinin veya sertifikasyonun yerine geçmez.
+Yerel sürüm x64 ve ARM64 MSI yükleyicileri ile x64 MSIX paketini içerir; hepsi imzasızdır. MSI kurulumu yönetici onayı gerektirir, ancak kurulu uygulama her zaman standart izinlerle çalışır. İmzalama, Store sertifikasyonu, Windows 10/ARM64 yeterliliği ve kurulum/yükseltme/kaldırma yeterliliği beklemektedir. Kod değişince eski paket otomatik yenilenmez. Logolar gerçek ekran görüntülerinin veya sertifikasyonun yerine geçmez.

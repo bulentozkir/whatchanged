@@ -5,48 +5,47 @@ using PCChangeTracker.Windows;
 
 namespace PCChangeTracker.App;
 
+/// <summary>
+/// Captures snapshots with the current user's default, unelevated security context only. Nothing here requests
+/// elevation: machine-wide sources are read with standard permissions, and whatever they cannot read is reported as incomplete.
+/// </summary>
 public interface ICaptureService
 {
     Task<Snapshot> CaptureAsync(IReadOnlySet<Category> enabled, IProgress<string> progress, CancellationToken cancellationToken,
-        CollectionScope scope = CollectionScope.Both, bool requestAdministratorAccess = false);
+        CollectionScope scope = CollectionScope.Both);
 }
 
 public sealed class CaptureService(string dataDirectory) : ICaptureService
 {
     public async Task<Snapshot> CaptureAsync(IReadOnlySet<Category> enabled, IProgress<string> progress, CancellationToken cancellationToken,
-        CollectionScope scope = CollectionScope.Both, bool requestAdministratorAccess = false)
+        CollectionScope scope = CollectionScope.Both)
     {
-        ValidateRequest(scope, requestAdministratorAccess);
+        ValidateRequest(scope);
         if (CollectorTransport.IsAdministrator)
-            throw new CaptureAccessException("Start ChangeTracker normally, not as administrator. Optional administrator access is limited to one requested check.");
+            throw new CaptureAccessException("Start ChangeTracker normally, not as administrator. Checks run only with standard Windows permissions.");
         cancellationToken.ThrowIfCancellationRequested();
         if (scope == CollectionScope.Both)
         {
-            var machine = requestAdministratorAccess
-                ? await CollectorTransport.CaptureElevatedAsync(dataDirectory, enabled, cancellationToken)
-                : await CaptureLocalAsync(enabled, CollectionScope.Machine, null, progress, cancellationToken);
+            var machine = await CaptureLocalAsync(enabled, CollectionScope.Machine, progress, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            var user = await CaptureLocalAsync(enabled, CollectionScope.CurrentUser, null, progress, cancellationToken);
+            var user = await CaptureLocalAsync(enabled, CollectionScope.CurrentUser, progress, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             return Combine(user, machine);
         }
-        return requestAdministratorAccess
-            ? await CollectorTransport.CaptureElevatedAsync(dataDirectory, enabled, cancellationToken)
-            : await CaptureLocalAsync(enabled, scope, null, progress, cancellationToken);
+        return await CaptureLocalAsync(enabled, scope, progress, cancellationToken);
     }
 
-    internal static void ValidateRequest(CollectionScope scope, bool requestAdministratorAccess)
+    internal static void ValidateRequest(CollectionScope scope)
     {
         if (scope is not CollectionScope.CurrentUser and not CollectionScope.Machine and not CollectionScope.Both)
             throw new ArgumentException("Choose current-user or machine-wide collection.");
-        if (requestAdministratorAccess && scope is not CollectionScope.Machine and not CollectionScope.Both)
-            throw new ArgumentException("Administrator access is only available for an explicit machine-wide check.");
     }
 
     internal static Snapshot Combine(Snapshot user, Snapshot machine)
     {
-        if (user.Scope != CollectionScope.CurrentUser || user.Elevated || machine.Scope != CollectionScope.Machine || user.SchemaVersion != machine.SchemaVersion)
-            throw new InvalidDataException("Combined checks require an unelevated user observation and a separate machine observation.");
+        if (user.Scope != CollectionScope.CurrentUser || user.Elevated || machine.Scope != CollectionScope.Machine || machine.Elevated ||
+            user.SchemaVersion != machine.SchemaVersion)
+            throw new InvalidDataException("Combined checks require separate unelevated user and machine observations.");
         var results = new List<CollectionResult>();
         foreach (var category in Enum.GetValues<Category>())
         {
@@ -65,10 +64,10 @@ public sealed class CaptureService(string dataDirectory) : ICaptureService
         }
         return new(Guid.NewGuid(), user.StartedAt < machine.StartedAt ? user.StartedAt : machine.StartedAt,
             user.FinishedAt > machine.FinishedAt ? user.FinishedAt : machine.FinishedAt, results)
-            { Scope = CollectionScope.Both, Elevated = machine.Elevated, SchemaVersion = user.SchemaVersion };
+            { Scope = CollectionScope.Both, SchemaVersion = user.SchemaVersion };
     }
 
-    internal async Task<Snapshot> CaptureLocalAsync(IReadOnlySet<Category> enabled, CollectionScope scope, byte[]? comparisonKey,
+    internal async Task<Snapshot> CaptureLocalAsync(IReadOnlySet<Category> enabled, CollectionScope scope,
         IProgress<string>? progress, CancellationToken cancellationToken)
     {
         var start = DateTimeOffset.UtcNow;
@@ -83,30 +82,24 @@ public sealed class CaptureService(string dataDirectory) : ICaptureService
                 continue;
             }
             progress?.Report("Checking " + descriptor.Name.ToLowerInvariant() + "...");
-            results.Add(await CollectAsync(descriptor.Category, scope, comparisonKey, cancellationToken));
+            results.Add(await CollectAsync(descriptor.Category, scope, cancellationToken));
         }
         cancellationToken.ThrowIfCancellationRequested();
-        return new(Guid.NewGuid(), start, DateTimeOffset.UtcNow, results) { Scope = scope, Elevated = CollectorTransport.IsAdministrator };
+        return new(Guid.NewGuid(), start, DateTimeOffset.UtcNow, results) { Scope = scope };
     }
 
-    private async Task<CollectionResult> CollectAsync(Category category, CollectionScope scope, byte[]? comparisonKey, CancellationToken cancellationToken)
+    private async Task<CollectionResult> CollectAsync(Category category, CollectionScope scope, CancellationToken cancellationToken)
     {
         var started = DateTimeOffset.UtcNow;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(25));
-        using var process = new Process { StartInfo = WorkerStartInfo(category, scope, comparisonKey is not null) };
+        using var process = new Process { StartInfo = WorkerStartInfo(category, scope) };
         try
         {
             if (!process.Start()) throw new InvalidOperationException("Collector could not start.");
             try { process.PriorityClass = ProcessPriorityClass.BelowNormal; } catch (System.ComponentModel.Win32Exception) { }
             var outputTask = CollectorTransport.ReadTextAsync(process.StandardOutput, 16_000_000, deadline.Token);
             var errorTask = CollectorTransport.ReadTextAsync(process.StandardError, 64_000, deadline.Token);
-            if (comparisonKey is not null)
-            {
-                await process.StandardInput.BaseStream.WriteAsync(comparisonKey, deadline.Token);
-                await process.StandardInput.BaseStream.FlushAsync(deadline.Token);
-                process.StandardInput.Close();
-            }
             await process.WaitForExitAsync(deadline.Token);
             var output = await outputTask;
             await errorTask;
@@ -132,13 +125,13 @@ public sealed class CaptureService(string dataDirectory) : ICaptureService
         }
     }
 
-    private ProcessStartInfo WorkerStartInfo(Category category, CollectionScope scope, bool keyFromInput)
+    /// <summary>Starts a collector worker directly (never through the shell), so it inherits this process's unelevated token.</summary>
+    internal ProcessStartInfo WorkerStartInfo(Category category, CollectionScope scope)
     {
         var executable = Environment.ProcessPath ?? throw new InvalidOperationException("Application path unavailable.");
         var info = new ProcessStartInfo(executable)
         {
-            UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
-            RedirectStandardInput = keyFromInput
+            UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
         };
         if (Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
             info.ArgumentList.Add(typeof(App).Assembly.Location);
@@ -146,12 +139,8 @@ public sealed class CaptureService(string dataDirectory) : ICaptureService
         info.ArgumentList.Add(category.ToString());
         info.ArgumentList.Add("--scope");
         info.ArgumentList.Add(scope.ToString());
-        if (keyFromInput) info.ArgumentList.Add("--key-stdin");
-        else
-        {
-            info.ArgumentList.Add("--data-dir");
-            info.ArgumentList.Add(dataDirectory);
-        }
+        info.ArgumentList.Add("--data-dir");
+        info.ArgumentList.Add(dataDirectory);
         return info;
     }
 }

@@ -1,13 +1,13 @@
 <Project Sdk="WixToolset.Sdk/5.0.2">
   <PropertyGroup>
-    <OutputName>ChangeTracker-$(Version)-x64</OutputName>
-    <InstallerPlatform>x64</InstallerPlatform>
+    <InstallerPlatform Condition="'$(InstallerPlatform)' == ''">x64</InstallerPlatform>
+    <OutputName>ChangeTracker-$(Version)-$(InstallerPlatform)</OutputName>
     <DefineConstants>$(DefineConstants);ProductVersion=$(Version)</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <BindPath Include="$(PublishDirectory)" BindName="Publish" />
   </ItemGroup>
   <Target Name="ValidatePublishDirectory" BeforeTargets="BeforeBuild">
-    <Error Condition="!Exists('$(PublishDirectory)\PCChangeTracker.exe')" Text="PublishDirectory must contain the self-contained x64 application." />
+    <Error Condition="!Exists('$(PublishDirectory)\PCChangeTracker.exe')" Text="PublishDirectory must contain the self-contained $(InstallerPlatform) application." />
   </Target>
 </Project>

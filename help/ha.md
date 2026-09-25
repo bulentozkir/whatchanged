@@ -12,7 +12,7 @@ Sunayen manhajoji, abin da ka rubuta, hanyoyi, ID da asalin ƙimomi ba sa fassar
 
 Buɗe Saituna daga menu. Ana adana zaɓuɓɓuka a babban fayil na tarihin yanzu, a dawo da su idan an sake buɗe manhajar.
 
-- Kamanni yana da jigon haske/duhu, nau'in rubutu, da launuka dabam na rubutun manhaja, lakabi, bangon maballi da rubutun maballi. Zaɓuɓɓukan launi suna da suna: Tsoho, Shuɗi mai duhu, Kore na daji, Ja mai duhu da Shuɗi-ja. Tsoho yana maido launin jigo. Babban bambancin launi na Windows yana da fifiko; manyan umarni suna riƙe rubutu mai bayyana.
+- Kamanni yana da jigon haske/duhu, nau'in rubutu, da launuka dabam na rubutun manhaja, lakabi, bangon maballi da rubutun maballi. Zaɓuɓɓukan launi suna da suna: Tsoho, Shuɗi mai duhu, Kore na daji, Ja mai duhu da Shuɗi-ja. Tsoho yana maido launin jigo. Babban bambancin launi na Windows yana da fifiko; manyan umarni suna riƙe rubutu mai bayyana. Idan ba a ajiye zaɓi ba, jigon duhu ne tsoho. Maballai suna da tsari bayyananne: babban dubawa launin shuɗi-kore ne, gogewa ja ne, duk sauran umarni kuwa na tsaka-tsaki ne tare da gunki mai launi (misali Rahoto, Canza yankin dubawa da Taimako). Jerin zaɓuɓɓuka, akwatunan duba da maɓallan kunnawa suna amfani da launi na musamman don kibiya, alamar zaɓi da iyakar mayar da hankali. Sassan Saituna suna bayyana a ginshiƙai, don haka shafin yakan dace a allo ɗaya ba tare da gungurawa ba.
 - Hotuna ta atomatik suna zuwa kowane awa 4 ta tsohuwa; ana kiyaye zaɓin da aka adana, har da A kashe. Zaɓi minti 15, awa 1, awa 4, awa 6, kullum ko kowane mako, ko A kashe don dubawa da hannu kawai. Suna aiki yayin da manhaja take gudana, har a tire, da izinin al'ada kuma ana iya sokewa. Bayan tabbatar da yanki, dubawa ta farko ko wadda ta makara na iya faruwa a dubawar minti na gaba; sauran suna bin lokacin da aka zaɓa. Ba sa neman shugaba, tada kwamfuta ko maimaita duk lokutan da suka wuce.
 - Ajiya ta tsohuwa kwana 30 ce; ana kiyaye zaɓin da aka adana, har da har abada. Zaɓi kwana 30, 90, 180 ko 365, ko har abada. Tsoffin hotuna marasa suna waɗanda ba tushe ba ne kawai ake gogewa. Ana tsaftacewa lokacin farko da ya dace, sannan kullum yayin da manhaja take aiki da bayan dubawar atomatik mai nasara, ko da hotunan atomatik a kashe suke. Wuraren dubawa masu suna da duk tushen kwatanci suna da kariya.
 - Farawa lokacin shiga Windows na zaɓi ne, a kashe da farko. Ya haɗa shiga bayan sake kunna kwamfuta, ba tarawa kafin shiga ba. Shigar farawa ta wannan manhaja ga mai amfani kawai ake canzawa; babu sabis ko aikin boot, babu canjin wasu manhajoji ko dokoki. Idan rajista ta kasa, tsohon zaɓi yana nan.
@@ -41,7 +41,7 @@ Sauyawa ba ya tarawa, ƙara izini ko motsa tushe. Farashin da aka tsara US$0.99 
 
 Mai amfani yana karanta nasa rajistar app, Run/RunOnce, tsoffin zaɓuɓɓuka, sauti, proxy da PATH. Kwamfuta tana karanta rajista ta gama-gari, sabis, ayyuka, updates, drivers, firewall, DNS/DHCP da machine PATH. Ba a buɗe sirrin sauran mutane ba.
 
-Idan duka an zaɓa, ana karanta su dabam sannan a haɗa cikin hoto ɗaya. Bangaren kwamfuta kawai zai iya amfani da shugaba bisa buƙatarka; mai amfani yana nan da asalin izini. Ana tuna zaɓin da ka riga ka adana.
+Idan duka an zaɓa, ana karanta su dabam da izinin yau da kullum na asusunka sannan a haɗa cikin hoto ɗaya. Babu wani yanki da ake ba izinin shugaba. Ana tuna zaɓin da ka riga ka adana.
 
 ## Ranaku da hotuna
 
@@ -57,13 +57,15 @@ Zaɓi ranar baya da hotonta, sai hoton da aka adana da ranar gaba. Kwatanci ba y
 
 Zaɓi tsohon hoto da Yau. Duba yanzu yana ɗaukar sabon yanayi ya kwatanta da abin da ka zaɓa, ba ya maye shi da wani tushe a ɓoye. Bayan nasara ana rufe panel; zaka iya buɗewa.
 
-Tushen shugaba ba ya ɗaga izini ta atomatik. Yi amfani da maɓallin shugaba dabam ko yanayin yanzu kawai. Soke yana tsayar da tarawa ya bar tarihi. Rufe yana barin tarawa ta ci gaba a tire; Fita a tire yana sokewa ya rufe manhajar.
+Hoton da tsohuwar siga ta adana da izinin shugaba ba zai zama tushe ga sabon dubawa ba, domin duk dubawa yanzu da izinin yau da kullum suke. Zaɓi hoton izinin yau da kullum ko Yanayin yanzu kawai. Hotuna biyu da aka adana har yanzu ana iya kwatanta su. Soke yana tsayar da tarawa ya bar tarihi. Rufe yana barin tarawa ta ci gaba a tire; Fita a tire yana sokewa ya rufe manhajar.
 
 ## Izinin shugaba
 
-Yawancin saitunan kwamfuta suna karantuwa da izinin al'ada. Waɗanda ba su karantu ba suna bayyana a matsayin gibi. Aikin shugaba yana buƙatar dannawa, tabbatarwa mai fara da A'a, da Windows UAC na dubawa ɗaya.
+ChangeTracker ba ya taɓa neman izinin shugaba. Kowane dubawa, na hannu ko atomatik, yana gudana da izinin Windows na yau da kullum a duk yankuna biyu, don haka Windows ba ya nuna saƙon UAC don dubawa. Babu yanayin shugaba, babu mai taimako mai ɗaga izini, babu sabis na baya.
 
-Babbar taga tana nan da izinin al'ada. Mai taimako na ɗan lokaci, karatu-kawai, yana duba kwamfuta; ba sabis ko izini na dindindin ba. Ƙin amincewa ba ya canza tarihi/tushe. Kada ka raba kalmar sirri ko kashe dokar tsaro. UAC da ya bayyana sai ka amsa a Windows.
+Yawancin saitunan kwamfuta gaba ɗaya suna karantuwa da izinin yau da kullum. Idan wani tushe yana da abin da wannan izini ba zai karanta ba, ana rahoto shi bai cika ba (a cikin cikakken iyaka, ba a taɓa ba da shawarar gogewa ba) maimakon ɗaga izini. Fara ChangeTracker da “Run as administrator” ba a tallafa ba: manhajar za ta nuna saƙo ta rufe; buɗe ta a kullum.
+
+Hotunan da tsohuwar siga ta adana da izinin shugaba suna nan a tarihi: ana iya duba su, kwatanta su da juna, da saka su a rahoto, amma ba za su zama hoton baya ga sabon dubawa ba; zaɓi hoton izinin yau da kullum ko “Yanayin yanzu kawai”. Girka MSI yana buƙatar amincewar shugaba daga Windows (girka kawai, ba dubawa ba); kunshin Microsoft Store yana girka ba tare da hakan ba. Kada ka taɓa raba kalmar sirrin shugaba.
 
 ## Cikakkun bayanan canji
 
@@ -121,7 +123,7 @@ Girman yana tara `history.db`, `history.db-wal` da `history.db-shm` idan suna na
 
 Ana sabunta girman tare da tarihi bayan tarawa, sharewa ko tsaftacewa, ba a ci gaba da aunawa ba. Rashin samun girman ba yana nufin sifili ba. Sharewa na iya barin wurin sake amfani ba tare da rage fayil ba; ko tarihin banza yana da ƙarin wuri. Babu takurewar rumbun bayanai ta atomatik. Kada a share rumbun bayanai ko fayilolin wucin gadi yayin da manhaja ke aiki.
 
-History format 2 yana barin tsoffin hotuna a matsayin mixed kuma yana hana tsoffin readers. Helper yana karɓar categories/key na lokaci kawai, ba history path ko arbitrary commands ba. UI na al'ada kawai yana ajiya. MSIX data lifecycle na buƙatar gwaji dabam.
+History format 2 yana barin tsoffin hotuna a matsayin mixed kuma yana hana tsoffin readers. UI na izinin yau da kullum kawai yana ajiye tarihi. MSIX data lifecycle na buƙatar gwaji dabam.
 
 ## Sauƙin amfani
 
@@ -143,10 +145,10 @@ Kanun labarai suna da matakai don masu karanta allo. Buɗe cikakken bayani yana 
 
 Rana fanko: zaɓi wani hoto. Kwatanci ya ƙi: duba lokaci, yanki/izini. Partial ba yana nufin an goge ba. Tsohon rahoto: fara sabon zaɓi. Database bai buɗe ba: duba sarari, izini da siga kafin gogewa.
 
-Don tallafi a raba rahoton da aka duba da app/Windows versions, ba password, raw database ko key ba. Ƙin shugaba ba ya hana dubawar al'ada.
+Wasu saitunan kwamfuta gaba ɗaya suna buƙatar izinin shugaba; ChangeTracker yana rahoto su bai cika ba maimakon neman ɗaga izini, sauran tushe kuma ana kwatanta su. Don tallafi a raba rahoton da aka duba da app/Windows versions, ba password, raw database ko key ba.
 
 ## Matsayin saki
 
 Sigar gwaji tana da rukunoni 11 masu iyaka, dubawa da hannu ko a lokutan da aka zaɓa, da tsarin ajiya. Babu sa ido kan lamura kullum, sanarwa ko cikakken timeline. Tarawa tana cin albarkatu; babu alkawarin CPU sifili.
 
-Local x64 MSI/MSIX ba su da sa hannu. MSI install yana neman izini dabam; kada a girka duka formats tare. UAC na gaske, wani admin account, Windows 10/ARM64, install da Store `allowElevation` suna buƙatar tantancewa. Sauya source ba ya sake gina tsohon package. Logos ba sa maye gurbin screenshots na gaske ko certification.
+Local release yana da x64 da ARM64 MSI installers da x64 MSIX bundle, duk ba su da sa hannu. MSI install yana buƙatar amincewar shugaba, amma manhajar da aka girka kullum tana gudana da izinin yau da kullum. Sa hannu, Store certification, Windows 10/ARM64 qualification, da install/upgrade/uninstall qualification suna nan gaba. Sauya source ba ya sake gina tsohon package. Logos ba sa maye gurbin screenshots na gaske ko certification.

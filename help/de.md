@@ -12,7 +12,7 @@ App-Namen, eigene Bezeichnungen, Pfade, Kennungen und Originalwerte werden nicht
 
 Öffnen Sie Einstellungen im Menü. Die Auswahl wird für das aktuelle Verlaufsverzeichnis gespeichert und beim Neustart wiederhergestellt.
 
-- Darstellung bietet Hell/Dunkel, Schriftart sowie unabhängige Farben für App-Text, Beschriftungen, Schaltflächenhintergrund und Schaltflächentext. Benannte Farbfelder bieten Standard, Marineblau, Waldgrün, Bordeaux und Violett. Standard setzt die jeweilige Designfarbe zurück. Der hohe Kontrast von Windows hat Vorrang; Hauptaktionen behalten kontrastierenden Text.
+- Darstellung bietet Hell/Dunkel, Schriftart sowie unabhängige Farben für App-Text, Beschriftungen, Schaltflächenhintergrund und Schaltflächentext. Benannte Farbfelder bieten Standard, Marineblau, Waldgrün, Bordeaux und Violett. Standard setzt die jeweilige Designfarbe zurück. Der hohe Kontrast von Windows hat Vorrang; Hauptaktionen behalten kontrastierenden Text. Ohne gespeicherte Wahl gilt Dunkel. Schaltflächen folgen einer klaren Hierarchie: Die Hauptprüfung ist türkis, Löschaktionen sind rot, und alle anderen Befehle sind neutral mit farbigem Symbol (etwa Bericht, Umfang ändern und Hilfe). Auswahllisten, Kontrollkästchen und Schalter zeigen Pfeil, Häkchen und Fokusrahmen in der Akzentfarbe. Die Bereiche der Einstellungen stehen in Spalten, sodass die Seite meist ohne Scrollen auf einen Bildschirm passt.
 - Automatische Aufnahmen erfolgen standardmäßig alle 4 Stunden; gespeicherte Einstellungen einschließlich Aus bleiben erhalten. Intervalle: 15 Minuten, 1 Stunde, 4 Stunden, 6 Stunden, täglich oder wöchentlich. Für rein manuelle Prüfungen wählen Sie Aus. Sie laufen nur bei geöffneter App, auch im Infobereich, mit normalen Rechten und Abbruchmöglichkeit. Nach Bestätigung des Bereichs kann die erste oder eine überfällige Prüfung beim nächsten minütlichen Kontrolllauf starten; weitere folgen dem Intervall. Keine automatische Rechteerhöhung, kein Aufwecken und keine Wiederholung aller verpassten Intervalle.
 - Die Standardaufbewahrung beträgt 30 Tage; gespeicherte Einstellungen einschließlich unbegrenzter Aufbewahrung bleiben erhalten. Wählen Sie 30, 90, 180 oder 365 Tage oder unbegrenzt. Nur ältere unbenannte Aufnahmen, die keine Referenz sind, werden gelöscht. Bereinigung läuft bei erster Fälligkeit, danach täglich während die App läuft und nach erfolgreichen automatischen Prüfungen, auch bei ausgeschalteter Aufnahmefrequenz. Benannte Prüfpunkte und alle Referenzen bleiben geschützt.
 - Start bei Anmeldung ist optional und zunächst aus. Das gilt auch nach einem Neustart, nicht vor der Anmeldung. Nur der eigene benutzerbezogene Starteintrag wird geändert; kein Dienst oder Systemstarttask, keine andere App oder Richtlinie. Ein Fehler lässt die vorige Auswahl bestehen.
@@ -41,7 +41,7 @@ Der Wechsel erfasst nichts, erhöht keine Rechte und ändert keine Referenz. Gep
 
 Der Benutzerbereich enthält eigene App-Registrierungen, Run/RunOnce, Zuordnungen, Audio, Proxy und PATH. Der Computerbereich enthält gemeinsame Registrierungen, Dienste, Aufgaben, Updates, Treiber, Firewallprofile, DNS/DHCP und System-PATH. Fremde private Profile werden nicht geladen.
 
-Bei beiden Kästchen werden die Bereiche getrennt gelesen und zusammen gespeichert. Nur der Computerteil kann ausdrücklich erhöhte Rechte erhalten. Der Benutzerteil bleibt beim ursprünglichen normalen Konto. Bestehende Auswahl und Quellen je Umfang bleiben gespeichert.
+Bei beiden Kästchen werden die Bereiche getrennt gelesen und zusammen gespeichert. Beide Bereiche verwenden Standardzugriff unter Ihrem eigenen Konto. Bestehende Auswahl und Quellen je Umfang bleiben gespeichert.
 
 ## Datum und Aufnahmen
 
@@ -57,14 +57,19 @@ Früheres Datum und Aufnahme wählen, dann Gespeicherte Aufnahme sowie späteres
 
 Frühere Aufnahme und Heute wählen. Jetzt prüfen erfasst frisch und vergleicht genau mit der Auswahl, nicht heimlich mit einer anderen Referenz. Der Auswahlbereich klappt nach Erfolg zu und lässt sich wieder öffnen.
 
-Eine Administratorreferenz erhöht niemals automatisch Rechte. Die separate Adminaktion verwenden oder nur den aktuellen Zustand erfassen. Abbrechen stoppt die Prüfung und bewahrt den Verlauf. Nach Schließen läuft die Erfassung im Infobereich weiter; Beenden im Infobereich bricht sie ab und beendet die App.
+Wenn die frühere Aufnahme mit Administratorzugriff aus einer älteren Version stammt, kann sie nicht die Referenz für eine neue Prüfung sein, weil Prüfungen immer Standardzugriff verwenden. Wählen Sie eine Aufnahme mit Standardzugriff oder **Nur aktueller Zustand**. Zwei gespeicherte Aufnahmen können weiterhin verglichen werden. Abbrechen stoppt die Prüfung und bewahrt den Verlauf. Nach Schließen läuft die Erfassung im Infobereich weiter; Beenden im Infobereich bricht sie ab und beendet die App.
 
 ## Administratorrechte
 
-Viele Computerdaten sind normal lesbar; geschützte Bereiche bleiben als Lücken sichtbar. Die Adminaktion verlangt einen expliziten Klick, eine Bestätigung mit Vorgabe Nein und Windows-UAC für eine einzelne Prüfung.
+ChangeTracker fragt nie nach Administratorzugriff. Jede manuelle oder automatische Prüfung läuft in beiden Bereichen mit Ihren normalen Windows-Rechten, daher zeigt Windows für eine Prüfung nie eine UAC-Abfrage. Es gibt keinen Administratormodus, keinen erhöhten Helfer und keinen Hintergrunddienst.
 
-Das Hauptfenster bleibt normal. Ein kurzlebiger Nur-Lese-Helfer prüft den Computer, installiert keinen Dienst und behält keine dauerhaften Rechte. Ablehnen ändert weder Verlauf noch Referenz. Keine Kennwörter teilen oder Richtlinien abschalten. Eine bereits offene sichere UAC-Abfrage muss in Windows geschlossen werden.
+Viele computerweite Einstellungen sind mit Standardrechten lesbar. Wenn eine Quelle etwas enthält, das diese Rechte nicht lesen können, meldet ChangeTracker diese Quelle als unvollständig, statt Rechte zu erhöhen. Unvollständige Quellen stehen in den Abdeckungsdetails und schlagen nie Entfernungen vor.
 
+Ein Start von ChangeTracker mit **Als Administrator ausführen** wird nicht unterstützt: Die App zeigt eine Meldung und schließt sich. Öffnen Sie sie normal.
+
+Aufnahmen, die eine frühere Version mit Administratorzugriff gespeichert hat, bleiben im Verlauf. Sie können sie anzeigen, miteinander vergleichen und in Berichte aufnehmen, aber sie können nicht die frühere Aufnahme für eine neue Prüfung sein, weil neue Prüfungen immer Standardzugriff verwenden. Wählen Sie eine Aufnahme mit Standardzugriff oder **Nur aktueller Zustand**.
+
+Die MSI-Installation benötigt eine Administratorbestätigung von Windows; diese Bestätigung gilt nur für die Installation, nicht für ChangeTracker-Prüfungen. Das Microsoft-Store-Paket wird ohne sie installiert. Geben Sie niemals ein Administratorkennwort weiter.
 ## Änderungen lesen
 
 Hinzugefügt, Entfernt und Geändert beschreiben beobachtete Endpunkte, nicht Urheber, genaue Zeit oder Ursache. Wichtig/Prüfen sind Prioritäten, keine Malwareurteile. Übliche/erwartete sowie ungeprüfte Änderungen bleiben in eigenen Gruppen. Die Überschrift zählt den Filter; Alle anzeigen öffnet mehr als die ersten drei.
@@ -121,7 +126,7 @@ Die Größe summiert vorhandene `history.db`, `history.db-wal` und `history.db-s
 
 Der Wert aktualisiert sich mit dem Verlauf nach Erfassung, Löschen oder Bereinigung, nicht kontinuierlich. Größe nicht verfügbar bedeutet nicht null. Löschen kann Platz zur Wiederverwendung hinterlassen, ohne die Datei zu verkleinern; auch ein leerer Verlauf belegt Platz. Keine automatische Komprimierung der Datenbank. Datenbank und temporäre Dateien nicht bei laufender App löschen.
 
-Verlaufsformat 2 bewahrt alte Daten als gemischt und blockiert alte Leser. Der Helfer erhält nur Kategorien und temporäre Schlüsselkopie, keine Verlaufspfade oder freien Befehle. Nur das normale Fenster schreibt. MSIX-Datenlebenszyklen benötigen eigene Tests.
+Verlaufsformat 2 bewahrt alte Daten als gemischt und blockiert alte Leser. Sichern Sie wichtige Daten, bevor Sie einen unveröffentlichten Build verwenden. MSIX-Datenumleitung, Zurücksetzen und Deinstallation benötigen eigene Tests; gehen Sie nicht davon aus, dass ihr Lebenszyklus dem MSI-Build entspricht.
 
 ## Barrierefreiheit
 
@@ -143,10 +148,10 @@ F1 öffnet Hilfe, Strg+F sucht, Escape schließt. Hilfezoom bis 160 Prozent; sch
 
 Leeres Datum: andere Beobachtung wählen. Vergleich abgelehnt: Reihenfolge, Umfang und Rechte prüfen. Teilweise bedeutet nicht entfernt. Alter Bericht: neue Auswahl erst ausführen. Datenbank unzugänglich: Platz, Rechte und Version prüfen, nicht ungesichert löschen.
 
-Für Support einen geprüften Bericht und App-/Windows-Versionen teilen, nie Kennwort, rohe Datenbank oder Vergleichsschlüssel. Abgelehnte Adminrechte verhindern normale Prüfungen nicht.
+Für Support einen geprüften Bericht und App-/Windows-Versionen teilen, nie Kennwort, rohe Datenbank oder Vergleichsschlüssel. Manche computerweiten Einstellungen benötigen Administratorrechte; ChangeTracker meldet sie als unvollständig, statt eine Erhöhung anzufordern, und vergleicht andere Quellen weiter.
 
 ## Veröffentlichung
 
 Vorschau mit 11 begrenzten Kategorien, manuellen oder optional geplanten Prüfungen und konfigurierbarer Aufbewahrung. Keine kontinuierliche Ereignisüberwachung, Benachrichtigungen oder vollständige Zeitachse. Erfassung braucht Ressourcen; keine Null-CPU-Zusage.
 
-Lokale x64-MSI/MSIX sind unsigniert. MSI-Installation benötigt getrennte Zustimmung; nicht beide Formate zusammen installieren. Echte UAC, anderes Administratorkonto, Windows 10/ARM64, Installation und Store-Freigabe für `allowElevation` bleiben zu prüfen. Quelländerungen bauen alte Pakete nicht neu. Logos ersetzen keine echten Screenshots oder Zertifizierung.
+Die lokale Veröffentlichung enthält x64- und ARM64-MSI-Installer sowie ein x64-MSIX-Bundle; alle sind unsigniert. Die MSI-Installation benötigt Administratorbestätigung, aber die installierte App läuft immer mit Standardrechten. Signierung, Store-Zertifizierung, Windows-10/ARM64-Qualifizierung sowie Installations-, Upgrade- und Deinstallationsqualifizierung stehen noch aus. Quelländerungen bauen alte Pakete nicht neu. Logos ersetzen keine echten Screenshots oder Zertifizierung.

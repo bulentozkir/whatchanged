@@ -15,7 +15,7 @@ public partial class App : Application
     private EventWaitHandle? activation;
     private RegisteredWaitHandle? activationRegistration;
     private Dictionary<string, object>? standardBrushes;
-    private string currentTheme = "Light";
+    private string currentTheme = Appearance.DefaultTheme;
     private string currentButtonTextColor = "ButtonColorDefault";
     private string currentAppTextColor = "ButtonColorDefault";
     private string currentButtonColor = "ButtonColorDefault";
@@ -24,16 +24,11 @@ public partial class App : Application
     private System.Windows.Forms.ToolStripMenuItem? trayOpenItem;
     private System.Windows.Forms.ToolStripMenuItem? trayExitItem;
 
-    protected override async void OnStartup(StartupEventArgs eventArgs)
+    protected override void OnStartup(StartupEventArgs eventArgs)
     {
         base.OnStartup(eventArgs);
-        if (eventArgs.Args.Contains("--machine-check"))
-        {
-            if (eventArgs.Args.Length != 3 || eventArgs.Args[0] != "--machine-check" || !int.TryParse(eventArgs.Args[2], out var parentId))
-            { Shutdown(2); return; }
-            Shutdown(await CollectorTransport.RunHelperAsync(eventArgs.Args[1], parentId));
-            return;
-        }
+        // ChangeTracker runs only in the user's default, unelevated security context: it never requests elevation,
+        // and neither the window nor a collector worker runs when started with administrator rights.
         var dataIndex = Array.IndexOf(eventArgs.Args, "--data-dir");
         var dataDirectory = dataIndex >= 0 && dataIndex + 1 < eventArgs.Args.Length
             ? Path.GetFullPath(eventArgs.Args[dataIndex + 1])
@@ -41,34 +36,25 @@ public partial class App : Application
         var workerIndex = Array.IndexOf(eventArgs.Args, "--collect");
         if (workerIndex >= 0)
         {
-            byte[]? material = null;
             try
             {
                 var scopeIndex = Array.IndexOf(eventArgs.Args, "--scope");
-                if (workerIndex + 1 >= eventArgs.Args.Length || !Enum.TryParse<Category>(eventArgs.Args[workerIndex + 1], out var category) ||
+                if (CollectorTransport.IsAdministrator || workerIndex + 1 >= eventArgs.Args.Length ||
+                    !Enum.TryParse<Category>(eventArgs.Args[workerIndex + 1], out var category) ||
                     scopeIndex < 0 || scopeIndex + 1 >= eventArgs.Args.Length ||
                     !Enum.TryParse<CollectionScope>(eventArgs.Args[scopeIndex + 1], out var scope) || !CollectorCatalog.Supports(category, scope))
                 { Shutdown(2); return; }
-                if (eventArgs.Args.Contains("--key-stdin"))
-                {
-                    if (scope != CollectionScope.Machine || !CollectorTransport.IsAdministrator) { Shutdown(2); return; }
-                    material = new byte[32];
-                    using var inputDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                    await Console.OpenStandardInput().ReadExactlyAsync(material, inputDeadline.Token);
-                    dataDirectory = "";
-                }
-                var result = CollectorCatalog.Create(category, dataDirectory, scope, material).Collect(CancellationToken.None);
+                var result = CollectorCatalog.Create(category, dataDirectory, scope).Collect(CancellationToken.None);
                 Console.Out.WriteLine(JsonSerializer.Serialize(result));
                 Shutdown();
             }
             catch (Exception exception) when (exception is not OutOfMemoryException) { Shutdown(1); }
-            finally { if (material is not null) CryptographicOperations.ZeroMemory(material); }
             return;
         }
 
         if (CollectorTransport.IsAdministrator)
         {
-            MessageBox.Show("Open ChangeTracker normally, not as administrator. Administrator access is requested separately for a single machine-wide check.",
+            MessageBox.Show("Open ChangeTracker normally, not as administrator. It runs only with your standard Windows permissions.",
                 "ChangeTracker", MessageBoxButton.OK, MessageBoxImage.Information);
             Shutdown();
             return;
@@ -85,13 +71,14 @@ public partial class App : Application
             Shutdown();
             return;
         }
-        standardBrushes = new[] { "CanvasBrush", "SurfaceBrush", "TextBrush", "MutedBrush", "AccentBrush", "AccentTextBrush", "ReviewBrush", "LineBrush", "ButtonTextBrush", "ButtonBackgroundBrush", "LabelBrush" }
-            .ToDictionary(name => name, name => Resources[name]);
+        standardBrushes = Appearance.ColorTokens(Resources);
+        EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
+            new RoutedEventHandler((sender, _) => Controls.WindowTheme.ApplyTitleBar((Window)sender, UsesDarkTitleBar)));
         SystemParameters.StaticPropertyChanged += SystemSettingsChanged;
         try
         {
             var store = new HistoryStore(Path.Combine(dataDirectory, "history.db"));
-            currentTheme = store.GetPreference("theme") == "Dark" ? "Dark" : "Light";
+            currentTheme = Appearance.ThemeOrDefault(store.GetPreference("theme"));
             currentButtonTextColor = store.GetPreference("buttonTextColor") ?? "ButtonColorDefault";
             currentAppTextColor = store.GetPreference("appTextColor") ?? "ButtonColorDefault";
             currentButtonColor = store.GetPreference("buttonColor") ?? "ButtonColorDefault";
@@ -105,7 +92,7 @@ public partial class App : Application
             SetupTrayIcon(window, viewModel);
             activation = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\PCChangeTracker.Open." + suffix);
             activationRegistration = ThreadPool.RegisterWaitForSingleObject(activation,
-                (_, _) => Dispatcher.BeginInvoke(window.RestoreFromTray),
+                (_, _) => Dispatcher.BeginInvoke(window.ShowForLaunch),
                 null, Timeout.Infinite, false);
             if (!eventArgs.Args.Contains("--start-minimized")) window.Show();
         }
@@ -135,77 +122,23 @@ public partial class App : Application
             Dispatcher.BeginInvoke(ApplyAppearance);
     }
 
-    internal void SetTheme(string theme) { currentTheme = theme; ApplyAppearance(); }
+    internal void SetTheme(string theme) { currentTheme = Appearance.ThemeOrDefault(theme); ApplyAppearance(); }
     internal void SetButtonTextColor(string color) { currentButtonTextColor = color; ApplyAppearance(); }
     internal void SetAppTextColor(string color) { currentAppTextColor = color; ApplyAppearance(); }
     internal void SetButtonColor(string color) { currentButtonColor = color; ApplyAppearance(); }
     internal void SetLabelColor(string color) { currentLabelColor = color; ApplyAppearance(); }
     internal void SetFont(string fontFamily) => Resources["AppFontFamily"] = new System.Windows.Media.FontFamily(fontFamily);
-    internal static IReadOnlyList<int> TextSizePercentages { get; } = [100, 125, 150, 200];
-    internal void SetTextSize(int percentage) => ApplyTextSize(Resources, percentage);
-    internal static void ApplyTextSize(ResourceDictionary resources, int percentage)
-    {
-        if (!TextSizePercentages.Contains(percentage)) percentage = 100;
-        foreach (var size in new[] { 14, 16, 17, 18, 19, 20, 22, 24, 26 })
-            resources["AppFont" + size] = size * percentage / 100d;
-    }
+    internal void SetTextSize(int percentage) => Appearance.ApplyTextSize(Resources, percentage);
 
     private void ApplyAppearance()
     {
         if (standardBrushes is null) return;
-        ApplyAccessibilityColors(Resources, BuildPalette(standardBrushes, currentTheme, currentAppTextColor,
+        Appearance.ApplyAccessibilityColors(Resources, Appearance.BuildPalette(standardBrushes, currentTheme, currentAppTextColor,
             currentButtonTextColor, currentButtonColor, currentLabelColor), SystemParameters.HighContrast);
+        foreach (Window window in Windows) Controls.WindowTheme.ApplyTitleBar(window, UsesDarkTitleBar);
     }
 
-    internal static readonly IReadOnlyDictionary<string, string> DarkPaletteHex = new Dictionary<string, string>
-    {
-        ["CanvasBrush"] = "#14191C", ["SurfaceBrush"] = "#1E2528", ["TextBrush"] = "#F2F5F6", ["MutedBrush"] = "#B7C2C7",
-        ["AccentBrush"] = "#1FBFAA", ["AccentTextBrush"] = "#04211D", ["ReviewBrush"] = "#F2A65A", ["LineBrush"] = "#647680",
-        ["ButtonTextBrush"] = "#F2F5F6", ["ButtonBackgroundBrush"] = "#1E2528", ["LabelBrush"] = "#F2F5F6"
-    };
-
-    internal static readonly IReadOnlyDictionary<(string Theme, string Color), string> ButtonTextColorHex = new Dictionary<(string, string), string>
-    {
-        [("Light", "ButtonColorNavy")] = "#0B3D91", [("Light", "ButtonColorForest")] = "#1B5E20",
-        [("Light", "ButtonColorMaroon")] = "#7A0C2E", [("Light", "ButtonColorPurple")] = "#4A148C",
-        [("Dark", "ButtonColorNavy")] = "#8AB4FF", [("Dark", "ButtonColorForest")] = "#8FD39A",
-        [("Dark", "ButtonColorMaroon")] = "#FFA6B3", [("Dark", "ButtonColorPurple")] = "#D2B3F5"
-    };
-
-    private static readonly IReadOnlyDictionary<(string Theme, string Color), string> ButtonBackgroundColorHex = new Dictionary<(string, string), string>
-    {
-        [("Light", "ButtonColorNavy")] = "#EBF2FF", [("Light", "ButtonColorForest")] = "#EAF5EE",
-        [("Light", "ButtonColorMaroon")] = "#FFF0F3", [("Light", "ButtonColorPurple")] = "#F5F0FF",
-        [("Dark", "ButtonColorNavy")] = "#172536", [("Dark", "ButtonColorForest")] = "#18261E",
-        [("Dark", "ButtonColorMaroon")] = "#302027", [("Dark", "ButtonColorPurple")] = "#282230"
-    };
-
-    internal static System.Windows.Media.Color ColorForChoice(string theme, string code, bool background = false)
-    {
-        var choices = background ? ButtonBackgroundColorHex : ButtonTextColorHex;
-        var fallback = theme == "Dark" ? DarkPaletteHex[background ? "SurfaceBrush" : "TextBrush"] : background ? "#FFFFFF" : "#172126";
-        return (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(
-            choices.TryGetValue((theme, code), out var hex) ? hex : fallback);
-    }
-
-    internal static Dictionary<string, object> BuildPalette(IReadOnlyDictionary<string, object> lightBrushes, string theme,
-        string appTextColor = "ButtonColorDefault", string buttonTextColor = "ButtonColorDefault",
-        string buttonColor = "ButtonColorDefault", string labelColor = "ButtonColorDefault")
-    {
-        var palette = new Dictionary<string, object>(lightBrushes);
-        if (theme == "Dark")
-            foreach (var pair in DarkPaletteHex)
-                palette[pair.Key] = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(pair.Value));
-        foreach (var (key, code) in new[] { ("TextBrush", appTextColor), ("ButtonTextBrush", buttonTextColor), ("LabelBrush", labelColor) })
-            if (ButtonTextColorHex.ContainsKey((theme, code)))
-                palette[key] = new System.Windows.Media.SolidColorBrush(ColorForChoice(theme, code));
-        if (ButtonBackgroundColorHex.ContainsKey((theme, buttonColor)))
-        {
-            palette["ButtonBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorForChoice(theme, buttonColor, true));
-            palette["AccentBrush"] = new System.Windows.Media.SolidColorBrush(ColorForChoice(theme, buttonColor));
-        }
-        return palette;
-    }
+    private bool UsesDarkTitleBar => currentTheme == "Dark" && !SystemParameters.HighContrast;
 
     private void SetupTrayIcon(MainWindow window, MainViewModel viewModel)
     {
@@ -230,17 +163,5 @@ public partial class App : Application
         using var stream = typeof(App).Assembly.GetManifestResourceStream("PCChangeTracker.AppIcon.ico")!;
         using var icon = new System.Drawing.Icon(stream, System.Windows.Forms.SystemInformation.SmallIconSize);
         return (System.Drawing.Icon)icon.Clone();
-    }
-
-    internal static void ApplyAccessibilityColors(ResourceDictionary resources, IReadOnlyDictionary<string, object> standard, bool highContrast)
-    {
-        foreach (var pair in standard)
-            resources[pair.Key] = !highContrast ? pair.Value : pair.Key switch
-            {
-                "CanvasBrush" or "SurfaceBrush" or "ButtonBackgroundBrush" => SystemColors.WindowBrush,
-                "AccentBrush" => SystemColors.HighlightBrush,
-                "AccentTextBrush" => SystemColors.HighlightTextBrush,
-                _ => SystemColors.WindowTextBrush
-            };
     }
 }

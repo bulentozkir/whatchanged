@@ -86,17 +86,29 @@ if ($CreateRelease) {
         throw 'MSIX bundle validation or packaging failed.'
     }
 
-    $msiOutput = Join-Path $artifacts ('msi-output-' + [guid]::NewGuid().ToString('N'))
     $msiProperties = @()
     if ($SkipMsiValidation) {
         $msiProperties += '-p:SuppressValidation=true'
         Write-Warning 'MSI ICE validation is explicitly skipped. Installer qualification remains required on a machine whose policy permits validation.'
     }
-    dotnet build (Join-Path $PSScriptRoot 'Msi\ChangeTracker.wixproj') --configuration Release "-p:PublishDirectory=$stage" "-p:OutputPath=$msiOutput" "-p:Version=$releaseVersion" "-p:RestoreConfigFile=$(Join-Path $root 'NuGet.config')" @msiProperties -nodeReuse:false --verbosity minimal
-    if ($LASTEXITCODE -ne 0) { throw 'MSI build failed.' }
-    $msiPath = Join-Path $msiOutput ($packageBaseName + '.msi')
-    if (-not (Test-Path -LiteralPath $msiPath -PathType Leaf)) { throw 'MSI build did not produce the expected installer.' }
-    Copy-Item -LiteralPath $msiPath -Destination (Join-Path $releaseStage ($packageBaseName + '.msi'))
+    # x64 reuses the MSIX payload; ARM64 gets its own self-contained publish of the same source and version.
+    foreach ($platform in @('x64', 'arm64')) {
+        $payload = $stage
+        if ($platform -ne 'x64') {
+            $payload = Join-Path $artifacts ("msi-publish-$platform-" + [guid]::NewGuid().ToString('N'))
+            dotnet publish (Join-Path $root 'src\PCChangeTracker.App\PCChangeTracker.App.csproj') --configuration Release --runtime "win-$platform" --self-contained true --output $payload -p:PublishTrimmed=false -nodeReuse:false
+            if ($LASTEXITCODE -ne 0) { throw "Application publish for $platform failed." }
+            $payloadVersion = [version][System.Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $payload 'PCChangeTracker.exe')).FileVersion
+            if ($payloadVersion -ne $packageVersion) { throw "The published $platform executable version does not match the MSIX manifest version." }
+        }
+        $msiOutput = Join-Path $artifacts ("msi-output-$platform-" + [guid]::NewGuid().ToString('N'))
+        dotnet build (Join-Path $PSScriptRoot 'Msi\ChangeTracker.wixproj') --configuration Release --no-incremental "-p:PublishDirectory=$payload" "-p:OutputPath=$msiOutput" "-p:Version=$releaseVersion" "-p:InstallerPlatform=$platform" "-p:RestoreConfigFile=$(Join-Path $root 'NuGet.config')" @msiProperties -nodeReuse:false --verbosity minimal
+        if ($LASTEXITCODE -ne 0) { throw "MSI build for $platform failed." }
+        $msiName = "ChangeTracker-$releaseVersion-$platform.msi"
+        $msiPath = Join-Path $msiOutput $msiName
+        if (-not (Test-Path -LiteralPath $msiPath -PathType Leaf)) { throw "MSI build did not produce the expected $platform installer." }
+        Copy-Item -LiteralPath $msiPath -Destination (Join-Path $releaseStage $msiName)
+    }
     Copy-Item -LiteralPath $releaseNotes -Destination (Join-Path $releaseStage 'RELEASE_NOTES.md')
     $checksumLines = @(Get-ChildItem -LiteralPath $releaseStage -File | Sort-Object Name | ForEach-Object {
         $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -106,5 +118,5 @@ if ($CreateRelease) {
     [void][System.IO.Directory]::CreateDirectory((Split-Path -Parent $releaseDirectory))
     [System.IO.Directory]::Move($releaseStage, $releaseDirectory)
     Write-Output "Local preview release: $releaseDirectory"
-    Write-Output 'Includes unsigned x64 MSIX bundle and MSI, release notes, and SHA-256 checksums. No portable ZIP, installation, signing, tag, upload, or publication was performed.'
+    Write-Output 'Includes an unsigned x64 MSIX bundle, x64 and ARM64 MSIs, release notes, and SHA-256 checksums. No portable ZIP, installation, signing, tag, upload, or publication was performed.'
 }

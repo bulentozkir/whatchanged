@@ -81,7 +81,7 @@ public partial class MainWindow : Window
     {
         "History" => HistoryHeading,
         "Sources" => SourcesHeading,
-        "Settings" => SettingsHeading,
+        "Settings" => SettingsContent.Heading,
         _ => ReviewHeading
     };
 
@@ -164,6 +164,13 @@ public partial class MainWindow : Window
         Show();
         if (WindowState == WindowState.Minimized) WindowState = restoreState;
         Activate();
+    }
+
+    /// <summary>Handles launching the app again while it runs: a hidden window opens maximized like a fresh start; a visible one only comes forward.</summary>
+    public void ShowForLaunch()
+    {
+        if (!IsVisible) WindowState = WindowState.Maximized;
+        RestoreFromTray();
     }
 
     protected override void OnClosed(EventArgs eventArgs)

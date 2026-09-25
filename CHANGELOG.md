@@ -4,6 +4,28 @@
 
 - No changes recorded.
 
+## 1.0.1 - 2026-09-25
+
+- **Remove administrator access for Microsoft Store compliance.** Certification denied the restricted `allowElevation` capability (policy 10.6.3), so the **Check with administrator access** button, its confirmation, the UAC launch, the elevated read-only helper, its named-pipe protocol, and comparison-key export were removed, and the MSIX manifest now declares only `runFullTrust`. ChangeTracker runs only in the signed-in user's default, unelevated security context: every manual and automatic check uses standard permissions, collector workers inherit the app's unelevated token and refuse to run elevated, and a **Run as administrator** launch is still refused. Machine-wide sources that standard permissions cannot fully read are reported as incomplete coverage.
+- Keep snapshots saved with administrator access by 1.0.0 readable: they can be viewed, compared with each other, and reported, but can no longer be the reference for a new check. The scope label now reads "Standard access", the scope dialog explains that administrator access is never requested (all 20 languages), and the offline help's **Administrator Access** topic and related guidance were rewritten in every language.
+- Add regression tests that fail if `allowElevation`, a UAC launch verb, an elevating manifest, or an administrator command reappears, and that confirm collector workers start directly without shell elevation.
+- Introduce a design system: color tokens in `Themes/Colors.xaml` (Light) with matching Dark values, control templates in `Themes/Controls.xaml`, and an `Appearance` module that owns palettes, user color choices, text size, and high-contrast substitution. `App` now only handles startup, tray, and lifecycle; reusable `Controls` (`ColumnFlowPanel`, `SettingsCard`, `Icon`, `WindowTheme`) and a separate `Views/SettingsView` replace ad hoc markup.
+- Replace decorative per-button colors with a semantic command hierarchy: teal primary actions, red danger buttons for deletion, and neutral buttons with color-coded icons (blue reports/viewing, violet scope/navigation, gold Help). Role text meets 7:1, outlines 3:1, and icons 4.5:1 in both themes; custom button colors still apply uniformly, and Windows high contrast overrides every role.
+- Modernize controls: icon navigation with a selection bar, neutral dropdowns and fields with an accent arrow and focus outline, 20-pixel check boxes and radio buttons, a switch for sign-in startup, chevron expanders, hover/pressed state layers, solid 2-pixel focus rings, themed slim scrollbars and tooltips, and a dark native title bar in the Dark theme where Windows supports it.
+- Condense **Settings** into icon-headed cards that flow into up to three balanced, width- and text-size-aware columns (read top to bottom, then across, matching Tab and screen-reader order), with aligned field rows and inline descriptions exposed as help text. Hide the review-only scope row and Comparison picker on Settings so the page fits one screen on typical displays (verified at 1366×768); narrow windows and large text reduce the columns and scroll.
+- Default the theme to **Dark** when no valid theme preference is saved; saved Light/Dark choices are preserved.
+- Starting ChangeTracker again while it runs hidden in the tray now opens the window maximized, like a fresh launch; tray Open and double-click still restore the last visible size.
+- Confirm the 30-day **Data retention** default in the Settings UI test alongside the existing view-model coverage; saved choices, including Forever, remain unchanged.
+- Build x64 and ARM64 MSIs from the release script (`Build-Package.ps1 -CreateRelease`), each from its own self-contained publish with a version check, so every installer in a release comes from the same source and the checksums cover every file.
+
+### Release Files
+
+- `ChangeTracker-1.0.1-x64.msixbundle`: unsigned bundle containing the x64 application package with the supplied Partner Center identity and only the `runFullTrust` capability (no `allowElevation`). It is not a trusted sideload package and has not been certified.
+- `ChangeTracker-1.0.1-x64.msi` and `ChangeTracker-1.0.1-arm64.msi`: unsigned, self-contained Windows Installer packages. They install to `%ProgramFiles%\ChangeTracker` for all users, add a Start menu shortcut, and upgrade 1.0.0 in place. Installation requires administrator approval; the installed application always runs with standard permissions.
+- `SHA256SUMS.txt`: SHA-256 checksums of the installers and these release notes. Checksums are not a digital signature or publisher-trust guarantee.
+
+Exit ChangeTracker from its tray icon before upgrading. History and preferences under `%LOCALAPPDATA%\PCChangeTracker` are kept, so saved choices (including an existing Light theme or retention period) are not reset; the new Dark and 30-day defaults apply only where nothing is saved. Runtime and UI verification was performed on Windows 11 x64 at 250% display scaling; the ARM64 installer was built but not run on ARM64 hardware. WiX ICE validation could not run under this build machine's policy and must be completed on a suitable validation machine. This build is not Authenticode-signed and may be blocked by device policy; do not bypass SmartScreen or organizational protections.
+
 ## 1.0.0 - 2026-09-23
 
 - Improve accessibility across Review, Snapshots, Sources, Settings, Help and Report: selected-page list navigation, readable item/group names, source status help, a visible checkpoint label, themed list selections, wrapping control text and 44-DIP minimum interaction heights. Modal scope/details now disable all background sidebar actions and manage focus explicitly.

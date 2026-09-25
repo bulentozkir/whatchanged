@@ -1,0 +1,49 @@
+<!--
+    Color tokens. These are the Light values; Appearance.DarkPaletteHex supplies the Dark values for the same keys,
+    user color choices are layered on top, and Windows high contrast replaces every token with system colors.
+    Contrast targets are enforced by tests: text 7:1 on surfaces, control boundaries 3:1 against adjacent surfaces.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="CanvasBrush" Color="#F5F7F8" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SubtleBackgroundBrush" Color="#E3EAEE" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="CardStrokeBrush" Color="#D5DDE2" />
+
+    <!-- Text and control boundaries -->
+    <SolidColorBrush x:Key="TextBrush" Color="#172126" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#394A53" />
+    <SolidColorBrush x:Key="LabelBrush" Color="#172126" />
+    <SolidColorBrush x:Key="LineBrush" Color="#70808A" />
+    <SolidColorBrush x:Key="ReviewBrush" Color="#783D08" />
+
+    <!-- Accent: primary actions, selection, selector affordances -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#08675F" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF" />
+
+    <!-- Base pair for user-chosen button colors -->
+    <SolidColorBrush x:Key="ButtonTextBrush" Color="#172126" />
+    <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FFFFFF" />
+
+    <!-- Command roles: standard, caution (elevation), danger (deletion) -->
+    <SolidColorBrush x:Key="NeutralButtonBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="NeutralButtonTextBrush" Color="#172126" />
+    <SolidColorBrush x:Key="NeutralButtonBorderBrush" Color="#70808A" />
+    <SolidColorBrush x:Key="CautionButtonBackgroundBrush" Color="#FFF3DC" />
+    <SolidColorBrush x:Key="CautionButtonTextBrush" Color="#6B3D00" />
+    <SolidColorBrush x:Key="CautionButtonBorderBrush" Color="#9A5A00" />
+    <SolidColorBrush x:Key="DangerButtonBackgroundBrush" Color="#FDECEC" />
+    <SolidColorBrush x:Key="DangerButtonTextBrush" Color="#8C1D18" />
+    <SolidColorBrush x:Key="DangerButtonBorderBrush" Color="#B42318" />
+
+    <!-- Icon tones that make otherwise neutral commands recognizable at a glance -->
+    <SolidColorBrush x:Key="InfoIconBrush" Color="#1A56A3" />
+    <SolidColorBrush x:Key="NavigateIconBrush" Color="#5A31A0" />
+    <SolidColorBrush x:Key="HelpIconBrush" Color="#7A5A00" />
+
+    <!-- Interaction state layers drawn over any fill -->
+    <SolidColorBrush x:Key="ControlHoverOverlayBrush" Color="#0F000000" />
+    <SolidColorBrush x:Key="ControlPressedOverlayBrush" Color="#1F000000" />
+</ResourceDictionary>

@@ -12,7 +12,7 @@ Nama aplikasi, label buatan pengguna, jalur, ID, dan nilai asli tidak diterjemah
 
 Buka Pengaturan dari menu. Preferensi disimpan untuk folder riwayat saat ini dan dipulihkan saat aplikasi dibuka kembali.
 
-- Tampilan menyediakan tema terang/gelap, font, serta warna teks aplikasi, label, latar tombol dan teks tombol secara terpisah. Sampel bernama: Default, Biru tua, Hijau hutan, Merah marun dan Ungu. Default mengembalikan warna tema; kontras tinggi Windows selalu diutamakan dan tindakan utama tetap memakai teks kontras.
+- Tampilan menyediakan tema terang/gelap, font, serta warna teks aplikasi, label, latar tombol dan teks tombol secara terpisah. Sampel bernama: Default, Biru tua, Hijau hutan, Merah marun dan Ungu. Default mengembalikan warna tema; kontras tinggi Windows selalu diutamakan dan tindakan utama tetap memakai teks kontras. Jika belum ada pilihan tersimpan, tema gelap menjadi default. Tombol mengikuti hierarki yang jelas: pemeriksaan utama berwarna toska, penghapusan berwarna merah, dan semua perintah lain netral dengan ikon berwarna (misalnya Laporan, Ubah cakupan, dan Bantuan). Daftar tarik-turun, kotak centang, dan sakelar memakai warna aksen untuk panah, tanda centang, dan garis fokus. Bagian Pengaturan tampil dalam kolom sehingga halaman biasanya muat dalam satu layar tanpa menggulir.
 - Snapshot otomatis default setiap 4 jam; pilihan tersimpan, termasuk Nonaktif, dipertahankan. Pilih setiap 15 menit, 1 jam, 4 jam, 6 jam, hari atau minggu, atau Nonaktif untuk pemeriksaan manual saja. Pemeriksaan hanya berjalan selama aplikasi terbuka, termasuk di baki sistem, dengan akses biasa dan dapat dibatalkan. Setelah cakupan dikonfirmasi, pemeriksaan pertama atau terlambat dapat berjalan pada pengecekan menit berikutnya; selanjutnya mengikuti interval. Tidak meminta administrator, membangunkan PC, atau mengulang seluruh interval yang terlewat.
 - Retensi default 30 hari; pilihan tersimpan, termasuk selamanya, dipertahankan. Pilih 30, 90, 180 atau 365 hari, atau selamanya. Hanya snapshot lama tanpa nama yang bukan acuan dihapus. Pembersihan berjalan saat pertama kali jatuh tempo, lalu setiap hari selama aplikasi terbuka dan setelah pemeriksaan otomatis berhasil, meskipun snapshot otomatis nonaktif. Checkpoint bernama dan semua acuan dilindungi.
 - Mulai saat masuk Windows bersifat opsional dan awalnya nonaktif. Ini mencakup masuk setelah restart, bukan pengumpulan sebelum masuk. Hanya entri startup milik aplikasi untuk pengguna ini yang diubah; tidak memasang layanan atau tugas boot, dan tidak mengubah aplikasi lain atau kebijakan. Kegagalan mempertahankan pilihan sebelumnya.
@@ -41,7 +41,7 @@ Pergantian mode tidak mengumpulkan, meningkatkan izin, memindahkan acuan, atau m
 
 Pengguna membaca registrasi aplikasi sendiri, Run/RunOnce, asosiasi, audio, proksi, PATH. Komputer membaca registrasi bersama, layanan, tugas, pembaruan, driver, firewall, DNS/DHCP, PATH sistem. Profil pribadi orang lain tidak dimuat.
 
-Jika keduanya dipilih, bagian dibaca terpisah lalu menjadi satu snapshot gabungan. Hanya bagian komputer dapat memakai administrator melalui permintaan jelas. Bagian pengguna tetap memakai akun biasa semula. Pilihan tersimpan dihormati.
+Jika keduanya dipilih, kedua bagian dibaca terpisah dengan akses biasa pada akun Anda sendiri lalu menjadi satu snapshot gabungan. Tidak ada cakupan yang diberi hak administrator. Pilihan tersimpan dihormati.
 
 ## Tanggal dan pengamatan
 
@@ -57,13 +57,15 @@ Pilih tanggal dan snapshot sebelumnya, lalu Snapshot tersimpan beserta tanggal d
 
 Pilih referensi dan Hari ini. Periksa sekarang membuat pengamatan baru dan membandingkan pilihan Anda, bukan acuan lain diam-diam. Panel menutup setelah berhasil dan dapat dibuka lagi.
 
-Referensi administrator tidak meningkatkan izin otomatis. Pilih tindakan administrator secara terpisah atau hanya keadaan sekarang. Batal menghentikan pengumpulan dan mempertahankan riwayat. Tutup membiarkan pengumpulan berlanjut di baki; Keluar dari baki membatalkan dan mengakhiri aplikasi.
+Snapshot yang disimpan dengan akses administrator oleh versi lama tidak dapat menjadi referensi untuk pemeriksaan baru karena pemeriksaan selalu memakai akses biasa. Pilih snapshot akses biasa atau Hanya keadaan sekarang. Dua snapshot tersimpan tetap dapat dibandingkan. Batal menghentikan pengumpulan dan mempertahankan riwayat. Tutup membiarkan pengumpulan berlanjut di baki; Keluar dari baki membatalkan dan mengakhiri aplikasi.
 
 ## Administrator
 
-Banyak pengaturan komputer dapat dibaca biasa. Yang dilindungi menjadi celah cakupan. Tindakan administrator memerlukan klik, konfirmasi bawaan Tidak, dan persetujuan Windows UAC untuk satu pemeriksaan.
+ChangeTracker tidak pernah meminta akses administrator. Setiap pemeriksaan, manual maupun otomatis, berjalan dengan izin Windows biasa di kedua cakupan, jadi Windows tidak menampilkan prompt UAC untuk pemeriksaan. Tidak ada mode administrator, pembantu yang ditinggikan, atau layanan latar belakang.
 
-Jendela utama tetap biasa. Pembantu sementara hanya-baca mengumpulkan bagian komputer, tidak memasang layanan atau menyimpan izin permanen. Penolakan tidak mengubah acuan/riwayat. Jangan bagikan sandi atau matikan kebijakan keamanan. Aplikasi tidak dapat menutup UAC yang sudah tampil; jawab melalui Windows.
+Banyak pengaturan seluruh komputer dapat dibaca dengan akses biasa. Jika suatu sumber berisi hal yang tidak dapat dibaca oleh izin biasa, sumber itu dilaporkan tidak lengkap (tercantum di rincian cakupan, tidak pernah menyarankan penghapusan), bukan menaikkan izin. Menjalankan ChangeTracker dengan “Jalankan sebagai administrator” tidak didukung: aplikasi menampilkan pesan lalu menutup; buka secara normal.
+
+Snapshot yang disimpan dengan akses administrator oleh versi lama tetap ada di riwayat: dapat dilihat, dibandingkan satu sama lain, dan disertakan dalam laporan, tetapi tidak dapat menjadi snapshot sebelumnya untuk pemeriksaan baru; pilih snapshot akses biasa atau “Hanya keadaan sekarang”. Instalasi MSI memerlukan persetujuan administrator dari Windows (hanya instalasi, bukan pemeriksaan); paket Microsoft Store memasang tanpa itu. Jangan pernah membagikan sandi administrator.
 
 ## Rincian perubahan
 
@@ -121,7 +123,7 @@ Ukuran menjumlahkan `history.db`, `history.db-wal`, dan `history.db-shm` jika ad
 
 Nilai diperbarui bersama riwayat setelah pengambilan, penghapusan atau pembersihan, bukan terus-menerus. Ukuran tidak tersedia bukan berarti nol. Penghapusan dapat meninggalkan ruang pakai ulang tanpa mengecilkan berkas; riwayat kosong pun memakai ruang. Tidak ada pemadatan otomatis. Jangan hapus basis data atau berkas sementara saat aplikasi berjalan.
 
-Format riwayat 2 menjaga rekaman lama sebagai campuran dan menolak pembaca lama. Pembantu hanya menerima kategori dan kunci sementara, bukan jalur riwayat atau perintah bebas. Hanya UI biasa menyimpan. Perilaku data MSIX perlu uji terpisah.
+Format riwayat 2 menjaga rekaman lama sebagai campuran dan menolak pembaca lama. Hanya UI akses biasa yang menyimpan riwayat. Perilaku data MSIX perlu uji terpisah.
 
 ## Aksesibilitas
 
@@ -143,10 +145,10 @@ Judul memiliki tingkat untuk navigasi pembaca layar. Membuka rincian memindahkan
 
 Tanggal kosong: pilih rekaman lain. Perbandingan ditolak: cocokkan urutan, cakupan, akses. Sebagian bukan berarti dihapus. Laporan lama: jalankan pilihan baru dulu. Riwayat gagal dibuka: periksa ruang, izin, versi sebelum menghapus.
 
-Untuk dukungan kirim laporan yang sudah ditinjau dan versi app/Windows, jangan sandi, basis data mentah, atau kunci. Menolak administrator tidak menghalangi pemeriksaan biasa.
+Sebagian pengaturan seluruh komputer memerlukan hak administrator; ChangeTracker melaporkannya tidak lengkap alih-alih meminta peningkatan izin, dan sumber lain tetap dibandingkan. Untuk dukungan kirim laporan yang sudah ditinjau dan versi app/Windows, jangan sandi, basis data mentah, atau kunci.
 
 ## Status rilis
 
 Pratinjau dengan 11 kategori terbatas, pemeriksaan manual atau terjadwal opsional dan retensi yang dapat diatur. Belum ada pemantauan peristiwa terus-menerus, notifikasi atau linimasa lengkap. Pengumpulan memakai sumber daya, tidak menjanjikan nol CPU.
 
-MSI/MSIX x64 lokal belum ditandatangani. Instalasi MSI memerlukan izin terpisah dari pengumpulan; jangan pasang kedua format bersamaan. UAC nyata, akun admin berbeda, Windows 10/ARM64, instalasi, dan persetujuan Store `allowElevation` belum dikualifikasi. Perubahan kode tidak membangun ulang paket lama. Logo tidak menggantikan tangkapan layar asli atau sertifikasi.
+Rilis lokal memiliki installer MSI x64 dan ARM64 serta bundel MSIX x64, semuanya belum ditandatangani. Instalasi MSI memerlukan persetujuan administrator, tetapi aplikasi yang terpasang selalu berjalan dengan izin biasa. Penandatanganan, sertifikasi Store, kualifikasi Windows 10/ARM64, serta kualifikasi instal/upgrade/uninstall masih belum selesai. Perubahan kode tidak membangun ulang paket lama. Logo tidak menggantikan tangkapan layar asli atau sertifikasi.

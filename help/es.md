@@ -12,7 +12,7 @@ Los nombres, rutas, identificadores y valores reales no se traducen. JSON/CSV ma
 
 Abra Configuración en el menú. Las preferencias se guardan para la carpeta de historial actual y se recuperan al reiniciar.
 
-- Apariencia incluye tema claro/oscuro, fuente y colores independientes para texto de la app, etiquetas, fondo y texto de botones. Las muestras con nombre ofrecen Predeterminado, Azul marino, Verde bosque, Granate y Morado. Predeterminado restaura el color del tema; el alto contraste de Windows tiene prioridad y las acciones principales mantienen texto contrastante.
+- Apariencia incluye tema claro/oscuro, fuente y colores independientes para texto de la app, etiquetas, fondo y texto de botones. Las muestras con nombre ofrecen Predeterminado, Azul marino, Verde bosque, Granate y Morado. Predeterminado restaura el color del tema; el alto contraste de Windows tiene prioridad y las acciones principales mantienen texto contrastante. Sin una elección guardada, se usa el tema oscuro. Los botones siguen una jerarquía clara: la comprobación principal es turquesa, las eliminaciones son rojas y el resto de comandos son neutros con un icono de color (por ejemplo Informe, Cambiar ámbito y Ayuda). Las listas desplegables, casillas e interruptores usan el color de acento en la flecha, la marca y el contorno de foco. Las secciones de Configuración se muestran en columnas, por lo que la página suele caber en una sola pantalla sin desplazarse.
 - Las capturas automáticas son cada 4 horas por defecto; se conservan las elecciones guardadas, incluido Desactivado. Intervalos: 15 minutos, 1 hora, 4 horas, 6 horas, diario o semanal. Elija Desactivado para comprobar solo manualmente. Funcionan solo con la app abierta, también en la bandeja, con acceso normal y cancelación. Tras confirmar el ámbito, la primera comprobación o una vencida puede ejecutarse en la siguiente revisión por minuto; las siguientes respetan el intervalo. No piden administrador, despiertan el equipo ni repiten todos los intervalos perdidos.
 - La retención predeterminada es de 30 días; se conservan las elecciones guardadas, incluido conservar para siempre. Elija 30, 90, 180 o 365 días, o conservar para siempre. Solo se eliminan capturas antiguas sin nombre que no sean referencias. La limpieza se ejecuta cuando corresponde por primera vez, después diariamente mientras la app está abierta y tras capturas automáticas correctas; también funciona con las capturas automáticas desactivadas. Puntos con nombre y referencias de todos los ámbitos quedan protegidos.
 - Iniciar al entrar en Windows es opcional y está desactivado. Incluye el inicio de sesión después de reiniciar, no la captura antes de entrar. Solo cambia la entrada de inicio de esta app para este usuario; no instala servicio ni tarea de arranque, ni cambia otras apps o políticas. Un fallo conserva la elección anterior.
@@ -41,7 +41,7 @@ Cambiar de modo no captura, eleva permisos, mueve referencias ni cobra más. Pre
 
 Usuario actual lee sus registros de aplicaciones, Run/RunOnce, asociaciones, audio, proxy y PATH. Todo el equipo lee registros compartidos, servicios, tareas, actualizaciones, controladores, firewall, DNS/DHCP y PATH del sistema. No carga perfiles privados ajenos.
 
-Con ambas casillas se leen las partes por separado y se guarda una observación combinada. Solo la parte del equipo puede elevarse, mediante petición explícita; el usuario conserva su cuenta normal. Se respetan selecciones anteriores y preferencias de fuentes por ámbito.
+Con ambas casillas se leen las partes por separado y se guarda una observación combinada. Ambos ámbitos usan acceso normal con su propia cuenta. Se respetan selecciones anteriores y preferencias de fuentes por ámbito.
 
 ## Fechas y observaciones
 
@@ -57,14 +57,19 @@ Elija fecha y captura anteriores. Seleccione **Instantánea guardada**, la fecha
 
 Elija la referencia deseada y **Hoy (nueva captura)**. **Comprobar ahora** captura y compara con esa selección, no con otra referencia oculta. El panel se contrae tras éxito y puede reabrirse. Una selección pendiente no altera el informe mostrado.
 
-Si la referencia usó administrador, solicite esa acción explícitamente o elija solo estado actual. Cancelar detiene la captura y conserva el historial. Cerrar mantiene la captura en la bandeja; Salir desde la bandeja la cancela y termina la app.
+Si la captura anterior usó acceso de administrador en una versión anterior, no puede ser la referencia para una comprobación nueva, porque las comprobaciones siempre usan acceso normal. Elija una captura con acceso normal o **Solo estado actual**. Dos capturas guardadas aún pueden compararse. Cancelar detiene la captura y conserva el historial. Cerrar mantiene la captura en la bandeja; Salir desde la bandeja la cancela y termina la app.
 
 ## Permisos de administrador
 
-Muchos datos del equipo se leen sin elevar. Fuentes inaccesibles quedan como lagunas. **Comprobar como administrador** requiere clic, confirmación predeterminada en No y autorización UAC para una sola comprobación.
+ChangeTracker nunca pide acceso de administrador. Cada comprobación, manual o automática, se ejecuta con sus permisos normales de Windows en ambos ámbitos, por lo que Windows nunca muestra una solicitud UAC para una comprobación. No hay modo de administrador, ayudante elevado ni servicio en segundo plano.
 
-La ventana queda normal. Un ayudante temporal de solo lectura comprueba el equipo; no instala servicio ni conserva permiso. Denegar no modifica referencia o historial. No comparta contraseñas ni desactive protecciones. Cancelar en la app no cierra un UAC ya abierto: responda en Windows.
+Muchos ajustes de todo el equipo se pueden leer con permisos normales. Si una fuente contiene algo que esos permisos no pueden leer, ChangeTracker informa esa fuente como incompleta en lugar de elevar permisos. Las fuentes incompletas aparecen en los detalles de cobertura y nunca sugieren eliminaciones.
 
+Iniciar ChangeTracker con **Ejecutar como administrador** no es compatible: la app muestra un mensaje y se cierra. Ábrala normalmente.
+
+Las capturas guardadas con acceso de administrador por una versión anterior permanecen en el historial. Puede verlas, compararlas entre sí e incluirlas en informes, pero no pueden ser la captura anterior para una comprobación nueva, porque las comprobaciones nuevas siempre usan acceso normal. Elija una captura con acceso normal o **Solo estado actual**.
+
+Instalar el MSI requiere aprobación de administrador de Windows; esa aprobación es solo para la instalación, no para las comprobaciones de ChangeTracker. El paquete de Microsoft Store se instala sin ella. Nunca comparta una contraseña de administrador.
 ## Detalles de cambios
 
 Añadido, Eliminado y Modificado describen extremos observados, no el autor, causa ni instante exacto. Importante/Revisar indican prioridad, no malware. Las actividades habituales/esperadas y los cambios sin impacto evaluado tienen grupos separados. El título cuenta los hallazgos del filtro; **Ver todos** muestra más de tres.
@@ -121,7 +126,7 @@ La cifra suma `history.db`, `history.db-wal` y `history.db-shm` cuando existen. 
 
 Se actualiza al refrescar el historial tras capturas, borrado o limpieza; no es un monitor continuo. Tamaño no disponible no significa cero. Borrar puede dejar espacio reutilizable sin reducir el archivo; incluso un historial vacío ocupa espacio. No hay compactación automática. No borre la base ni sus archivos temporales mientras la app esté abierta.
 
-El formato de historial 2 conserva los registros antiguos como mixtos y bloquea lectores antiguos. El ayudante recibe categorías y una clave temporal, nunca rutas de historial ni comandos arbitrarios; solo la ventana normal guarda. El ciclo de datos de MSIX necesita pruebas aparte.
+El formato de historial 2 conserva los registros antiguos como mixtos y bloquea lectores antiguos. Haga copia de datos importantes antes de usar una compilación no publicada. La redirección, restablecimiento y desinstalación de datos MSIX necesitan pruebas separadas; no suponga que su ciclo coincide con el de la compilación MSI.
 
 ## Accesibilidad
 
@@ -143,10 +148,10 @@ Los títulos exponen niveles para navegar con lectores de pantalla. Abrir detall
 
 Fecha vacía: elija otra observación. Comparación rechazada: compruebe cronología, ámbito y acceso. Fuente parcial: no significa eliminación. Informe antiguo: ejecute la nueva selección. Base inaccesible: revise espacio, permisos y versión antes de borrar nada.
 
-Para soporte use un informe revisado y versiones de app/Windows, nunca contraseña, base bruta ni clave. Denegar administrador no impide la comprobación ordinaria.
+Para soporte use un informe revisado y versiones de app/Windows, nunca contraseña, base bruta ni clave. Algunos ajustes de todo el equipo necesitan derechos de administrador; ChangeTracker los informa como incompletos en lugar de pedir elevación y sigue comparando otras fuentes.
 
 ## Estado de publicación
 
 Vista previa con 11 categorías acotadas, comprobaciones manuales o programadas opcionales y retención configurable. No hay monitor continuo de eventos, notificaciones ni línea temporal completa. La colección consume recursos; no se promete CPU cero.
 
-MSI/MSIX x64 locales sin firma; MSI necesita aprobación para instalar, aparte del consentimiento de captura. No instale ambos juntos. UAC real, cuenta administradora alternativa, Windows 10/ARM64, instalación y aprobación Store de `allowElevation` siguen pendientes. Cambiar código no reconstruye paquetes previos. Las imágenes Store no sustituyen capturas reales ni certificación.
+La versión local incluye instaladores MSI x64 y ARM64 y un paquete MSIX x64, todos sin firma; el MSI necesita aprobación de administrador para instalar, pero la app instalada siempre se ejecuta con permisos normales. Siguen pendientes la firma, la certificación de Store, la calificación de Windows 10/ARM64 y la calificación de instalación, actualización y desinstalación. Cambiar código no reconstruye paquetes previos. Las imágenes Store no sustituyen capturas reales ni certificación.

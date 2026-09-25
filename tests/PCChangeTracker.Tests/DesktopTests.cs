@@ -105,12 +105,7 @@ public sealed class DesktopTests
     [Fact]
     public void AccessiblePaletteMeetsTextAndControlContrastTargets()
     {
-        var resources = XDocument.Load(Path.Combine(FindRoot(), "src", "PCChangeTracker.App", "App.xaml"));
-        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
-        var colors = resources.Descendants(presentation + "SolidColorBrush").ToDictionary(
-            element => (string)element.Attribute(xaml + "Key")!,
-            element => (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString((string)element.Attribute("Color")!));
+        var colors = LoadStandardBrushes().ToDictionary(pair => pair.Key, pair => ((System.Windows.Media.SolidColorBrush)pair.Value).Color);
         double ContrastByKey(string foreground, string background) => Contrast(colors[foreground], colors[background]);
         foreach (var background in new[] { "SurfaceBrush", "CanvasBrush" })
         {
@@ -119,8 +114,18 @@ public sealed class DesktopTests
             Assert.True(ContrastByKey("LineBrush", background) >= 3, $"Insufficient control-boundary contrast: {background}");
         }
         Assert.True(ContrastByKey("AccentTextBrush", "AccentBrush") >= 4.5);
-        Assert.DoesNotContain(resources.Descendants(presentation + "Style"), style => (string?)style.Attribute(xaml + "Key") == "ModeSegment");
+        Assert.DoesNotContain(LoadThemeXaml("Controls.xaml").Descendants(Presentation + "Style"), style => (string?)style.Attribute(Xaml + "Key") == "ModeSegment");
     }
+
+    private static readonly XNamespace Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+    private static readonly XNamespace Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+    private static XDocument LoadThemeXaml(string file) => XDocument.Load(Path.Combine(FindRoot(), "src", "PCChangeTracker.App", "Themes", file));
+
+    /// <summary>The Light color tokens exactly as declared in Themes/Colors.xaml.</summary>
+    private static Dictionary<string, object> LoadStandardBrushes() => LoadThemeXaml("Colors.xaml").Descendants(Presentation + "SolidColorBrush").ToDictionary(
+        element => (string)element.Attribute(Xaml + "Key")!,
+        element => (object)new System.Windows.Media.SolidColorBrush(Hex((string)element.Attribute("Color")!)));
 
     [Theory]
     [InlineData(100, 1d)]
@@ -131,7 +136,7 @@ public sealed class DesktopTests
     public void TextSizeScalesAllSharedFontRoles(int percentage, double scale)
     {
         var resources = new System.Windows.ResourceDictionary();
-        PCChangeTracker.App.App.ApplyTextSize(resources, percentage);
+        PCChangeTracker.App.Appearance.ApplyTextSize(resources, percentage);
         foreach (var size in new[] { 14, 16, 17, 18, 19, 20, 22, 24, 26 })
             Assert.Equal(size * scale, Assert.IsType<double>(resources["AppFont" + size]));
     }
@@ -140,8 +145,8 @@ public sealed class DesktopTests
     public void CustomButtonTextColorsMeetContrastAgainstBothThemeSurfaces()
     {
         var lightSurface = Hex("#FFFFFF");
-        var darkSurface = Hex(PCChangeTracker.App.App.DarkPaletteHex["SurfaceBrush"]);
-        foreach (var pair in PCChangeTracker.App.App.ButtonTextColorHex)
+        var darkSurface = Hex(PCChangeTracker.App.Appearance.DarkPaletteHex["SurfaceBrush"]);
+        foreach (var pair in PCChangeTracker.App.Appearance.ButtonTextColorHex)
         {
             var surface = pair.Key.Theme == "Dark" ? darkSurface : lightSurface;
             Assert.True(Contrast(Hex(pair.Value), surface) >= 4.5,
@@ -152,18 +157,13 @@ public sealed class DesktopTests
     [Fact]
     public void EveryCustomColorCombinationPreservesContrastAndHighContrastOverrides()
     {
-        var resources = XDocument.Load(Path.Combine(FindRoot(), "src", "PCChangeTracker.App", "App.xaml"));
-        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
-        var standard = resources.Descendants(presentation + "SolidColorBrush").ToDictionary(
-            element => (string)element.Attribute(xaml + "Key")!,
-            element => (object)new System.Windows.Media.SolidColorBrush(Hex((string)element.Attribute("Color")!)));
+        var standard = LoadStandardBrushes();
         var codes = new[] { "ButtonColorDefault", "ButtonColorNavy", "ButtonColorForest", "ButtonColorMaroon", "ButtonColorPurple" };
         foreach (var theme in new[] { "Light", "Dark" })
         foreach (var foreground in codes)
         foreach (var background in codes)
         {
-            var palette = PCChangeTracker.App.App.BuildPalette(standard, theme, foreground, foreground, background, foreground);
+            var palette = PCChangeTracker.App.Appearance.BuildPalette(standard, theme, foreground, foreground, background, foreground);
             System.Windows.Media.Color Color(string key) => ((System.Windows.Media.SolidColorBrush)palette[key]).Color;
             foreach (var surface in new[] { "CanvasBrush", "SurfaceBrush" })
                 foreach (var text in new[] { "TextBrush", "LabelBrush" })
@@ -171,13 +171,132 @@ public sealed class DesktopTests
             Assert.True(Contrast(Color("ButtonTextBrush"), Color("ButtonBackgroundBrush")) >= 4.5, $"{theme}: {foreground}/{background}");
             Assert.True(Contrast(Color("LineBrush"), Color("ButtonBackgroundBrush")) >= 3, $"{theme}: button outline/{background}");
             Assert.True(Contrast(Color("AccentTextBrush"), Color("AccentBrush")) >= 4.5, $"{theme}: primary button/{background}");
+            foreach (var role in PCChangeTracker.App.Appearance.ButtonRoles)
+            {
+                var fill = Color(role + "ButtonBackgroundBrush");
+                Assert.True(Contrast(Color(role + "ButtonTextBrush"), fill) >= 4.5, $"{theme}: {role} button text {foreground}/{background}");
+                foreach (var surface in new[] { "CanvasBrush", "SurfaceBrush" })
+                    Assert.True(Contrast(Color(role + "ButtonBorderBrush"), Color(surface)) >= 3, $"{theme}: {role} button boundary/{surface} {foreground}/{background}");
+            }
+            foreach (var tone in PCChangeTracker.App.Appearance.IconTones)
+                Assert.True(Contrast(Color(tone + "IconBrush"), Color("NeutralButtonBackgroundBrush")) >= 3, $"{theme}: {tone} icon {foreground}/{background}");
+            foreach (var surface in new[] { "CanvasBrush", "SurfaceBrush", "InputBackgroundBrush" })
+                Assert.True(Contrast(Color("AccentBrush"), Color(surface)) >= 3, $"{theme}: selector accent/{surface} {background}");
+            Assert.True(Contrast(Color("TextBrush"), Color("InputBackgroundBrush")) >= 4.5, $"{theme}: field text {foreground}");
+            Assert.True(Contrast(Color("LineBrush"), Color("InputBackgroundBrush")) >= 3, $"{theme}: field boundary");
             var applied = new System.Windows.ResourceDictionary();
-            PCChangeTracker.App.App.ApplyAccessibilityColors(applied, palette, true);
+            PCChangeTracker.App.Appearance.ApplyAccessibilityColors(applied, palette, true);
             Assert.Same(System.Windows.SystemColors.WindowTextBrush, applied["TextBrush"]);
             Assert.Same(System.Windows.SystemColors.WindowTextBrush, applied["LabelBrush"]);
             Assert.Same(System.Windows.SystemColors.WindowTextBrush, applied["ButtonTextBrush"]);
             Assert.Same(System.Windows.SystemColors.WindowBrush, applied["ButtonBackgroundBrush"]);
+            Assert.Same(System.Windows.SystemColors.WindowBrush, applied["InputBackgroundBrush"]);
+            Assert.Same(System.Windows.Media.Brushes.Transparent, applied["ControlHoverOverlayBrush"]);
+            foreach (var role in PCChangeTracker.App.Appearance.ButtonRoles)
+            {
+                Assert.Same(System.Windows.SystemColors.WindowBrush, applied[role + "ButtonBackgroundBrush"]);
+                Assert.Same(System.Windows.SystemColors.WindowTextBrush, applied[role + "ButtonTextBrush"]);
+                Assert.Same(System.Windows.SystemColors.WindowTextBrush, applied[role + "ButtonBorderBrush"]);
+            }
+            foreach (var tone in PCChangeTracker.App.Appearance.IconTones)
+                Assert.Same(System.Windows.SystemColors.WindowTextBrush, applied[tone + "IconBrush"]);
         }
+    }
+
+    [Fact]
+    public void CommandHierarchyUsesSemanticRolesAndDistinctIconsInBothThemes()
+    {
+        var standard = LoadStandardBrushes();
+        foreach (var theme in new[] { "Light", "Dark" })
+        {
+            var palette = PCChangeTracker.App.Appearance.BuildPalette(standard, theme);
+            System.Windows.Media.Color Color(string key) => ((System.Windows.Media.SolidColorBrush)palette[key]).Color;
+            var fills = new List<System.Windows.Media.Color> { Color("AccentBrush") };
+            foreach (var role in PCChangeTracker.App.Appearance.ButtonRoles)
+            {
+                var fill = Color(role + "ButtonBackgroundBrush");
+                Assert.True(Contrast(Color(role + "ButtonTextBrush"), fill) >= 7, $"{theme}: {role} button text needs 7:1");
+                foreach (var surface in new[] { "CanvasBrush", "SurfaceBrush" })
+                    Assert.True(Contrast(Color(role + "ButtonBorderBrush"), Color(surface)) >= 3, $"{theme}: {role} button boundary against {surface}");
+                Assert.DoesNotContain(fill, fills);
+                fills.Add(fill);
+            }
+            var tones = PCChangeTracker.App.Appearance.IconTones.Select(tone => Color(tone + "IconBrush")).ToArray();
+            Assert.Equal(tones.Length, tones.Distinct().Count());
+            Assert.All(tones, tone => Assert.True(Contrast(tone, Color("NeutralButtonBackgroundBrush")) >= 4.5, $"{theme}: icon tone {tone}"));
+            foreach (var surface in new[] { "CanvasBrush", "SurfaceBrush", "InputBackgroundBrush" })
+                Assert.True(Contrast(Color("AccentBrush"), Color(surface)) >= 3, $"{theme}: selector accent against {surface}");
+        }
+        var styles = LoadThemeXaml("Controls.xaml").Descendants(Presentation + "Style").Select(style => (string?)style.Attribute(Xaml + "Key")).OfType<string>().ToHashSet();
+        var window = XDocument.Load(Path.Combine(FindRoot(), "src", "PCChangeTracker.App", "MainWindow.xaml"));
+        XNamespace controls = "clr-namespace:PCChangeTracker.App.Controls";
+        XElement Button(string automationId) => window.Descendants(Presentation + "Button")
+            .Single(button => (string?)button.Attribute("AutomationProperties.AutomationId") == automationId);
+        var commands = new[] { "Report", "CheckNow", "ChangeScope", "HelpMe" }.Select(Button).ToArray();
+        var commandStyles = commands.Select(button => ((string)button.Attribute("Style")!).Replace("{StaticResource ", "").TrimEnd('}')).ToArray();
+        Assert.Equal(new[] { "InfoButton", "PrimaryButton", "NavigateButton", "HelpButton" }, commandStyles);
+        Assert.All(commandStyles, style => Assert.Contains(style, styles));
+        var glyphs = commands.Select(button => (string?)button.Attribute(controls + "Icon.Glyph")).ToArray();
+        Assert.All(glyphs, glyph => Assert.False(string.IsNullOrEmpty(glyph)));
+        Assert.Equal(glyphs.Length, glyphs.Distinct().Count());
+        Assert.All(window.Descendants(Presentation + "Button").Where(button => ((string?)button.Attribute("Content"))?.Contains("DeleteSelected") == true),
+            button => Assert.Equal("{StaticResource DangerButton}", (string?)button.Attribute("Style")));
+    }
+
+    [Theory]
+    [InlineData(1256d, 320d, 10d, 3, 3)]
+    [InlineData(1000d, 320d, 10d, 3, 3)]
+    [InlineData(704d, 320d, 10d, 3, 2)]
+    [InlineData(1256d, 640d, 10d, 3, 1)]
+    [InlineData(300d, 320d, 10d, 3, 1)]
+    [InlineData(double.PositiveInfinity, 320d, 10d, 3, 3)]
+    public void ColumnFlowPanelChoosesColumnsFromWidthAndTextSize(double width, double minimumColumnWidth, double spacing, int maximum, int expected)
+    {
+        Assert.Equal(expected, PCChangeTracker.App.Controls.ColumnFlowPanel.ColumnsFor(width, minimumColumnWidth, spacing, maximum));
+    }
+
+    [Fact]
+    public void ColumnFlowPanelBalancesColumnsWithoutReorderingSections()
+    {
+        Assert.Equal(new[] { 0, 3, 5 }, PCChangeTracker.App.Controls.ColumnFlowPanel.BalanceColumns([100, 190, 165, 305, 195, 180, 280], 3, 10));
+        Assert.Equal(new[] { 0, 2 }, PCChangeTracker.App.Controls.ColumnFlowPanel.BalanceColumns([10, 10, 10], 2, 0));
+        Assert.Equal(new[] { 0 }, PCChangeTracker.App.Controls.ColumnFlowPanel.BalanceColumns([10, 10, 10], 1, 0));
+        Assert.Equal(new[] { 0, 1 }, PCChangeTracker.App.Controls.ColumnFlowPanel.BalanceColumns([5, 5], 3, 0));
+        Assert.Equal(new[] { 0 }, PCChangeTracker.App.Controls.ColumnFlowPanel.BalanceColumns([], 3, 0));
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                System.Windows.Controls.Border Card(double height) => new() { Height = height };
+                var panel = new PCChangeTracker.App.Controls.ColumnFlowPanel { MinColumnEms = 20, MaxColumns = 3, ColumnSpacing = 10, RowSpacing = 10, FontSize = 16 };
+                foreach (var height in new double[] { 100, 190, 165, 305, 195, 180, 280 }) panel.Children.Add(Card(height));
+                panel.Measure(new System.Windows.Size(1010, double.PositiveInfinity));
+                panel.Arrange(new System.Windows.Rect(panel.DesiredSize));
+                Assert.Equal(3, panel.ColumnCount);
+                Assert.Equal(510, panel.DesiredSize.Height);
+                System.Windows.Point Position(int index) => panel.Children[index].TranslatePoint(new System.Windows.Point(), panel);
+                Assert.Equal(new System.Windows.Point(0, 110), Position(1));
+                Assert.Equal(new System.Windows.Point(340, 0), Position(3));
+                Assert.Equal(new System.Windows.Point(680, 190), Position(6));
+                panel.FontSize = 32;
+                panel.Measure(new System.Windows.Size(1010, double.PositiveInfinity));
+                Assert.Equal(1, panel.ColumnCount);
+                var fields = new PCChangeTracker.App.Controls.ColumnFlowPanel { MinColumnEms = 7, MaxColumns = 3, ColumnSpacing = 12, RowSpacing = 8, FontSize = 16, FillRowsFirst = true };
+                foreach (var height in new double[] { 60, 80, 60 }) fields.Children.Add(Card(height));
+                fields.Measure(new System.Windows.Size(260, double.PositiveInfinity));
+                fields.Arrange(new System.Windows.Rect(fields.DesiredSize));
+                Assert.Equal(2, fields.ColumnCount);
+                Assert.Equal(80 + 8 + 60, fields.DesiredSize.Height);
+                Assert.Equal(new System.Windows.Point(136, 0), fields.Children[1].TranslatePoint(new System.Windows.Point(), fields));
+                Assert.Equal(new System.Windows.Point(0, 88), fields.Children[2].TranslatePoint(new System.Windows.Point(), fields));
+            }
+            catch (Exception exception) { failure = exception; }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(10)), "Column layout did not finish.");
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
     [Fact]
@@ -192,12 +311,12 @@ public sealed class DesktopTests
             ["AccentTextBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
         };
         var resources = new System.Windows.ResourceDictionary();
-        PCChangeTracker.App.App.ApplyAccessibilityColors(resources, normal, true);
+        PCChangeTracker.App.Appearance.ApplyAccessibilityColors(resources, normal, true);
         Assert.Same(System.Windows.SystemColors.WindowTextBrush, resources["TextBrush"]);
         Assert.Same(System.Windows.SystemColors.WindowTextBrush, resources["LineBrush"]);
         Assert.Same(System.Windows.SystemColors.WindowBrush, resources["SurfaceBrush"]);
         Assert.Same(System.Windows.SystemColors.HighlightTextBrush, resources["AccentTextBrush"]);
-        PCChangeTracker.App.App.ApplyAccessibilityColors(resources, normal, false);
+        PCChangeTracker.App.Appearance.ApplyAccessibilityColors(resources, normal, false);
         foreach (var pair in normal) Assert.Same(pair.Value, resources[pair.Key]);
     }
 
@@ -482,9 +601,15 @@ public sealed class DesktopTests
             Assert.True(process.WaitForInputIdle(15000));
             var window = WaitForWindow(process.Id, "ChangeTracker");
             InvokeId(window, "SettingsPage");
+            var texts = new PCChangeTracker.App.Localization.UiText("en");
+            AssertSelectedSnapshot(window, "ThemePicker", "Dark");
+            AssertSelectedSnapshot(window, "RetentionPicker", texts["Retain30Days"]);
+            Assert.Null(store.GetPreference("theme"));
+            Assert.Null(store.GetPreference("retention"));
+            SelectSnapshot(window, "ThemePicker", "Light");
+            Assert.Equal("Light", store.GetPreference("theme"));
             SelectSnapshot(window, "ThemePicker", "Dark");
             SelectSnapshot(window, "FontPicker", "Calibri");
-            var texts = new PCChangeTracker.App.Localization.UiText("en");
             SelectSnapshot(window, "ButtonTextColorPicker", texts["ButtonColorForest"]);
             SelectSnapshot(window, "AppTextColorPicker", texts["ButtonColorNavy"]);
             SelectSnapshot(window, "ButtonColorPicker", texts["ButtonColorForest"]);
@@ -533,6 +658,64 @@ public sealed class DesktopTests
             Assert.Single(store.List());
             Assert.Equal(baseline.Id, store.GetBaselineId(CollectionScope.CurrentUser));
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
+            ExitFromTray(process);
+        }
+        finally
+        {
+            if (!process.HasExited) { process.Kill(true); process.WaitForExit(10000); }
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Desktop")]
+    public void CondensedSettingsFitOneScreenAndHideReviewOnlyControls()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerUi", Guid.NewGuid().ToString("N"));
+        var store = new HistoryStore(Path.Combine(directory, "history.db"));
+        store.SetPreference("collection.scope", "Both");
+        store.SetPreference("schedule.interval", "Off");
+        store.Save(Seed(0, false) with { Scope = CollectionScope.Both });
+        var start = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
+        start.ArgumentList.Add("--data-dir");
+        start.ArgumentList.Add(directory);
+        using var process = Process.Start(start)!;
+        try
+        {
+            Assert.True(process.WaitForInputIdle(15000));
+            var window = WaitForWindow(process.Id, "ChangeTracker");
+            ResizeWindowInDips(window, 1366, 768);
+            Assert.False(FindId(window, "ChangeScope").Current.IsOffscreen);
+            InvokeId(window, "SettingsPage");
+            Assert.True(SpinWait.SpinUntil(() => !FindId(window, "SettingsHeading").Current.IsOffscreen, 5000));
+            static bool Hidden(AutomationElement root, string id) =>
+                root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, id)) is not { Current.IsOffscreen: false };
+            Assert.True(SpinWait.SpinUntil(() => Hidden(window, "ChangeScope") && Hidden(window, "ComparisonOptions"), 5000),
+                "Review-only scope and comparison controls should not use space on Settings.");
+            var content = FindId(window, "MainContentScroll");
+            var scroll = (ScrollPattern)content.GetCurrentPattern(ScrollPattern.Pattern);
+            Assert.True(SpinWait.SpinUntil(() => !scroll.Current.VerticallyScrollable, 5000),
+                $"Settings need scrolling; only {scroll.Current.VerticalViewSize:0.0}% is visible.");
+            var viewport = content.Current.BoundingRectangle;
+            var texts = new PCChangeTracker.App.Localization.UiText("en");
+            foreach (var id in new[] { "LanguagePicker", "ThemePicker", "FontPicker", "AppTextSize", "AppTextColorPicker", "LabelColorPicker",
+                         "ButtonColorPicker", "ButtonTextColorPicker", "FrequencyPicker", "RetentionPicker", "StartWithWindows" })
+            {
+                var bounds = FindId(window, id).Current.BoundingRectangle;
+                Assert.True(bounds.Top >= viewport.Top - 1 && bounds.Bottom <= viewport.Bottom + 1 && bounds.Right <= viewport.Right + 1,
+                    $"Settings control is outside the visible page: {id} {bounds} / {viewport}");
+            }
+            foreach (var name in new[] { texts["ClearHistory"], texts["PriceHelp"] })
+            {
+                var bounds = FindName(window, name).Current.BoundingRectangle;
+                Assert.True(bounds.Bottom <= viewport.Bottom + 1, $"Settings text is below the visible page: {name}");
+            }
+            var screenshots = Path.Combine(FindRoot(), "artifacts", "screenshots");
+            Directory.CreateDirectory(screenshots);
+            Screenshot(window, Path.Combine(screenshots, "settings-condensed-dark.png"));
+            InvokeId(window, "ReviewPage");
+            Assert.True(SpinWait.SpinUntil(() => !Hidden(window, "ChangeScope") && !Hidden(window, "ComparisonOptions"), 5000));
+            Assert.Single(store.List());
             ExitFromTray(process);
         }
         finally
@@ -592,6 +775,15 @@ public sealed class DesktopTests
             Assert.Equal(restoredSize, window.Current.BoundingRectangle.Size);
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
             Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
+            var launch = new ProcessStartInfo(FindExecutable()) { UseShellExecute = false };
+            launch.ArgumentList.Add("--data-dir");
+            launch.ArgumentList.Add(directory);
+            using (var again = Process.Start(launch)!) Assert.True(again.WaitForExit(10000));
+            window = WaitForWindow(process.Id, "ChangeTracker");
+            Assert.True(SpinWait.SpinUntil(() => ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Current.WindowVisualState == WindowVisualState.Maximized, 5000),
+                "Launching the app again should open the hidden window maximized.");
+            ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
+            Assert.True(SpinWait.SpinUntil(() => { process.Refresh(); return process.MainWindowHandle == IntPtr.Zero; }, 5000));
             Assert.False(process.HasExited);
             Assert.Empty(store.List());
             ExitFromTray(process);
@@ -607,6 +799,8 @@ public sealed class DesktopTests
     public void OfflineHelpIsEmbeddedAndSearchesFullTopicText()
     {
         Assert.Equal(File.ReadAllText(Path.Combine(FindRoot(), "Helpme.md")), PCChangeTracker.App.HelpContent.ReadSource());
+        Assert.DoesNotContain("Check with administrator access", PCChangeTracker.App.HelpContent.ReadSource());
+        Assert.DoesNotContain("allowElevation", PCChangeTracker.App.HelpContent.ReadSource());
         var topics = PCChangeTracker.App.HelpContent.LoadTopics();
         Assert.True(topics.Count >= 15);
         Assert.Contains(topics, topic => topic.Title == "Settings");
@@ -667,7 +861,7 @@ public sealed class DesktopTests
         Assert.Contains(translatedTopics, topic => topic.Title == texts["NavSettings"]);
         Assert.Contains("DPAPI", translated);
         Assert.Contains("JSON/CSV", translated);
-        Assert.Contains("allowElevation", translated);
+        Assert.DoesNotContain("allowElevation", translated);
         var storageTopic = Assert.Single(PCChangeTracker.App.HelpContent.Search(translatedTopics, "history.db-wal"));
         Assert.Contains(PCChangeTracker.App.HelpContent.Search(translatedTopics, "DPAPI"), topic => topic.Title == storageTopic.Title);
         Assert.Contains("history.db-shm", translated);
@@ -728,13 +922,35 @@ public sealed class DesktopTests
         Assert.Equal("PCChangeTracker.exe", (string?)application.Attribute("Executable"));
         Assert.Equal("ChangeTracker", (string?)application.Element(visual + "VisualElements")?.Attribute("DisplayName"));
         XNamespace restricted = "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities";
-        Assert.Equal(new[] { "allowElevation", "runFullTrust" }, package.Element(schema + "Capabilities")!
+        Assert.Equal(new[] { "runFullTrust" }, package.Element(schema + "Capabilities")!
             .Elements(restricted + "Capability").Select(capability => (string)capability.Attribute("Name")!).Order());
         var executableManifest = XDocument.Load(Path.Combine(FindRoot(), "src", "PCChangeTracker.App", "app.manifest"));
         XNamespace execution = "urn:schemas-microsoft-com:asm.v3";
         var level = Assert.Single(executableManifest.Descendants(execution + "requestedExecutionLevel"));
         Assert.Equal("asInvoker", (string?)level.Attribute("level"));
         Assert.Equal("false", (string?)level.Attribute("uiAccess"));
+    }
+
+    /// <summary>
+    /// Store policy: the app must run only in the user's default security context. Guards against reintroducing the denied
+    /// allowElevation capability, a UAC launch verb, or an elevating manifest anywhere in the shipped sources.
+    /// </summary>
+    [Fact]
+    public void ShippedSourcesNeverRequestElevation()
+    {
+        var root = FindRoot();
+        var files = new[] { "src", "packaging" }.SelectMany(folder => Directory.EnumerateFiles(Path.Combine(root, folder), "*", SearchOption.AllDirectories))
+            .Where(file => !file.Split(Path.DirectorySeparatorChar).Any(part => part is "bin" or "obj"))
+            .Where(file => Path.GetExtension(file) is ".cs" or ".xaml" or ".xml" or ".manifest" or ".wxs" or ".csproj" or ".wixproj" or ".json");
+        foreach (var file in files)
+        {
+            var content = File.ReadAllText(file);
+            foreach (var marker in new[] { "allowElevation", "\"runas\"", "requireAdministrator", "highestAvailable", "--machine-check" })
+                Assert.False(content.Contains(marker, StringComparison.OrdinalIgnoreCase), $"{Path.GetRelativePath(root, file)} contains {marker}");
+        }
+        var window = XDocument.Load(Path.Combine(root, "src", "PCChangeTracker.App", "MainWindow.xaml"));
+        Assert.DoesNotContain(window.Descendants().Attributes(), attribute => attribute.Value.Contains("Administrator", StringComparison.Ordinal) &&
+            attribute.Name.LocalName is "Command" or "AutomationProperties.AutomationId");
     }
 
     [Fact]
@@ -842,7 +1058,8 @@ public sealed class DesktopTests
             InvokeId(window!, "ConfirmScope");
             Assert.True(SpinWait.SpinUntil(() => store.GetPreference("collection.scope") == "Machine", 5000));
             Assert.Single(store.List());
-            Assert.False(FindId(window!, "CheckAsAdministrator").Current.IsOffscreen);
+            Assert.Null(window!.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "CheckAsAdministrator")));
+            Assert.Equal("Machine-wide / Standard access", FindId(window!, "ScopeLabel").Current.Name);
             Assert.Null(store.GetBaselineId(CollectionScope.Machine));
             InvokeId(window!, "CheckNow");
             Assert.True(SpinWait.SpinUntil(() => store.List().Count == 2, 30000));
@@ -1274,6 +1491,30 @@ public sealed class DesktopTests
         ((TransformPattern)window.GetCurrentPattern(TransformPattern.Pattern)).Resize(width, height);
         Assert.True(pattern.WaitForInputIdle(5000));
     }
+
+    /// <summary>Resizes in device-independent pixels, converting to the coordinate space UI Automation uses for this test process.</summary>
+    private static void ResizeWindowInDips(AutomationElement window, double width, double height)
+    {
+        var scale = GetAwarenessFromDpiAwarenessContext(GetThreadDpiAwarenessContext()) switch
+        {
+            2 => GetDpiForWindow((nint)window.Current.NativeWindowHandle) / 96d,
+            1 => GetDpiForSystem() / 96d,
+            _ => 1d
+        };
+        ResizeWindow(window, width * scale, height * scale);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern nint GetThreadDpiAwarenessContext();
+
+    [DllImport("user32.dll")]
+    private static extern int GetAwarenessFromDpiAwarenessContext(nint context);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(nint window);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForSystem();
 
     private static nint FindTrayWindow(Process process)
     {
