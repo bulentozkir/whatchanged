@@ -57,6 +57,16 @@ public sealed class UiText : INotifyPropertyChanged
     public string Format(string key, params object?[] arguments) => string.Format(Culture, this[key], arguments);
     public string Date(DateTimeOffset value, string format = "g") => value.ToLocalTime().ToString(format, Culture);
 
+    /// <summary>Texts in the supported language closest to the Windows display language, for messages shown before preferences can be read.</summary>
+    public static UiText ForSystemLanguage(CultureInfo? culture = null)
+    {
+        culture ??= CultureInfo.CurrentUICulture;
+        var match = Languages.FirstOrDefault(language => language.CultureName.Equals(culture.Name, StringComparison.OrdinalIgnoreCase)
+                || language.Code.Equals(culture.Name, StringComparison.OrdinalIgnoreCase))
+            ?? Languages.FirstOrDefault(language => language.Code.Equals(culture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase));
+        return new UiText(match?.Code);
+    }
+
     public void ChangeLanguage(string? languageCode)
     {
         Language = Languages.FirstOrDefault(language => language.Code.Equals(languageCode, StringComparison.OrdinalIgnoreCase)) ?? Languages[0];
@@ -168,12 +178,16 @@ public sealed class SnapshotTextConverter : IMultiValueConverter
         if (values.Length < 2 || values[1] is not UiText text) return "";
         if (values[0] is DateTime day) return day.ToString("D", text.Culture);
         if (values[0] is not SnapshotSummary snapshot) return "";
+        var label = string.IsNullOrWhiteSpace(snapshot.Label) ? text["ManualCheck"] : snapshot.Label;
         return (parameter as string) switch
         {
             "Context" => text.Context(snapshot.Scope, snapshot.Elevated),
             "Date" => text.Date(snapshot.CapturedAt, "D"),
             "Time" => text.Date(snapshot.CapturedAt, "HH:mm:ss.fff zzz"),
-            "Label" => string.IsNullOrWhiteSpace(snapshot.Label) ? text["ManualCheck"] : snapshot.Label,
+            "Label" => label,
+            // Secondary line of an open list item, and the single line shown in a closed snapshot selector.
+            "Details" => $"{label}  ·  {text.Context(snapshot.Scope, snapshot.Elevated)}",
+            "Selection" => $"{text.Date(snapshot.CapturedAt, "d")} {text.Date(snapshot.CapturedAt, "HH:mm:ss.fff zzz")}  ·  {label}",
             _ => text.Snapshot(snapshot, parameter as string == "Compact")
         };
     }

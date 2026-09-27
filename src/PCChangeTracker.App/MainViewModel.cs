@@ -127,14 +127,14 @@ public sealed record ChangeRow(ObservedChange Change, bool Expected, UiText? Tex
                 var before = Change.Before.Fields.GetValueOrDefault(propertyName);
                 var after = Change.After.Fields.GetValueOrDefault(propertyName);
                 if (before != after)
-                        differences.Add($"{text[propertyName]}: {ReportExporter.Sanitize(before ?? text["NotPresent"])} -> {ReportExporter.Sanitize(after ?? text["NotPresent"])}");
+                    differences.Add($"{text[propertyName]}: {ReportExporter.Sanitize(before ?? text["NotPresent"])} -> {ReportExporter.Sanitize(after ?? text["NotPresent"])}");
             }
-                    if (differences.Count == 0) return text["PrivateSummary"];
-                    return string.Join("\n", differences.Take(3)) + (differences.Count > 3 ? "\n" + text.Format("MoreFields", differences.Count - 3) : "");
+            if (differences.Count == 0) return text["PrivateSummary"];
+            return string.Join("\n", differences.Take(3)) + (differences.Count > 3 ? "\n" + text.Format("MoreFields", differences.Count - 3) : "");
         }
     }
-                public string Priority => Expected ? text["Expected"] : text[Change.Importance.ToString()];
-                public string Why => text.Reason(Change);
+    public string Priority => Expected ? text["Expected"] : text[Change.Importance.ToString()];
+    public string Why => text.Reason(Change);
     public string Before => Summary(Change.Before);
     public string After => Summary(Change.After);
     public string Window => text.Format("DetectedBetween", text.Date(Change.ObservedFrom), text.Date(Change.ObservedTo));
@@ -164,6 +164,7 @@ public sealed partial class MainViewModel : ObservableObject
     private Snapshot? currentSnapshot;
     private Comparison? comparison;
     private IReadOnlyList<ChangeRow> allChanges = [];
+    private HashSet<Guid> baselineIds = [];
     private bool restoringSources;
     private bool updatingComparisonChoices;
     private bool comparisonChoicesInitialized;
@@ -270,6 +271,21 @@ public sealed partial class MainViewModel : ObservableObject
         : Texts[BeforeDate is not null ? "NoDateSnapshots" : "NoReference"];
     public string AfterSelectionSummary => CompareWithToday ? Texts["PendingSnapshot"]
         : CompareTo is not null ? Texts.Context(CompareTo.Scope, CompareTo.Elevated) : Texts["NoDateSnapshots"];
+    /// <summary>The comparison panel's header: what will be compared, readable while the panel is collapsed.</summary>
+    public string ComparisonHeader
+    {
+        get
+        {
+            var before = CompareFrom is null ? Texts[BeforeDate is null ? "CurrentState" : "NoDateSnapshots"] : ComparisonEndpoint(CompareFrom);
+            if (CompareFrom is not null && baselineIds.Contains(CompareFrom.Id)) before = Texts["Baseline"] + " · " + before;
+            var after = CompareWithToday ? Texts["Today"] : CompareTo is null ? Texts["NoDateSnapshots"] : ComparisonEndpoint(CompareTo);
+            return $"{Texts["Comparison"]}: {before} {(Texts.Language.RightToLeft ? "←" : "→")} {after}";
+        }
+    }
+    private string ComparisonEndpoint(SnapshotSummary snapshot) =>
+        Texts.Date(snapshot.CapturedAt) + (string.IsNullOrWhiteSpace(snapshot.Label) ? "" : $" ({ReportExporter.Sanitize(snapshot.Label)})");
+    /// <summary>Sidebar build label, taken from the assembly so it cannot drift from the released version.</summary>
+    public string VersionText => Texts.Format("VersionLabel", typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "");
     public string ComparisonSelectionIssue => !CompareWithToday ? SavedComparisonIssue()
         : CompareFrom is null ? BeforeDate is null ? "" : Texts["NoMatchingDate"]
         : CompareFrom.Scope != SelectedScope ? Texts["ScopeMismatch"]
@@ -612,6 +628,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(BeforeSelectionSummary));
         OnPropertyChanged(nameof(AfterSelectionSummary));
         OnPropertyChanged(nameof(ComparisonSelectionIssue));
+        OnPropertyChanged(nameof(ComparisonHeader));
     }
 
     private void RefreshDateChoices(bool beforeChanged = false, bool afterChanged = false)
@@ -672,7 +689,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnPageChanged(string value)
     {
-        if (value is "Settings" or "Sources") ComparisonPickerExpanded = false;
+        // The comparison panel collapses to its one-line summary away from Review, keeping each page's own content in view.
+        if (value is not "Review") ComparisonPickerExpanded = false;
     }
 
     [RelayCommand(CanExecute = nameof(CanCapture))]
@@ -888,6 +906,8 @@ public sealed partial class MainViewModel : ObservableObject
         var afterId = CompareTo?.Id;
         Snapshots.Clear();
         foreach (var snapshot in store.List()) Snapshots.Add(snapshot);
+        baselineIds = Snapshots.Select(snapshot => (snapshot.Scope, snapshot.Elevated)).Distinct()
+            .Select(key => store.GetBaselineId(key.Scope, key.Elevated)).OfType<Guid>().ToHashSet();
         SnapshotDates = Snapshots.Select(snapshot => snapshot.CapturedAt.ToLocalTime().Date).Distinct().OrderByDescending(date => date).ToArray();
         OnPropertyChanged(nameof(SnapshotDates));
         var baseline = Snapshots.FirstOrDefault(snapshot => snapshot.Id == store.GetBaselineId(SelectedScope));

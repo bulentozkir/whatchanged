@@ -23,15 +23,18 @@ internal static class Appearance
 
     internal static readonly IReadOnlyDictionary<string, string> DarkPaletteHex = new Dictionary<string, string>
     {
-        ["CanvasBrush"] = "#14191C", ["SurfaceBrush"] = "#1E2528", ["SubtleBackgroundBrush"] = "#2A3439", ["InputBackgroundBrush"] = "#242C30",
-        ["CardStrokeBrush"] = "#2E393E", ["TextBrush"] = "#F2F5F6", ["MutedBrush"] = "#B7C2C7", ["LabelBrush"] = "#F2F5F6",
-        ["LineBrush"] = "#6B7D87", ["ReviewBrush"] = "#F2A65A", ["AccentBrush"] = "#1FBFAA", ["AccentTextBrush"] = "#04211D",
-        ["ButtonTextBrush"] = "#F2F5F6", ["ButtonBackgroundBrush"] = "#1E2528",
-        ["NeutralButtonBackgroundBrush"] = "#2A3338", ["NeutralButtonTextBrush"] = "#F2F5F6", ["NeutralButtonBorderBrush"] = "#7A8C96",
-        ["CautionButtonBackgroundBrush"] = "#3A2A0F", ["CautionButtonTextBrush"] = "#FFD08A", ["CautionButtonBorderBrush"] = "#D9973A",
-        ["DangerButtonBackgroundBrush"] = "#3D1518", ["DangerButtonTextBrush"] = "#FFB4AE", ["DangerButtonBorderBrush"] = "#E5676A",
-        ["InfoIconBrush"] = "#8EC5FF", ["NavigateIconBrush"] = "#C8B1FF", ["HelpIconBrush"] = "#F2D95C",
-        ["ControlHoverOverlayBrush"] = "#1AFFFFFF", ["ControlPressedOverlayBrush"] = "#2EFFFFFF"
+        ["CanvasBrush"] = "#111418", ["SurfaceBrush"] = "#1A1F26", ["SubtleBackgroundBrush"] = "#262E38", ["InputBackgroundBrush"] = "#1F252D",
+        ["CardStrokeBrush"] = "#2E3743", ["TextBrush"] = "#F1F4F8", ["MutedBrush"] = "#BAC4CF", ["LabelBrush"] = "#A9C9F7",
+        ["ReviewBrush"] = "#FFB86B", ["SuccessBrush"] = "#66D1A8", ["LineBrush"] = "#7A8898",
+        ["AccentBrush"] = "#8AB4F8", ["AccentTextBrush"] = "#081A36",
+        ["SelectionBackgroundBrush"] = "#1A2D4A", ["SelectionTextBrush"] = "#E6EFFD", ["SelectionAccentBrush"] = "#8AB4F8",
+        ["BrandBrush"] = "#08675F", ["BrandTextBrush"] = "#FFFFFF",
+        ["ButtonTextBrush"] = "#F1F4F8", ["ButtonBackgroundBrush"] = "#1A1F26",
+        ["NeutralButtonBackgroundBrush"] = "#252C35", ["NeutralButtonTextBrush"] = "#F1F4F8", ["NeutralButtonBorderBrush"] = "#7A8898",
+        ["CautionButtonBackgroundBrush"] = "#3A2A10", ["CautionButtonTextBrush"] = "#FFD08A", ["CautionButtonBorderBrush"] = "#D9973A",
+        ["DangerButtonBackgroundBrush"] = "#3E1619", ["DangerButtonTextBrush"] = "#FFB4AE", ["DangerButtonBorderBrush"] = "#E5676A",
+        ["InfoIconBrush"] = "#8AB4F8", ["NavigateIconBrush"] = "#CDB6FF", ["HelpIconBrush"] = "#F2D35C",
+        ["ControlHoverOverlayBrush"] = "#1AFFFFFF", ["ControlPressedOverlayBrush"] = "#2EFFFFFF", ["ScrimOverlayBrush"] = "#99000000"
     };
 
     internal static readonly IReadOnlyDictionary<(string Theme, string Color), string> ButtonTextColorHex = new Dictionary<(string, string), string>
@@ -50,11 +53,17 @@ internal static class Appearance
         [("Dark", "ButtonColorMaroon")] = "#302027", [("Dark", "ButtonColorPurple")] = "#282230"
     };
 
+    /// <summary>Light values previewed by the Default color swatches; a test keeps them equal to Themes/Colors.xaml.</summary>
+    internal const string LightTextHex = "#141A21";
+    internal const string LightButtonBackgroundHex = "#FFFFFF";
+
     internal static Color ColorForChoice(string theme, string code, bool background = false)
     {
         var choices = background ? ButtonBackgroundColorHex : ButtonTextColorHex;
-        var fallback = theme == "Dark" ? DarkPaletteHex[background ? "SurfaceBrush" : "TextBrush"] : background ? "#FFFFFF" : "#172126";
-        return Parse(choices.TryGetValue((theme, code), out var hex) ? hex : fallback);
+        if (choices.TryGetValue((theme, code), out var hex)) return Parse(hex);
+        return Parse(theme == "Dark"
+            ? DarkPaletteHex[background ? "NeutralButtonBackgroundBrush" : "TextBrush"]
+            : background ? LightButtonBackgroundHex : LightTextHex);
     }
 
     /// <summary>Collects the declared color tokens, including those in merged dictionaries.</summary>
@@ -85,6 +94,7 @@ internal static class Appearance
         {
             palette["ButtonBackgroundBrush"] = new SolidColorBrush(ColorForChoice(theme, buttonColor, true));
             palette["AccentBrush"] = new SolidColorBrush(ColorForChoice(theme, buttonColor));
+            palette["SelectionAccentBrush"] = palette["AccentBrush"];
         }
         // A custom button color applies uniformly to every command so the chosen, contrast-tested pair is what users see.
         if (ButtonBackgroundColorHex.ContainsKey((theme, buttonColor)) || ButtonTextColorHex.ContainsKey((theme, buttonTextColor)))
@@ -105,21 +115,28 @@ internal static class Appearance
         foreach (var pair in standard)
             resources[pair.Key] = !highContrast ? pair.Value : pair.Key switch
             {
+                "AccentBrush" or "SelectionBackgroundBrush" or "BrandBrush" => SystemColors.HighlightBrush,
+                "AccentTextBrush" or "SelectionTextBrush" or "SelectionAccentBrush" or "BrandTextBrush" => SystemColors.HighlightTextBrush,
                 "CanvasBrush" or "SurfaceBrush" => SystemColors.WindowBrush,
                 _ when pair.Key.EndsWith("BackgroundBrush", StringComparison.Ordinal) => SystemColors.WindowBrush,
                 _ when pair.Key.EndsWith("OverlayBrush", StringComparison.Ordinal) => Brushes.Transparent,
-                "AccentBrush" => SystemColors.HighlightBrush,
-                "AccentTextBrush" => SystemColors.HighlightTextBrush,
                 _ => SystemColors.WindowTextBrush
             };
     }
 
+    /// <summary>Type ramp sizes, in DIPs at 100%. Body text is 15; secondary text is never smaller than 14.</summary>
+    internal static IReadOnlyList<int> FontSizes { get; } = [14, 15, 16, 17, 18, 19, 20, 22, 24, 26];
+
     internal static void ApplyTextSize(ResourceDictionary resources, int percentage)
     {
         if (!TextSizePercentages.Contains(percentage)) percentage = 100;
-        foreach (var size in new[] { 14, 16, 17, 18, 19, 20, 22, 24, 26 })
+        foreach (var size in FontSizes)
             resources["AppFont" + size] = size * percentage / 100d;
+        resources["SidebarWidth"] = new GridLength(SidebarWidth(percentage));
     }
+
+    /// <summary>The sidebar grows at half the rate of the text so navigation labels break between words rather than inside them.</summary>
+    internal static double SidebarWidth(int percentage) => 216 * (1 + (percentage / 100d - 1) / 2);
 
     private static Color Parse(string hex) => (Color)ColorConverter.ConvertFromString(hex);
 }

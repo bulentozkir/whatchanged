@@ -54,8 +54,7 @@ public partial class App : Application
 
         if (CollectorTransport.IsAdministrator)
         {
-            MessageBox.Show("Open ChangeTracker normally, not as administrator. It runs only with your standard Windows permissions.",
-                "ChangeTracker", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowStartupMessage("StandardLaunchRequired", MessageBoxImage.Information);
             Shutdown();
             return;
         }
@@ -98,10 +97,17 @@ public partial class App : Application
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            MessageBox.Show("The local history could not be opened. Existing data has not been deleted. Close other copies of the app and check the data folder before retrying.",
-                "ChangeTracker", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowStartupMessage("HistoryOpenFailed", MessageBoxImage.Warning);
             Shutdown(1);
         }
+    }
+
+    /// <summary>Shows a startup message in the Windows display language; saved preferences are not readable yet.</summary>
+    private static void ShowStartupMessage(string key, MessageBoxImage image)
+    {
+        var texts = Localization.UiText.ForSystemLanguage();
+        var options = texts.Language.RightToLeft ? MessageBoxOptions.RtlReading | MessageBoxOptions.RightAlign : MessageBoxOptions.None;
+        MessageBox.Show(texts[key], "ChangeTracker", MessageBoxButton.OK, image, MessageBoxResult.OK, options);
     }
 
     protected override void OnExit(ExitEventArgs eventArgs)

@@ -4,7 +4,7 @@
         xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
         xmlns:controls="clr-namespace:PCChangeTracker.App.Controls"
         xmlns:views="clr-namespace:PCChangeTracker.App.Views"
-        Title="ChangeTracker" Width="1240" Height="820" MinWidth="900" MinHeight="620" WindowState="Maximized" ShowInTaskbar="True"
+        Title="ChangeTracker" Width="1240" Height="800" MinWidth="900" MinHeight="600" WindowState="Maximized" ShowInTaskbar="True"
         WindowStartupLocation="CenterScreen" Language="{Binding Texts.XmlLanguage}" Style="{StaticResource {x:Type Window}}">
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Help" Executed="OpenHelp"/>
@@ -37,24 +37,40 @@
         <Style x:Key="ComparisonExpander" TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
             <Style.Triggers><DataTrigger Binding="{Binding Page}" Value="Settings"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers>
         </Style>
+        <!-- Messages that take no room until they have something to say. -->
+        <Style x:Key="CollapsedWhenEmpty" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed" /></Trigger></Style.Triggers>
+        </Style>
+        <Style x:Key="GroupLabel" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="{DynamicResource AppFont14}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource LabelBrush}" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <!-- Snapshot choices: the open list shows two lines per snapshot; the closed selector shows one. -->
         <DataTemplate x:Key="SnapshotChoiceTemplate">
-            <StackPanel MaxWidth="520">
-                <TextBlock FontWeight="SemiBold" FontSize="{DynamicResource AppFont16}" Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
-                    <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Date"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
-                </TextBlock>
-                <TextBlock FontWeight="SemiBold" FontSize="{DynamicResource AppFont16}" FlowDirection="LeftToRight">
-                    <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Time"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
-                </TextBlock>
-                <TextBlock FontSize="{DynamicResource AppFont14}" Margin="0,3,0,0">
-                    <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Label"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
-                </TextBlock>
+            <StackPanel MaxWidth="560">
+                <WrapPanel>
+                    <TextBlock FontWeight="SemiBold" Margin="0,0,8,0" Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
+                        <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Date"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
+                    </TextBlock>
+                    <TextBlock FontWeight="SemiBold" FlowDirection="LeftToRight">
+                        <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Time"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
+                    </TextBlock>
+                </WrapPanel>
                 <TextBlock FontSize="{DynamicResource AppFont14}">
-                    <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Context"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
+                    <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Details"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
                 </TextBlock>
             </StackPanel>
         </DataTemplate>
+        <DataTemplate x:Key="SnapshotSelectionTemplate">
+            <TextBlock FontWeight="SemiBold">
+                <TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Selection"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text>
+            </TextBlock>
+        </DataTemplate>
         <DataTemplate x:Key="SnapshotDayTemplate">
-            <TextBlock FontSize="{DynamicResource AppFont16}"><TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text></TextBlock>
+            <TextBlock><TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text></TextBlock>
         </DataTemplate>
         <Style x:Key="SnapshotDayStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
             <Setter Property="AutomationProperties.Name"><Setter.Value><MultiBinding Converter="{StaticResource SnapshotText}"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></Setter.Value></Setter>
@@ -62,30 +78,53 @@
         <Style x:Key="SnapshotChoiceStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
             <Setter Property="AutomationProperties.Name"><Setter.Value><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Compact"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></Setter.Value></Setter>
         </Style>
+
+        <!-- A changed field in Simple mode: labels repeat beside each value, and each value names its field and side. -->
         <DataTemplate x:Key="DetailRowTemplate">
-            <StackPanel Margin="0,8,0,16">
-                <WrapPanel Margin="0,0,0,8">
-                    <TextBlock Text="{Binding Field}" FontSize="{DynamicResource AppFont18}" FontWeight="SemiBold" Margin="0,0,12,0" AutomationProperties.HeadingLevel="Level4"/>
-                    <TextBlock Text="{Binding Difference}" Foreground="{DynamicResource MutedBrush}"/>
+            <StackPanel Margin="0,2,0,8">
+                <WrapPanel Margin="0,0,0,4">
+                    <TextBlock Text="{Binding Field}" FontWeight="SemiBold" Margin="0,0,10,0" AutomationProperties.HeadingLevel="Level4"/>
+                    <TextBlock Text="{Binding Difference}" Style="{StaticResource HelpText}" VerticalAlignment="Center"/>
                 </WrapPanel>
                 <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged">
-                <StackPanel Margin="0,0,10,8">
-                    <TextBlock Text="{loc:Loc Before}" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding Before, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MinHeight="46" Padding="10"
-                             FlowDirection="LeftToRight" FontSize="{DynamicResource AppFont18}" AutomationProperties.Name="{Binding BeforeLabel}"/>
-                </StackPanel>
-                <StackPanel Margin="0,0,10,8">
-                    <TextBlock Text="{loc:Loc After}" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding After, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MinHeight="46" Padding="10"
-                             FlowDirection="LeftToRight" FontSize="{DynamicResource AppFont18}" AutomationProperties.Name="{Binding AfterLabel}"/>
-                </StackPanel>
+                    <DockPanel Margin="0,0,12,4">
+                        <TextBlock DockPanel.Dock="Left" Text="{loc:Loc Before}" Style="{StaticResource GroupLabel}" Margin="0,7,8,0" VerticalAlignment="Top"/>
+                        <TextBox Text="{Binding Before, Mode=OneWay}" Style="{StaticResource ReadOnlyValue}" FontSize="{DynamicResource AppFont16}"
+                                 FlowDirection="LeftToRight" AutomationProperties.Name="{Binding BeforeLabel}"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,12,4">
+                        <TextBlock DockPanel.Dock="Left" Text="{loc:Loc After}" Style="{StaticResource GroupLabel}" Margin="0,7,8,0" VerticalAlignment="Top"/>
+                        <TextBox Text="{Binding After, Mode=OneWay}" Style="{StaticResource ReadOnlyValue}" FontSize="{DynamicResource AppFont16}"
+                                 FlowDirection="LeftToRight" AutomationProperties.Name="{Binding AfterLabel}"/>
+                    </DockPanel>
                 </UniformGrid>
             </StackPanel>
         </DataTemplate>
+        <!-- Advanced field tables: one row per field under a Field / Before / After header. Each value still names its field and side. -->
+        <DataTemplate x:Key="DetailTableRowTemplate">
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="DetailField"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,4,12,0" MaxWidth="220">
+                    <TextBlock Text="{Binding Field}" FontWeight="SemiBold" FontSize="{DynamicResource AppFont14}" AutomationProperties.HeadingLevel="Level4"/>
+                    <TextBlock Text="{Binding Difference}" Style="{StaticResource HelpText}"/>
+                </StackPanel>
+                <TextBox Grid.Column="1" Text="{Binding Before, Mode=OneWay}" Style="{StaticResource ReadOnlyValue}" Margin="0,0,6,0"
+                         FlowDirection="LeftToRight" AutomationProperties.Name="{Binding BeforeLabel}"/>
+                <TextBox Grid.Column="2" Text="{Binding After, Mode=OneWay}" Style="{StaticResource ReadOnlyValue}" Margin="6,0,0,0"
+                         FlowDirection="LeftToRight" AutomationProperties.Name="{Binding AfterLabel}"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="DetailTableHeaderTemplate">
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="DetailField"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <TextBlock Text="{loc:Loc Field}" Style="{StaticResource GroupLabel}" Margin="0,0,12,0"/>
+                <TextBlock Grid.Column="1" Text="{loc:Loc Before}" Style="{StaticResource GroupLabel}"/>
+                <TextBlock Grid.Column="2" Text="{loc:Loc After}" Style="{StaticResource GroupLabel}" Margin="6,0,0,4"/>
+            </Grid>
+        </DataTemplate>
         <Style x:Key="SimpleSummaryStyle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-            <Setter Property="FontSize" Value="{DynamicResource AppFont18}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
             <Style.Triggers><DataTrigger Binding="{Binding SimpleSummary}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
         </Style>
         <Style x:Key="ChangeItemContainerStyle" TargetType="ContentPresenter">
@@ -94,325 +133,447 @@
         <Style x:Key="DetailItemContainerStyle" TargetType="ContentPresenter">
             <Setter Property="AutomationProperties.Name" Value="{Binding Field}"/>
         </Style>
+
+        <!-- A finding: kind, category, and priority in words (with a distinct glyph), then the name, reason, values, and actions. -->
         <DataTemplate x:Key="ChangeTemplate">
-            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,12">
-                <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                <StackPanel>
                     <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding Priority}" Foreground="{DynamicResource ReviewBrush}" FontWeight="SemiBold" Margin="12,0,0,0"/>
-                        <WrapPanel><TextBlock Text="{Binding Category}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,12,0"/><TextBlock Text="{Binding Kind}" FontWeight="Bold"/></WrapPanel>
-                    </DockPanel>
-                    <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="{DynamicResource AppFont20}" FontWeight="SemiBold" Margin="0,6,0,8" AutomationProperties.HeadingLevel="Level3"/>
-                    <StackPanel Grid.Row="2">
-                        <TextBlock Text="{Binding DifferenceSummary}" FontWeight="SemiBold" Margin="0,0,0,10"
-                                   Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}"/>
-                        <StackPanel Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
-                            <TextBlock Text="{Binding SimpleSummary}" Style="{StaticResource SimpleSummaryStyle}"/>
-                            <ItemsControl ItemsSource="{Binding ChangedFields}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.AutomationId="SimpleChangeValues" AutomationProperties.Name="{loc:Loc BeforeAfter}"/>
+                        <StackPanel x:Name="PriorityTag" DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center"
+                                    TextElement.Foreground="{DynamicResource ReviewBrush}">
+                            <controls:Glyph x:Name="PriorityGlyph" Text="&#xE946;" FontSize="{DynamicResource AppFont14}" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding Priority}" FontWeight="SemiBold" FontSize="{DynamicResource AppFont14}" VerticalAlignment="Center"/>
                         </StackPanel>
-                    </StackPanel>
-                    <TextBlock Grid.Row="3" Text="{Binding Why}" FontSize="{DynamicResource AppFont16}" Margin="0,0,0,16"/>
-                    <TextBlock Grid.Row="4" Text="{Binding TechnicalSummary}" FontSize="{DynamicResource AppFont14}" Margin="0,0,0,12"
+                        <WrapPanel>
+                            <Border Style="{StaticResource Chip}" Margin="0,0,8,0"><TextBlock Text="{Binding Kind}"/></Border>
+                            <TextBlock Text="{Binding Category}" Style="{StaticResource HelpText}" VerticalAlignment="Center"/>
+                        </WrapPanel>
+                    </DockPanel>
+                    <TextBlock Text="{Binding Name}" FontSize="{DynamicResource AppFont17}" FontWeight="SemiBold" Margin="0,6,0,2" AutomationProperties.HeadingLevel="Level3"/>
+                    <TextBlock Text="{Binding Why}" FontSize="{DynamicResource AppFont14}" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding DifferenceSummary}" FontWeight="SemiBold" Margin="0,0,0,8"
                                Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}"/>
-                    <WrapPanel Grid.Row="5">
-                        <Button Content="{loc:Loc BeforeAfter}" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc BeforeAfter}" Click="RememberDetailOrigin" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE890;" AutomationProperties.AutomationId="InspectChange"/>
-                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc OpenSettings}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8A7;"/>
-                        <Button Content="{Binding ExpectedAction}" Command="{Binding DataContext.ToggleExpectedCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="{loc:Loc MarkExpected}" controls:Icon.Glyph="&#xE73E;"/>
+                    <StackPanel Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
+                        <TextBlock Text="{Binding SimpleSummary}" Style="{StaticResource SimpleSummaryStyle}"/>
+                        <ItemsControl ItemsSource="{Binding ChangedFields}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}"
+                                      AutomationProperties.AutomationId="SimpleChangeValues" AutomationProperties.Name="{loc:Loc BeforeAfter}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding TechnicalSummary}" Style="{StaticResource HelpText}" Margin="0,0,0,8"
+                               Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}"/>
+                    <WrapPanel>
+                        <Button Content="{loc:Loc BeforeAfter}" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                ToolTip="{loc:Loc BeforeAfter}" Click="RememberDetailOrigin" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE890;" AutomationProperties.AutomationId="InspectChange" Margin="0,0,8,4"/>
+                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                ToolTip="{loc:Loc OpenSettings}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8A7;" Margin="0,0,8,4"/>
+                        <Button Content="{Binding ExpectedAction}" Command="{Binding DataContext.ToggleExpectedCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                ToolTip="{loc:Loc MarkExpected}" controls:Icon.Glyph="&#xE73E;" Margin="0,0,8,4"/>
                     </WrapPanel>
-                    <StackPanel Grid.Row="6" Margin="0,14,0,0" Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
+                    <StackPanel Margin="0,8,0,0" Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
                         <Expander Header="{loc:Loc AllFields}" IsExpanded="True" AutomationProperties.AutomationId="AdvancedFields">
-                            <StackPanel Margin="0,12,0,0">
-                                <ItemsControl ItemsSource="{Binding FieldDetails}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc AllFields}"/>
-                                <TextBlock Text="{Binding HiddenComparison}" FontWeight="SemiBold" Margin="0,8,0,12"/>
+                            <StackPanel Grid.IsSharedSizeScope="True" Margin="0,4,0,0">
+                                <ContentPresenter ContentTemplate="{StaticResource DetailTableHeaderTemplate}"/>
+                                <ItemsControl ItemsSource="{Binding FieldDetails}" ItemTemplate="{StaticResource DetailTableRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc AllFields}"/>
+                                <TextBlock Text="{Binding HiddenComparison}" FontWeight="SemiBold" FontSize="{DynamicResource AppFont14}" Margin="0,4,0,6"/>
                             </StackPanel>
                         </Expander>
-                        <Expander Header="{loc:Loc ObservationMetadata}" Margin="0,10,0,12" AutomationProperties.AutomationId="AdvancedObservationMetadata">
-                            <ItemsControl ItemsSource="{Binding ObservationDetails}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" Margin="0,10,0,0" AutomationProperties.Name="{loc:Loc ObservationMetadata}"/>
+                        <Expander Header="{loc:Loc ObservationMetadata}" Margin="0,2,0,6" AutomationProperties.AutomationId="AdvancedObservationMetadata">
+                            <StackPanel Grid.IsSharedSizeScope="True" Margin="0,4,0,0">
+                                <ContentPresenter ContentTemplate="{StaticResource DetailTableHeaderTemplate}"/>
+                                <ItemsControl ItemsSource="{Binding ObservationDetails}" ItemTemplate="{StaticResource DetailTableRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc ObservationMetadata}"/>
+                            </StackPanel>
                         </Expander>
-                        <TextBlock Text="{loc:Loc AdvancedPrivacy}" FontSize="{DynamicResource AppFont14}" Foreground="{DynamicResource MutedBrush}"/>
+                        <TextBlock Text="{loc:Loc AdvancedPrivacy}" Style="{StaticResource HelpText}"/>
                     </StackPanel>
-                </Grid>
+                </StackPanel>
             </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Change.Importance}" Value="Important"><Setter TargetName="PriorityGlyph" Property="Text" Value="&#xE7BA;"/></DataTrigger>
+                <DataTrigger Binding="{Binding Change.Importance}" Value="Review"><Setter TargetName="PriorityGlyph" Property="Text" Value="&#xE7C1;"/></DataTrigger>
+                <DataTrigger Binding="{Binding Change.Importance}" Value="Info"><Setter TargetName="PriorityTag" Property="TextElement.Foreground" Value="{DynamicResource MutedBrush}"/></DataTrigger>
+                <DataTrigger Binding="{Binding Expected}" Value="True">
+                    <Setter TargetName="PriorityGlyph" Property="Text" Value="&#xE73E;"/>
+                    <Setter TargetName="PriorityTag" Property="TextElement.Foreground" Value="{DynamicResource MutedBrush}"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
     </Window.Resources>
+
     <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <Grid.ColumnDefinitions><ColumnDefinition Width="232"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-        <Border Grid.RowSpan="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,1,0" Padding="14,22,12,16">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-            <Grid IsEnabled="{Binding BackgroundInteractive}" MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                <DockPanel Margin="4,0,0,28">
-                    <Border DockPanel.Dock="Left" Width="36" Height="36" CornerRadius="8" Background="{DynamicResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource IconFontFamily}" FontSize="20" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="ChangeTracker" FontSize="{DynamicResource AppFont20}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                </DockPanel>
-                <StackPanel Grid.Row="2" FlowDirection="{Binding Texts.Direction}" KeyboardNavigation.TabIndex="1">
-                    <TextBlock Text="{Binding SnapshotStorageLabel}" FontSize="{DynamicResource AppFont16}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,18"
-                               Focusable="{Binding BackgroundInteractive}" FocusVisualStyle="{StaticResource KeyboardFocus}"
-                               AutomationProperties.AutomationId="SnapshotStorage" AutomationProperties.Name="{Binding SnapshotStorageLabel}"
-                               AutomationProperties.HelpText="{loc:Loc SnapshotStorageHelp}" ToolTipService.ShowDuration="30000">
-                        <TextBlock.ToolTip>
-                            <ToolTip DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}" FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppFont14}"
-                                     Background="{DynamicResource SurfaceBrush}" Foreground="{DynamicResource TextBrush}" BorderBrush="{DynamicResource LineBrush}" Padding="12">
-                                <TextBlock Text="{Binding Texts[SnapshotStorageHelp]}" MaxWidth="340" TextWrapping="Wrap"/>
-                            </ToolTip>
-                        </TextBlock.ToolTip>
-                    </TextBlock>
-                    <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" Margin="0,0,0,14" Style="{StaticResource HelpButton}" controls:Icon.Glyph="&#xE897;" AutomationProperties.AutomationId="HelpMe" ToolTip="F1"/>
-                    <TextBlock Text="{loc:Loc LocalReadOnly}" FontSize="{DynamicResource AppFont14}" Foreground="{DynamicResource MutedBrush}"/>
-                    <TextBlock Text="{loc:Loc Preview}" FontSize="{DynamicResource AppFont14}" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0"/>
-                </StackPanel>
-                <ListBox x:Name="PageNavigation" SelectedValue="{Binding Page}" SelectedValuePath="Tag" SelectionMode="Single"
-                         Grid.Row="1" VerticalAlignment="Top" KeyboardNavigation.TabIndex="0"
-                         BorderThickness="0" Padding="3" IsEnabled="{Binding BackgroundInteractive}" FlowDirection="{Binding Texts.Direction}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Loc Navigation}" AutomationProperties.AutomationId="PageNavigation">
-                    <ListBoxItem Tag="Review" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE9D5;" AutomationProperties.AutomationId="ReviewPage" AutomationProperties.Name="{loc:Loc NavReview}"><TextBlock Text="{loc:Loc NavReview}"/></ListBoxItem>
-                    <ListBoxItem Tag="History" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE81C;" AutomationProperties.AutomationId="HistoryPage" AutomationProperties.Name="{loc:Loc NavHistory}"><TextBlock Text="{loc:Loc NavHistory}"/></ListBoxItem>
-                    <ListBoxItem Tag="Sources" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE8B7;" AutomationProperties.AutomationId="SourcesPage" AutomationProperties.Name="{loc:Loc NavSources}"><TextBlock Text="{loc:Loc NavSources}"/></ListBoxItem>
-                    <ListBoxItem Tag="Settings" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE713;" AutomationProperties.AutomationId="SettingsPage" AutomationProperties.Name="{loc:Loc NavSettings}"><TextBlock Text="{loc:Loc NavSettings}"/></ListBoxItem>
-                </ListBox>
-            </Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="{DynamicResource SidebarWidth}"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+        <!-- Sidebar: product mark, page navigation, the collection scope that every page works in, and storage/help/version at the bottom. -->
+        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,1,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" Padding="12,16,12,12">
+                <Grid IsEnabled="{Binding BackgroundInteractive}" MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" FlowDirection="{Binding Texts.Direction}">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <DockPanel Margin="4,0,0,20">
+                        <Border DockPanel.Dock="Left" Width="32" Height="32" CornerRadius="8" Background="{DynamicResource BrandBrush}" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <controls:Glyph Text="&#xE9D9;" FontSize="18" Foreground="{DynamicResource BrandTextBrush}" HorizontalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <!-- The wordmark is a logo: a fixed size keeps it on one line at every text size (the tagline still scales). -->
+                            <TextBlock Text="ChangeTracker" FontSize="18" FontWeight="SemiBold" TextWrapping="NoWrap"/>
+                            <TextBlock Text="{loc:Loc Tagline}" Style="{StaticResource HelpText}"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <ListBox x:Name="PageNavigation" Grid.Row="1" SelectedValue="{Binding Page}" SelectedValuePath="Tag" SelectionMode="Single" VerticalAlignment="Top"
+                             KeyboardNavigation.TabIndex="0" BorderThickness="0" Padding="0" Background="Transparent" IsEnabled="{Binding BackgroundInteractive}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Loc Navigation}" AutomationProperties.AutomationId="PageNavigation">
+                        <ListBoxItem Tag="Review" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE9D5;" AutomationProperties.AutomationId="ReviewPage" AutomationProperties.Name="{loc:Loc NavReview}"><TextBlock Text="{loc:Loc NavReview}"/></ListBoxItem>
+                        <ListBoxItem Tag="History" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE81C;" AutomationProperties.AutomationId="HistoryPage" AutomationProperties.Name="{loc:Loc NavHistory}"><TextBlock Text="{loc:Loc NavHistory}"/></ListBoxItem>
+                        <ListBoxItem Tag="Sources" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE8B7;" AutomationProperties.AutomationId="SourcesPage" AutomationProperties.Name="{loc:Loc NavSources}"><TextBlock Text="{loc:Loc NavSources}"/></ListBoxItem>
+                        <ListBoxItem Tag="Settings" Style="{StaticResource NavItem}" controls:Icon.Glyph="&#xE713;" AutomationProperties.AutomationId="SettingsPage" AutomationProperties.Name="{loc:Loc NavSettings}"><TextBlock Text="{loc:Loc NavSettings}"/></ListBoxItem>
+                    </ListBox>
+                    <!-- Scope is app-wide context: it decides what Check now collects and which sources and snapshots apply.
+                         The 1-DIP insets below match the navigation list's built-in border so all sidebar blocks share one right edge. -->
+                    <StackPanel Grid.Row="2" Margin="1,16,1,0" KeyboardNavigation.TabIndex="1" Style="{StaticResource HiddenOnSettings}">
+                        <Border Height="1" Background="{DynamicResource CardStrokeBrush}" Margin="0,0,0,12"/>
+                        <TextBlock Text="{loc:Loc ScopeAccess}" Style="{StaticResource GroupLabel}"/>
+                        <TextBlock Text="{Binding ScopeLabel}" Style="{StaticResource HelpText}" Margin="0,0,0,8" AutomationProperties.AutomationId="ScopeLabel"/>
+                        <Button x:Name="ChangeScopeButton" Content="{loc:Loc ChangeScope}" Command="{Binding ChangeScopeCommand}" Style="{StaticResource NavigateButton}"
+                                controls:Icon.Glyph="&#xE8AB;" Margin="0" AutomationProperties.AutomationId="ChangeScope"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="4" Margin="1,16,1,0" KeyboardNavigation.TabIndex="2">
+                        <TextBlock Text="{Binding SnapshotStorageLabel}" FontSize="{DynamicResource AppFont14}" FontWeight="SemiBold" Margin="0,0,0,8"
+                                   Focusable="{Binding BackgroundInteractive}" FocusVisualStyle="{StaticResource KeyboardFocus}"
+                                   AutomationProperties.AutomationId="SnapshotStorage" AutomationProperties.Name="{Binding SnapshotStorageLabel}"
+                                   AutomationProperties.HelpText="{loc:Loc SnapshotStorageHelp}" ToolTipService.ShowDuration="30000">
+                            <TextBlock.ToolTip>
+                                <ToolTip DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                    <TextBlock Text="{Binding Texts[SnapshotStorageHelp]}" MaxWidth="340" TextWrapping="Wrap"/>
+                                </ToolTip>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" Margin="0,0,0,12" Style="{StaticResource HelpButton}" controls:Icon.Glyph="&#xE897;"
+                                AutomationProperties.AutomationId="HelpMe" ToolTip="F1"/>
+                        <TextBlock Text="{loc:Loc LocalReadOnly}" Style="{StaticResource HelpText}"/>
+                        <TextBlock Text="{Binding VersionText}" Style="{StaticResource HelpText}" Margin="0,2,0,0" AutomationProperties.AutomationId="VersionText"/>
+                    </StackPanel>
+                </Grid>
             </ScrollViewer>
         </Border>
-        <ScrollViewer x:Name="MainContentScroll" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsEnabled="{Binding BackgroundInteractive}" Focusable="False">
-        <Grid Margin="24,24,24,16" FlowDirection="{Binding Texts.Direction}">
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <WrapPanel x:Name="MainToolbar" Margin="0,0,0,18" AutomationProperties.Name="{loc:Loc Tagline}" KeyboardNavigation.TabNavigation="Continue">
-                <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="{loc:Loc Tagline}" FontWeight="SemiBold" FontSize="{DynamicResource AppFont16}" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                    <WrapPanel>
+
+        <Grid Grid.Column="1" FlowDirection="{Binding Texts.Direction}">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+            <!-- Command bar, always visible: presentation mode leads; the page-independent commands end the row, or take their own
+                 row when they would otherwise be squeezed (narrow windows, large text). -->
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,0,1" Padding="20,6,20,6">
+                <controls:CommandBarPanel x:Name="MainToolbar" IsEnabled="{Binding BackgroundInteractive}" KeyboardNavigation.TabNavigation="Continue" AutomationProperties.Name="{loc:Loc CommandBar}">
+                    <WrapPanel VerticalAlignment="Center" Margin="0,2">
                         <RadioButton Content="{loc:Loc Simple}" GroupName="Mode" IsChecked="{Binding Simple}" AutomationProperties.AutomationId="SimpleMode" ToolTip="{loc:Loc SimpleHelp}" AutomationProperties.HelpText="{loc:Loc SimpleHelp}"/>
-                        <RadioButton Content="{loc:Loc Advanced}" GroupName="Mode" IsChecked="{Binding Advanced}" AutomationProperties.AutomationId="AdvancedMode" ToolTip="{loc:Loc AdvancedHelp}" AutomationProperties.HelpText="{loc:Loc AdvancedHelp}"/>
+                        <RadioButton Content="{loc:Loc Advanced}" GroupName="Mode" IsChecked="{Binding Advanced}" AutomationProperties.AutomationId="AdvancedMode" ToolTip="{loc:Loc AdvancedHelp}" AutomationProperties.HelpText="{loc:Loc AdvancedHelp}" Margin="0"/>
                     </WrapPanel>
-                </WrapPanel>
-                <WrapPanel Margin="0,6,0,0">
-                    <Button Content="{loc:Loc Report}" Command="{Binding PreviewReportCommand}" IsEnabled="{Binding HasSnapshot}" ToolTip="{loc:Loc ReportPreview}" Style="{StaticResource InfoButton}"
-                            controls:Icon.Glyph="&#xE8A5;" AutomationProperties.Name="{loc:Loc Report}" AutomationProperties.AutomationId="Report"/>
-                    <Button x:Name="CheckNowButton" Content="{Binding CheckActionLabel}" Command="{Binding CaptureCommand}" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE72C;"
-                            AutomationProperties.AutomationId="CheckNow" ToolTip="{Binding CheckActionHelp}" AutomationProperties.Name="{Binding CheckActionLabel}"/>
-                    <Button Content="{loc:Loc Cancel}" Command="{Binding CancelCaptureCommand}" controls:Icon.Glyph="&#xE711;" Visibility="{Binding IsBusy, Converter={StaticResource BoolVisibility}}"/>
-                </WrapPanel>
-            </WrapPanel>
-            <WrapPanel Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource HiddenOnSettings}">
-                <TextBlock Text="{Binding ScopeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="0,0,12,8" AutomationProperties.AutomationId="ScopeLabel"/>
-                <Button x:Name="ChangeScopeButton" Content="{loc:Loc ChangeScope}" Command="{Binding ChangeScopeCommand}" Margin="0,0,8,8" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8AB;" AutomationProperties.AutomationId="ChangeScope"/>
-            </WrapPanel>
-            <Expander Grid.Row="2" Header="{loc:Loc Comparison}" IsExpanded="{Binding ComparisonPickerExpanded}" Margin="0,0,0,12" Style="{StaticResource ComparisonExpander}" AutomationProperties.AutomationId="ComparisonOptions">
-                <StackPanel IsEnabled="{Binding IsIdle}" Margin="0,12,0,0">
-                    <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged">
-                        <StackPanel Margin="0,0,16,0">
-                            <StackPanel Visibility="{Binding Advanced, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,8">
-                                <Label Content="{loc:Loc BeforeDate}" Target="{Binding ElementName=BeforeDayPicker}"/>
-                                <ComboBox x:Name="BeforeDayPicker" ItemsSource="{Binding SnapshotDates}" SelectedItem="{Binding BeforeDate, Mode=OneWay}" SelectionChanged="BeforeDaySelected"
-                                          ItemTemplate="{StaticResource SnapshotDayTemplate}" ItemContainerStyle="{StaticResource SnapshotDayStyle}" IsEditable="False"
-                                          MaxDropDownHeight="320" AutomationProperties.Name="{loc:Loc BeforeDate}" AutomationProperties.AutomationId="BeforeDate"/>
-                            </StackPanel>
-                            <Label Content="{loc:Loc EarlierSnapshot}" Target="{Binding ElementName=BeforeSnapshotPicker}"/>
-                            <ComboBox x:Name="BeforeSnapshotPicker" ItemsSource="{Binding BeforeSnapshotChoices}" SelectedItem="{Binding CompareFrom}" ItemTemplate="{StaticResource SnapshotChoiceTemplate}"
-                                      IsEditable="False" IsSynchronizedWithCurrentItem="False" MinHeight="44" MaxDropDownHeight="420"
-                                      ItemContainerStyle="{StaticResource SnapshotChoiceStyle}" AutomationProperties.Name="{loc:Loc EarlierSnapshot}" AutomationProperties.AutomationId="BeforeSnapshot" MinWidth="0"/>
-                            <WrapPanel Margin="0,8,0,0">
-                                <Button Content="{loc:Loc Baseline}" Command="{Binding SelectBaselineCommand}" ToolTip="{loc:Loc Baseline}" Margin="0,0,8,0" FontSize="{DynamicResource AppFont14}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE718;" AutomationProperties.Name="{loc:Loc Baseline}"/>
-                                <Button Content="&#xE711;" FontFamily="{StaticResource IconFontFamily}" Width="44" Height="44" Padding="6" Margin="0"
-                                        Command="{Binding CurrentStateOnlyCommand}" ToolTip="{loc:Loc CurrentState}" AutomationProperties.Name="{loc:Loc CurrentState}"/>
-                            </WrapPanel>
-                            <TextBlock Text="{Binding BeforeSelectionSummary}" FontSize="{DynamicResource AppFont14}" Margin="0,6,0,0"/>
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock Text="{loc:Loc After}" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <WrapPanel Margin="0,0,0,8">
-                                <RadioButton Content="{loc:Loc Today}" GroupName="ComparisonTarget" IsChecked="{Binding CompareWithToday}" AutomationProperties.AutomationId="CompareToday"/>
-                                <RadioButton Content="{loc:Loc SavedSnapshot}" GroupName="ComparisonTarget" IsChecked="{Binding CompareSavedSnapshots}" AutomationProperties.AutomationId="CompareSaved"/>
-                            </WrapPanel>
-                            <StackPanel Visibility="{Binding CompareSavedSnapshots, Converter={StaticResource BoolVisibility}}">
-                                <StackPanel Visibility="{Binding Advanced, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,8">
-                                    <Label Content="{loc:Loc AfterDate}" Target="{Binding ElementName=AfterDayPicker}"/>
-                                    <ComboBox x:Name="AfterDayPicker" ItemsSource="{Binding SnapshotDates}" SelectedItem="{Binding AfterDate, Mode=OneWay}" SelectionChanged="AfterDaySelected"
-                                              ItemTemplate="{StaticResource SnapshotDayTemplate}" ItemContainerStyle="{StaticResource SnapshotDayStyle}" IsEditable="False"
-                                              MaxDropDownHeight="320" AutomationProperties.Name="{loc:Loc AfterDate}" AutomationProperties.AutomationId="AfterDate"/>
-                                </StackPanel>
-                                <Label Content="{loc:Loc LaterSnapshot}" Target="{Binding ElementName=AfterSnapshotPicker}"/>
-                                <ComboBox x:Name="AfterSnapshotPicker" ItemsSource="{Binding AfterSnapshotChoices}" SelectedItem="{Binding CompareTo}" ItemTemplate="{StaticResource SnapshotChoiceTemplate}"
-                                          IsEditable="False" IsSynchronizedWithCurrentItem="False" MinHeight="44" MaxDropDownHeight="420"
-                                          ItemContainerStyle="{StaticResource SnapshotChoiceStyle}" AutomationProperties.Name="{loc:Loc LaterSnapshot}" AutomationProperties.AutomationId="AfterSnapshot" MinWidth="0"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding AfterSelectionSummary}" FontSize="{DynamicResource AppFont14}" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </UniformGrid>
-                    <TextBlock x:Name="SelectionIssueText" Text="{Binding ComparisonSelectionIssue}" Foreground="{DynamicResource ReviewBrush}" FontWeight="SemiBold" Margin="0,8,0,0"
-                               AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="ComparisonSelectionIssue"/>
-                </StackPanel>
-            </Expander>
-            <ProgressBar Grid.Row="3" Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,15" AutomationProperties.Name="{loc:Loc CheckNow}"/>
-            <ScrollViewer x:Name="ReviewContent" Grid.Row="4" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Style="{StaticResource ReviewPage}" Focusable="False">
-                <StackPanel>
-                    <TextBlock x:Name="ReviewHeading" Text="{Binding Headline}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" Margin="0,6,0,6" AutomationProperties.HeadingLevel="Level1" Focusable="True" KeyboardNavigation.IsTabStop="False"/>
-                    <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}" Margin="0,0,0,12"/>
-                    <StackPanel Visibility="{Binding IsFirstRun, Converter={StaticResource BoolVisibility}}" Margin="0,14,0,28">
-                        <TextBlock Text="{loc:Loc FirstBaseline}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2"/>
-                        <TextBlock Text="{loc:Loc PrivacyIntro}" MaxWidth="650" HorizontalAlignment="Left" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,14"/>
-                        <TextBlock Text="{loc:Loc BaselineIntro}" MaxWidth="650" HorizontalAlignment="Left" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,20"/>
-                        <Button Content="{loc:Loc CollectionSources}" Command="{Binding NavigateCommand}" CommandParameter="Sources" HorizontalAlignment="Left" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8B7;"/>
-                    </StackPanel>
-                    <Border BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,1" Padding="0,10" Margin="0,0,0,12">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Coverage}" FontWeight="SemiBold"/>
-                            <Expander Header="{loc:Loc CoverageDetails}" Margin="0,6,0,0" AutomationProperties.AutomationId="CoverageDetails">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding UnchangedSummary}" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}" Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding BaselineText}" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}" Margin="0,5,0,0"/>
-                                </StackPanel>
-                            </Expander>
-                            <Expander Header="{Binding GapHeading}" Visibility="{Binding HasGaps, Converter={StaticResource BoolVisibility}}" Margin="0,10,0,0">
-                                <ItemsControl ItemsSource="{Binding Gaps}" AutomationProperties.Name="{Binding GapHeading}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Margin="0,6,0,0"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-                            </Expander>
-                        </StackPanel>
-                    </Border>
-                    <TextBlock Text="{loc:Loc BaselineReady}" FontSize="{DynamicResource AppFont18}" FontWeight="SemiBold" Visibility="{Binding IsBaselineOnly, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,14" AutomationProperties.HeadingLevel="Level2"/>
-                    <StackPanel Visibility="{Binding HasComparison, Converter={StaticResource BoolVisibility}}">
-                        <WrapPanel Margin="0,0,0,12">
-                            <StackPanel Margin="0,0,8,6"><Label Content="{loc:Loc Category}" Target="{Binding ElementName=CategoryPicker}" FontSize="{DynamicResource AppFont14}"/><ComboBox x:Name="CategoryPicker" ItemsSource="{Binding CategoryFilters}" SelectedItem="{Binding CategoryFilter}" Width="180" AutomationProperties.Name="{loc:Loc Category}"/></StackPanel>
-                            <StackPanel Margin="0,0,8,6"><Label Content="{loc:Loc SearchChanges}" Target="{Binding ElementName=ChangesSearch}" FontSize="{DynamicResource AppFont14}"/><TextBox x:Name="ChangesSearch" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="240" ToolTip="{loc:Loc SearchChanges}" AutomationProperties.Name="{loc:Loc SearchChanges}"/></StackPanel>
-                            <Button Content="{loc:Loc ClearFilters}" Command="{Binding ClearFiltersCommand}" Margin="0,0,0,6" VerticalAlignment="Bottom" controls:Icon.Glyph="&#xE894;"/>
-                        </WrapPanel>
-                        <TextBlock Text="{loc:Loc ReviewFirst}" Foreground="{DynamicResource TextBrush}" FontSize="{DynamicResource AppFont16}" FontWeight="Bold" Margin="0,0,0,12" AutomationProperties.HeadingLevel="Level2"/>
-                        <ItemsControl ItemsSource="{Binding ReviewItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" AutomationProperties.Name="{loc:Loc ReviewFirst}"/>
-                        <Button Content="{loc:Loc ViewAll}" Command="{Binding ShowAllCommand}" Visibility="{Binding HasMoreReviews, Converter={StaticResource BoolVisibility}}" HorizontalAlignment="Left" Margin="0,0,0,14" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8FD;"/>
-                        <TextBlock Text="{loc:Loc NoReviewsHelp}" Visibility="{Binding HasNoReviews, Converter={StaticResource BoolVisibility}}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,20"/>
-                        <Expander Margin="0,0,0,16" Header="{Binding RoutineHeading}" AutomationProperties.Name="{Binding RoutineHeading}" AutomationProperties.AutomationId="RoutineGroup">
-                            <ItemsControl ItemsSource="{Binding RoutineItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" Margin="0,12,0,0" AutomationProperties.Name="{Binding RoutineHeading}"/>
-                        </Expander>
-                        <Expander Margin="0,0,0,16" Header="{Binding OtherHeading}" AutomationProperties.Name="{Binding OtherHeading}" AutomationProperties.AutomationId="OtherGroup">
-                            <ItemsControl ItemsSource="{Binding OtherItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" Margin="0,12,0,0" AutomationProperties.Name="{Binding OtherHeading}"/>
-                        </Expander>
-                    </StackPanel>
-                    <Expander Header="{loc:Loc Inventory}" Visibility="{Binding HasSnapshot, Converter={StaticResource BoolVisibility}}" Margin="0,10,0,16">
-                        <ListBox ItemsSource="{Binding Inventory}" MaxHeight="320" ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderThickness="0" Background="{DynamicResource SurfaceBrush}" Margin="0,12,0,0" AutomationProperties.Name="{loc:Loc Inventory}">
-                            <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Margin="6"/></DataTemplate></ListBox.ItemTemplate>
-                        </ListBox>
-                    </Expander>
-                </StackPanel>
-            </ScrollViewer>
-            <Grid x:Name="HistoryContent" Grid.Row="4" Style="{StaticResource HistoryPage}" IsEnabled="{Binding IsIdle}">
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                <TextBlock x:Name="HistoryHeading" Text="{loc:Loc SavedSnapshots}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" Margin="0,8,0,20" AutomationProperties.HeadingLevel="Level1" Focusable="True" KeyboardNavigation.IsTabStop="False"/>
-                <ListView Grid.Row="2" ItemsSource="{Binding Snapshots}" SelectedItem="{Binding SelectedSnapshot}" MaxHeight="420" MinHeight="160" AutomationProperties.AutomationId="SnapshotList" AutomationProperties.Name="{loc:Loc SavedSnapshots}">
-                    <ListView.ItemContainerStyle><Style TargetType="ListViewItem" BasedOn="{StaticResource {x:Type ListViewItem}}">
-                        <Setter Property="AutomationProperties.Name"><Setter.Value><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Compact"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></Setter.Value></Setter>
-                    </Style></ListView.ItemContainerStyle>
-                    <ListView.View><GridView>
-                        <GridViewColumn DisplayMemberBinding="{Binding CapturedAt, StringFormat=g}" Width="180"><GridViewColumn.Header><TextBlock Text="{loc:Loc Captured}"/></GridViewColumn.Header></GridViewColumn>
-                        <GridViewColumn Width="240"><GridViewColumn.Header><TextBlock Text="{loc:Loc ScopeAccess}"/></GridViewColumn.Header><GridViewColumn.CellTemplate><DataTemplate><TextBlock><TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Context"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text></TextBlock></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding Label}" Width="180"><GridViewColumn.Header><TextBlock Text="{loc:Loc Checkpoint}"/></GridViewColumn.Header></GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding ItemCount}" Width="90"><GridViewColumn.Header><TextBlock Text="{loc:Loc Records}"/></GridViewColumn.Header></GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding CompleteSources}" Width="150"><GridViewColumn.Header><TextBlock Text="{loc:Loc CompleteSources}"/></GridViewColumn.Header></GridViewColumn>
-                    </GridView></ListView.View>
-                </ListView>
-                <StackPanel Grid.Row="3" Margin="0,18,0,0">
-                    <Label Content="{loc:Loc CheckpointName}" Target="{Binding ElementName=CheckpointNameInput}"/>
-                    <WrapPanel Margin="0,0,0,10">
-                        <TextBox x:Name="CheckpointNameInput" Text="{Binding CheckpointName, UpdateSourceTrigger=PropertyChanged}" Width="290" Margin="0,0,8,0" MaxLength="120" AutomationProperties.Name="{loc:Loc CheckpointName}"/>
-                        <Button Content="{loc:Loc NameCheckpoint}" Command="{Binding NameCheckpointCommand}" controls:Icon.Glyph="&#xE8EC;"/>
+                    <WrapPanel VerticalAlignment="Center" Margin="0,2">
+                        <Button Content="{loc:Loc Cancel}" Command="{Binding CancelCaptureCommand}" controls:Icon.Glyph="&#xE711;" Visibility="{Binding IsBusy, Converter={StaticResource BoolVisibility}}"/>
+                        <Button Content="{loc:Loc Report}" Command="{Binding PreviewReportCommand}" IsEnabled="{Binding HasSnapshot}" ToolTip="{loc:Loc ReportPreview}" Style="{StaticResource InfoButton}"
+                                controls:Icon.Glyph="&#xE8A5;" AutomationProperties.Name="{loc:Loc Report}" AutomationProperties.AutomationId="Report"/>
+                        <Button x:Name="CheckNowButton" Content="{Binding CheckActionLabel}" Command="{Binding CaptureCommand}" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE72C;"
+                                Margin="0" AutomationProperties.AutomationId="CheckNow" ToolTip="{Binding CheckActionHelp}" AutomationProperties.Name="{Binding CheckActionLabel}"/>
                     </WrapPanel>
-                    <WrapPanel>
-                        <Button Content="{loc:Loc ViewSelected}" Command="{Binding ViewSnapshotCommand}" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE890;"/>
-                        <Button Content="{loc:Loc UseBaseline}" Command="{Binding UseBaselineCommand}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE718;"/>
-                        <Button Content="{loc:Loc DeleteSelected}" Command="{Binding DeleteSnapshotCommand}" Style="{StaticResource DangerButton}" controls:Icon.Glyph="&#xE74D;"/>
-                    </WrapPanel>
-                </StackPanel>
-            </Grid>
-            <ScrollViewer x:Name="SourcesContent" Grid.Row="4" Style="{StaticResource SourcesPage}" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                <StackPanel IsEnabled="{Binding IsIdle}">
-                    <TextBlock x:Name="SourcesHeading" Text="{loc:Loc CollectionSources}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" Margin="0,8,0,10" AutomationProperties.HeadingLevel="Level1" Focusable="True" KeyboardNavigation.IsTabStop="False"/>
-                    <TextBlock Text="{loc:Loc SourcesIntro}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,22"/>
-                    <ItemsControl ItemsSource="{Binding Sources}" AutomationProperties.Name="{loc:Loc CollectionSources}">
-                        <ItemsControl.ItemContainerStyle><Style TargetType="ContentPresenter"><Setter Property="AutomationProperties.Name" Value="{Binding Name}"/></Style></ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate><DataTemplate>
-                            <Border BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,0,1" Padding="0,12">
-                                <StackPanel>
-                                    <StackPanel>
-                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Enabled}" IsEnabled="{Binding Available}" FontWeight="SemiBold"
-                                                  AutomationProperties.Name="{Binding Name}" AutomationProperties.HelpText="{Binding AccessibilityDescription}" AutomationProperties.ItemStatus="{Binding StatusDisplay}"
-                                                  AutomationProperties.AutomationId="{Binding Category, StringFormat=Source{0}}"/>
-                                        <TextBlock Text="{Binding Scope}" Margin="32,3,16,0" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}"/>
-                                        <TextBlock Text="{Binding DetailDisplay}" Margin="32,5,16,0" Foreground="{DynamicResource ReviewBrush}" FontSize="{DynamicResource AppFont14}"/>
+                </controls:CommandBarPanel>
+            </Border>
+            <ProgressBar Grid.Row="1" Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolVisibility}}" AutomationProperties.Name="{loc:Loc CheckNow}"/>
+
+            <ScrollViewer x:Name="MainContentScroll" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24,12,24,16"
+                          IsEnabled="{Binding BackgroundInteractive}" Focusable="False">
+                <!-- Only Snapshots fills the viewport (its list scrolls itself); other pages scroll as documents. -->
+                <controls:ViewportFill MinimumEms="26">
+                    <controls:ViewportFill.Style>
+                        <Style TargetType="controls:ViewportFill">
+                            <Style.Triggers><DataTrigger Binding="{Binding Page}" Value="History"><Setter Property="IsActive" Value="True"/></DataTrigger></Style.Triggers>
+                        </Style>
+                    </controls:ViewportFill.Style>
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+                        <!-- Page titles come first, then the comparison they apply to, then the page body, so each page opens on its title
+                             at every text size. Settings has no comparison and keeps its title inside SettingsView. -->
+                        <StackPanel Style="{StaticResource ReviewPage}" Margin="0,0,0,10">
+                            <TextBlock x:Name="ReviewHeading" Text="{Binding Headline}" Style="{StaticResource PageTitle}"/>
+                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource PageSubtitle}"/>
+                        </StackPanel>
+                        <Border Style="{StaticResource HistoryPage}" Margin="0,0,0,10">
+                            <TextBlock x:Name="HistoryHeading" Text="{loc:Loc SavedSnapshots}" Style="{StaticResource PageTitle}"/>
+                        </Border>
+                        <StackPanel Style="{StaticResource SourcesPage}" Margin="0,0,0,10">
+                            <TextBlock x:Name="SourcesHeading" Text="{loc:Loc CollectionSources}" Style="{StaticResource PageTitle}"/>
+                            <TextBlock Text="{loc:Loc SourcesIntro}" Style="{StaticResource PageSubtitle}"/>
+                        </StackPanel>
+
+                        <!-- Comparison: the header always states what will be compared; expand to change either end. -->
+                        <Expander x:Name="ComparisonOptions" Grid.Row="1" Header="{Binding ComparisonHeader}" IsExpanded="{Binding ComparisonPickerExpanded}" Margin="0,0,0,10"
+                                  Style="{StaticResource ComparisonExpander}" AutomationProperties.AutomationId="ComparisonOptions">
+                            <StackPanel IsEnabled="{Binding IsIdle}" Margin="4,6,0,4">
+                                <UniformGrid Columns="2" SizeChanged="ResponsiveColumnsChanged">
+                                    <StackPanel Margin="0,0,20,4">
+                                        <StackPanel Visibility="{Binding Advanced, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,8">
+                                            <Label Content="{loc:Loc BeforeDate}" Target="{Binding ElementName=BeforeDayPicker}"/>
+                                            <ComboBox x:Name="BeforeDayPicker" ItemsSource="{Binding SnapshotDates}" SelectedItem="{Binding BeforeDate, Mode=OneWay}" SelectionChanged="BeforeDaySelected"
+                                                      ItemTemplate="{StaticResource SnapshotDayTemplate}" ItemContainerStyle="{StaticResource SnapshotDayStyle}" IsEditable="False"
+                                                      MaxDropDownHeight="320" AutomationProperties.Name="{loc:Loc BeforeDate}" AutomationProperties.AutomationId="BeforeDate"/>
+                                        </StackPanel>
+                                        <Label Content="{loc:Loc EarlierSnapshot}" Target="{Binding ElementName=BeforeSnapshotPicker}"/>
+                                        <ComboBox x:Name="BeforeSnapshotPicker" ItemsSource="{Binding BeforeSnapshotChoices}" SelectedItem="{Binding CompareFrom}" ItemTemplate="{StaticResource SnapshotChoiceTemplate}"
+                                                  controls:ComboBoxAssist.SelectionTemplate="{StaticResource SnapshotSelectionTemplate}" IsEditable="False" IsSynchronizedWithCurrentItem="False" MaxDropDownHeight="420"
+                                                  ItemContainerStyle="{StaticResource SnapshotChoiceStyle}" AutomationProperties.Name="{loc:Loc EarlierSnapshot}" AutomationProperties.AutomationId="BeforeSnapshot"/>
+                                        <!-- Shortcuts share the summary line so the selector keeps its full width. -->
+                                        <DockPanel Margin="0,6,0,0">
+                                            <Button DockPanel.Dock="Right" Content="&#xE711;" Style="{StaticResource IconButton}" Margin="0"
+                                                    Command="{Binding CurrentStateOnlyCommand}" ToolTip="{loc:Loc CurrentState}" AutomationProperties.Name="{loc:Loc CurrentState}"/>
+                                            <Button DockPanel.Dock="Right" Content="{loc:Loc Baseline}" Command="{Binding SelectBaselineCommand}" ToolTip="{loc:Loc Baseline}" Margin="8,0,8,0"
+                                                    Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE718;"/>
+                                            <TextBlock Text="{Binding BeforeSelectionSummary}" Style="{StaticResource HelpText}" VerticalAlignment="Center"/>
+                                        </DockPanel>
                                     </StackPanel>
-                                    <WrapPanel Margin="32,6,0,0">
-                                        <TextBlock Text="{Binding StatusDisplay}" FontWeight="SemiBold" Margin="0,5,16,0"/>
-                                        <TextBlock Text="{Binding CountDisplay}" Foreground="{DynamicResource MutedBrush}" FontSize="{DynamicResource AppFont14}" Margin="0,5,0,0"/>
-                                    </WrapPanel>
+                                    <StackPanel Margin="0,0,0,4">
+                                        <TextBlock Text="{loc:Loc After}" Style="{StaticResource GroupLabel}"/>
+                                        <WrapPanel Margin="0,0,0,4">
+                                            <RadioButton Content="{loc:Loc Today}" GroupName="ComparisonTarget" IsChecked="{Binding CompareWithToday}" AutomationProperties.AutomationId="CompareToday"/>
+                                            <RadioButton Content="{loc:Loc SavedSnapshot}" GroupName="ComparisonTarget" IsChecked="{Binding CompareSavedSnapshots}" AutomationProperties.AutomationId="CompareSaved"/>
+                                        </WrapPanel>
+                                        <StackPanel Visibility="{Binding CompareSavedSnapshots, Converter={StaticResource BoolVisibility}}">
+                                            <StackPanel Visibility="{Binding Advanced, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,8">
+                                                <Label Content="{loc:Loc AfterDate}" Target="{Binding ElementName=AfterDayPicker}"/>
+                                                <ComboBox x:Name="AfterDayPicker" ItemsSource="{Binding SnapshotDates}" SelectedItem="{Binding AfterDate, Mode=OneWay}" SelectionChanged="AfterDaySelected"
+                                                          ItemTemplate="{StaticResource SnapshotDayTemplate}" ItemContainerStyle="{StaticResource SnapshotDayStyle}" IsEditable="False"
+                                                          MaxDropDownHeight="320" AutomationProperties.Name="{loc:Loc AfterDate}" AutomationProperties.AutomationId="AfterDate"/>
+                                            </StackPanel>
+                                            <Label Content="{loc:Loc LaterSnapshot}" Target="{Binding ElementName=AfterSnapshotPicker}"/>
+                                            <ComboBox x:Name="AfterSnapshotPicker" ItemsSource="{Binding AfterSnapshotChoices}" SelectedItem="{Binding CompareTo}" ItemTemplate="{StaticResource SnapshotChoiceTemplate}"
+                                                      controls:ComboBoxAssist.SelectionTemplate="{StaticResource SnapshotSelectionTemplate}" IsEditable="False" IsSynchronizedWithCurrentItem="False" MaxDropDownHeight="420"
+                                                      ItemContainerStyle="{StaticResource SnapshotChoiceStyle}" AutomationProperties.Name="{loc:Loc LaterSnapshot}" AutomationProperties.AutomationId="AfterSnapshot"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding AfterSelectionSummary}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <TextBlock x:Name="SelectionIssueText" Text="{Binding ComparisonSelectionIssue}" Foreground="{DynamicResource ReviewBrush}" FontWeight="SemiBold" Margin="0,4,0,0"
+                                           Style="{StaticResource CollapsedWhenEmpty}" AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="ComparisonSelectionIssue"/>
+                            </StackPanel>
+                        </Expander>
+
+                        <!-- Review changes -->
+                        <StackPanel x:Name="ReviewContent" Grid.Row="2" Style="{StaticResource ReviewPage}">
+                            <Border Style="{StaticResource Card}" Visibility="{Binding IsFirstRun, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="{loc:Loc FirstBaseline}" Style="{StaticResource SectionTitle}"/>
+                                    <TextBlock Text="{loc:Loc PrivacyIntro}" MaxWidth="760" HorizontalAlignment="Left" Margin="0,6,0,4"/>
+                                    <TextBlock Text="{loc:Loc BaselineIntro}" Style="{StaticResource HelpText}" MaxWidth="760" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                                    <Button Content="{loc:Loc CollectionSources}" Command="{Binding NavigateCommand}" CommandParameter="Sources" HorizontalAlignment="Left"
+                                            Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8B7;"/>
                                 </StackPanel>
                             </Border>
-                        </DataTemplate></ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+                            <!-- Coverage strip: always read before the findings. -->
+                            <Border Style="{StaticResource Card}" Padding="12,6,12,4" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <DockPanel Margin="4,4,0,2">
+                                        <controls:Glyph Text="&#xE9F9;" Foreground="{DynamicResource AccentBrush}" FontSize="{DynamicResource AppFont14}" Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding Coverage}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <Expander Header="{loc:Loc CoverageDetails}" AutomationProperties.AutomationId="CoverageDetails">
+                                        <StackPanel Margin="28,0,0,6">
+                                            <TextBlock Text="{Binding UnchangedSummary}" Style="{StaticResource HelpText}" Margin="0,0,0,2"/>
+                                            <TextBlock Text="{Binding BaselineText}" Style="{StaticResource HelpText}"/>
+                                        </StackPanel>
+                                    </Expander>
+                                    <Expander Header="{Binding GapHeading}" Visibility="{Binding HasGaps, Converter={StaticResource BoolVisibility}}">
+                                        <ItemsControl ItemsSource="{Binding Gaps}" Margin="28,0,0,6" AutomationProperties.Name="{Binding GapHeading}">
+                                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="{DynamicResource AppFont14}" Margin="0,0,0,4"/></DataTemplate></ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Text="{loc:Loc BaselineReady}" Style="{StaticResource SectionTitle}" Visibility="{Binding IsBaselineOnly, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,10"/>
+                            <StackPanel Visibility="{Binding HasComparison, Converter={StaticResource BoolVisibility}}">
+                                <!-- Filters on one line, with visible labels beside their fields. -->
+                                <WrapPanel Margin="0,0,0,6">
+                                    <WrapPanel Margin="0,0,16,6">
+                                        <Label Content="{loc:Loc Category}" Target="{Binding ElementName=CategoryPicker}" Style="{StaticResource InlineLabel}"/>
+                                        <ComboBox x:Name="CategoryPicker" ItemsSource="{Binding CategoryFilters}" SelectedItem="{Binding CategoryFilter}" Width="200" AutomationProperties.Name="{loc:Loc Category}"/>
+                                    </WrapPanel>
+                                    <WrapPanel Margin="0,0,16,6">
+                                        <Label Content="{loc:Loc SearchChanges}" Target="{Binding ElementName=ChangesSearch}" Style="{StaticResource InlineLabel}"/>
+                                        <TextBox x:Name="ChangesSearch" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="240" AutomationProperties.Name="{loc:Loc SearchChanges}"/>
+                                    </WrapPanel>
+                                    <Button Content="{loc:Loc ClearFilters}" Command="{Binding ClearFiltersCommand}" Margin="0,0,0,6" controls:Icon.Glyph="&#xE894;"/>
+                                </WrapPanel>
+                                <TextBlock Text="{loc:Loc ReviewFirst}" Style="{StaticResource GroupLabel}" FontWeight="Bold" Margin="0,0,0,8" AutomationProperties.HeadingLevel="Level2"/>
+                                <ItemsControl ItemsSource="{Binding ReviewItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" AutomationProperties.Name="{loc:Loc ReviewFirst}"/>
+                                <Button Content="{loc:Loc ViewAll}" Command="{Binding ShowAllCommand}" Visibility="{Binding HasMoreReviews, Converter={StaticResource BoolVisibility}}" HorizontalAlignment="Left" Margin="0,0,0,10"
+                                        Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8FD;"/>
+                                <TextBlock Text="{loc:Loc NoReviewsHelp}" Visibility="{Binding HasNoReviews, Converter={StaticResource BoolVisibility}}" Style="{StaticResource HelpText}" Margin="0,0,0,10"/>
+                                <Expander Header="{Binding RoutineHeading}" Margin="0,0,0,6" AutomationProperties.Name="{Binding RoutineHeading}" AutomationProperties.AutomationId="RoutineGroup">
+                                    <ItemsControl ItemsSource="{Binding RoutineItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" AutomationProperties.Name="{Binding RoutineHeading}"/>
+                                </Expander>
+                                <Expander Header="{Binding OtherHeading}" Margin="0,0,0,6" AutomationProperties.Name="{Binding OtherHeading}" AutomationProperties.AutomationId="OtherGroup">
+                                    <ItemsControl ItemsSource="{Binding OtherItems}" ItemTemplate="{StaticResource ChangeTemplate}" ItemContainerStyle="{StaticResource ChangeItemContainerStyle}" AutomationProperties.Name="{Binding OtherHeading}"/>
+                                </Expander>
+                            </StackPanel>
+                            <Expander Header="{loc:Loc Inventory}" Visibility="{Binding HasSnapshot, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,6">
+                                <ListBox ItemsSource="{Binding Inventory}" MaxHeight="320" ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderThickness="1" BorderBrush="{DynamicResource CardStrokeBrush}"
+                                         AutomationProperties.Name="{loc:Loc Inventory}">
+                                    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="{DynamicResource AppFont14}"/></DataTemplate></ListBox.ItemTemplate>
+                                </ListBox>
+                            </Expander>
+                        </StackPanel>
+
+                        <!-- Snapshots: commands above the list; the list fills the rest of the page. -->
+                        <Grid x:Name="HistoryContent" Grid.Row="2" Style="{StaticResource HistoryPage}" IsEnabled="{Binding IsIdle}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                            <!-- Command groups wrap as units: open or re-baseline, name, and (last and apart) delete. -->
+                            <WrapPanel Margin="0,0,0,6">
+                                <WrapPanel Margin="0,0,16,6">
+                                    <Button Content="{loc:Loc ViewSelected}" Command="{Binding ViewSnapshotCommand}" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE890;"/>
+                                    <Button Content="{loc:Loc UseBaseline}" Command="{Binding UseBaselineCommand}" Style="{StaticResource CautionButton}" controls:Icon.Glyph="&#xE718;" Margin="0"/>
+                                </WrapPanel>
+                                <WrapPanel Margin="0,0,16,6">
+                                    <Label Content="{loc:Loc CheckpointName}" Target="{Binding ElementName=CheckpointNameInput}" Style="{StaticResource InlineLabel}"/>
+                                    <TextBox x:Name="CheckpointNameInput" Text="{Binding CheckpointName, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,8,0" MaxLength="120" AutomationProperties.Name="{loc:Loc CheckpointName}"/>
+                                    <Button Content="{loc:Loc NameCheckpoint}" Command="{Binding NameCheckpointCommand}" controls:Icon.Glyph="&#xE8EC;" Margin="0"/>
+                                </WrapPanel>
+                                <Button Content="{loc:Loc DeleteSelected}" Command="{Binding DeleteSnapshotCommand}" Style="{StaticResource DangerButton}" controls:Icon.Glyph="&#xE74D;" Margin="0,0,0,6"/>
+                            </WrapPanel>
+                            <ListView Grid.Row="1" ItemsSource="{Binding Snapshots}" SelectedItem="{Binding SelectedSnapshot}" MinHeight="120"
+                                      AutomationProperties.AutomationId="SnapshotList" AutomationProperties.Name="{loc:Loc SavedSnapshots}">
+                                <ListView.ItemContainerStyle><Style TargetType="ListViewItem" BasedOn="{StaticResource {x:Type ListViewItem}}">
+                                    <Setter Property="AutomationProperties.Name"><Setter.Value><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Compact"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></Setter.Value></Setter>
+                                </Style></ListView.ItemContainerStyle>
+                                <ListView.View><GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding CapturedAt, StringFormat=g}" Width="170"><GridViewColumn.Header><TextBlock Text="{Binding Texts[Captured]}"/></GridViewColumn.Header></GridViewColumn>
+                                    <GridViewColumn Width="290"><GridViewColumn.Header><TextBlock Text="{Binding Texts[ScopeAccess]}"/></GridViewColumn.Header><GridViewColumn.CellTemplate><DataTemplate><TextBlock TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"><TextBlock.Text><MultiBinding Converter="{StaticResource SnapshotText}" ConverterParameter="Context"><Binding/><Binding Path="DataContext.Texts" RelativeSource="{RelativeSource AncestorType=Window}"/><Binding Path="DataContext.Texts.Revision" RelativeSource="{RelativeSource AncestorType=Window}"/></MultiBinding></TextBlock.Text></TextBlock></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
+                                    <GridViewColumn Width="200"><GridViewColumn.Header><TextBlock Text="{Binding Texts[Checkpoint]}"/></GridViewColumn.Header><GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Label}" ToolTip="{Binding Label}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
+                                    <GridViewColumn DisplayMemberBinding="{Binding ItemCount}" Width="90"><GridViewColumn.Header><TextBlock Text="{Binding Texts[Records]}"/></GridViewColumn.Header></GridViewColumn>
+                                    <GridViewColumn DisplayMemberBinding="{Binding CompleteSources}" Width="150"><GridViewColumn.Header><TextBlock Text="{Binding Texts[CompleteSources]}"/></GridViewColumn.Header></GridViewColumn>
+                                </GridView></ListView.View>
+                            </ListView>
+                        </Grid>
+
+                        <!-- Sources: compact cards in balanced rows; status is a word plus a distinct glyph. -->
+                        <StackPanel x:Name="SourcesContent" Grid.Row="2" Style="{StaticResource SourcesPage}" IsEnabled="{Binding IsIdle}">
+                            <ItemsControl ItemsSource="{Binding Sources}" AutomationProperties.Name="{loc:Loc CollectionSources}" Focusable="False">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><controls:ColumnFlowPanel MinColumnEms="22" MaxColumns="3" ColumnSpacing="10" RowSpacing="10" FillRowsFirst="True"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle><Style TargetType="ContentPresenter"><Setter Property="AutomationProperties.Name" Value="{Binding Name}"/></Style></ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate><DataTemplate>
+                                    <Border Style="{StaticResource Card}" Padding="12,6,12,10">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <StackPanel x:Name="StatusTag" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" TextElement.Foreground="{DynamicResource MutedBrush}">
+                                                    <controls:Glyph x:Name="StatusGlyph" Text="&#xEA3A;" FontSize="{DynamicResource AppFont14}" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{Binding StatusDisplay}" FontWeight="SemiBold" FontSize="{DynamicResource AppFont14}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding Enabled}" IsEnabled="{Binding Available}" FontWeight="SemiBold"
+                                                          AutomationProperties.Name="{Binding Name}" AutomationProperties.HelpText="{Binding AccessibilityDescription}" AutomationProperties.ItemStatus="{Binding StatusDisplay}"
+                                                          AutomationProperties.AutomationId="{Binding Category, StringFormat=Source{0}}"/>
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding Scope}" Style="{StaticResource HelpText}" Margin="28,0,0,0"/>
+                                            <TextBlock Text="{Binding CountDisplay}" Style="{StaticResource HelpText}" Margin="28,4,0,0"/>
+                                            <TextBlock Text="{Binding DetailDisplay}" Foreground="{DynamicResource ReviewBrush}" FontSize="{DynamicResource AppFont14}" Margin="28,4,0,0" Style="{StaticResource CollapsedWhenEmpty}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Status}" Value="Success">
+                                            <Setter TargetName="StatusGlyph" Property="Text" Value="&#xE73E;"/>
+                                            <Setter TargetName="StatusTag" Property="TextElement.Foreground" Value="{DynamicResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}" Value="Partial">
+                                            <Setter TargetName="StatusGlyph" Property="Text" Value="&#xE7BA;"/>
+                                            <Setter TargetName="StatusTag" Property="TextElement.Foreground" Value="{DynamicResource ReviewBrush}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}" Value="Failed">
+                                            <Setter TargetName="StatusGlyph" Property="Text" Value="&#xE783;"/>
+                                            <Setter TargetName="StatusTag" Property="TextElement.Foreground" Value="{DynamicResource DangerButtonTextBrush}"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate></ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <views:SettingsView x:Name="SettingsContent" Grid.Row="2" Style="{StaticResource SettingsPage}" AutomationProperties.AutomationId="SettingsContent"/>
+                    </Grid>
+                </controls:ViewportFill>
             </ScrollViewer>
-            <views:SettingsView x:Name="SettingsContent" Grid.Row="4" Style="{StaticResource SettingsPage}" AutomationProperties.AutomationId="SettingsContent"/>
-        </Grid>
-        </ScrollViewer>
-        <Border Grid.Row="1" Grid.Column="1" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,0" Padding="28,12" Background="{DynamicResource SurfaceBrush}">
-            <TextBlock x:Name="StatusText" Text="{Binding Status}" FlowDirection="{Binding Texts.Direction}" Foreground="{DynamicResource TextBrush}" FontSize="{DynamicResource AppFont14}" AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="StatusText"/>
-        </Border>
-        <Border Grid.Column="1" Grid.RowSpan="2" Background="#60000000" FlowDirection="{Binding Texts.Direction}">
-            <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding SelectedChange}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
-            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Padding="26" Margin="36" CornerRadius="6" KeyboardNavigation.TabNavigation="Cycle">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                    <DockPanel><Button x:Name="CloseDetailButton" DockPanel.Dock="Right" Content="{loc:Loc Close}" Command="{Binding CloseDetailsCommand}" IsCancel="True" AutomationProperties.AutomationId="CloseChangeDetails"/><TextBlock Text="{Binding SelectedChange.Name}" FontSize="{DynamicResource AppFont22}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/></DockPanel>
-                    <TextBlock Grid.Row="1" Text="{Binding SelectedChange.Window}" Foreground="{DynamicResource MutedBrush}" Margin="0,12,0,14"/>
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False" AutomationProperties.Name="{loc:Loc BeforeAfter}" AutomationProperties.AutomationId="ChangeDetails">
-                        <StackPanel DataContext="{Binding SelectedChange}" Margin="0,0,12,0">
-                            <WrapPanel Margin="0,0,0,12"><TextBlock Text="{Binding Category}" Margin="0,0,16,0"/><TextBlock Text="{Binding Kind}" FontWeight="SemiBold"/></WrapPanel>
-                            <TextBlock Text="{Binding Why}" FontSize="{DynamicResource AppFont18}" Margin="0,0,0,16"/>
-                            <StackPanel Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
-                                <TextBlock Text="{Binding SimpleSummary}" Style="{StaticResource SimpleSummaryStyle}"/>
-                                <ItemsControl ItemsSource="{Binding ChangedFields}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc BeforeAfter}"/>
+
+            <Border Grid.Row="3" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,0" Padding="24,6" Background="{DynamicResource SurfaceBrush}">
+                <TextBlock x:Name="StatusText" Text="{Binding Status}" Foreground="{DynamicResource TextBrush}" FontSize="{DynamicResource AppFont14}"
+                           AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="StatusText"/>
+            </Border>
+
+            <!-- Before / after panel: fixed header and actions around scrolling details. -->
+            <Border Grid.RowSpan="4" Background="{DynamicResource ScrimOverlayBrush}">
+                <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding SelectedChange}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
+                <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Margin="24" MaxWidth="1040"
+                        VerticalAlignment="Center" KeyboardNavigation.TabNavigation="Cycle">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <DockPanel Margin="20,14,16,8">
+                            <Button x:Name="CloseDetailButton" DockPanel.Dock="Right" Content="{loc:Loc Close}" Command="{Binding CloseDetailsCommand}" IsCancel="True" Margin="12,0,0,0"
+                                    controls:Icon.Glyph="&#xE711;" AutomationProperties.AutomationId="CloseChangeDetails" VerticalAlignment="Top"/>
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedChange.Name}" FontSize="{DynamicResource AppFont20}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/>
+                                <TextBlock Text="{Binding SelectedChange.Window}" Style="{StaticResource PageSubtitle}"/>
                             </StackPanel>
-                            <StackPanel Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
-                                <TextBlock Text="{loc:Loc AllFields}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level2"/>
-                                <ItemsControl ItemsSource="{Binding FieldDetails}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc AllFields}"/>
-                                <TextBlock Text="{loc:Loc ObservationMetadata}" FontSize="{DynamicResource AppFont19}" FontWeight="SemiBold" Margin="0,16,0,8" AutomationProperties.HeadingLevel="Level2"/>
-                                <ItemsControl ItemsSource="{Binding ObservationDetails}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc ObservationMetadata}"/>
-                                <TextBlock Text="{loc:Loc AdvancedPrivacy}" Margin="0,8,0,12"/>
+                        </DockPanel>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" Padding="20,0,20,4"
+                                      AutomationProperties.Name="{loc:Loc BeforeAfter}" AutomationProperties.AutomationId="ChangeDetails">
+                            <StackPanel DataContext="{Binding SelectedChange}">
+                                <WrapPanel Margin="0,0,0,8">
+                                    <Border Style="{StaticResource Chip}" Margin="0,0,8,0"><TextBlock Text="{Binding Kind}"/></Border>
+                                    <TextBlock Text="{Binding Category}" Style="{StaticResource HelpText}" VerticalAlignment="Center"/>
+                                </WrapPanel>
+                                <TextBlock Text="{Binding Why}" Margin="0,0,0,10"/>
+                                <StackPanel Visibility="{Binding DataContext.Simple, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
+                                    <TextBlock Text="{Binding SimpleSummary}" Style="{StaticResource SimpleSummaryStyle}"/>
+                                    <ItemsControl ItemsSource="{Binding ChangedFields}" ItemTemplate="{StaticResource DetailRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc BeforeAfter}"/>
+                                </StackPanel>
+                                <StackPanel Visibility="{Binding DataContext.Advanced, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVisibility}}">
+                                    <TextBlock Text="{loc:Loc AllFields}" Style="{StaticResource SectionTitle}" Margin="0,0,0,6"/>
+                                    <StackPanel Grid.IsSharedSizeScope="True">
+                                        <ContentPresenter ContentTemplate="{StaticResource DetailTableHeaderTemplate}"/>
+                                        <ItemsControl ItemsSource="{Binding FieldDetails}" ItemTemplate="{StaticResource DetailTableRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc AllFields}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{loc:Loc ObservationMetadata}" Style="{StaticResource SectionTitle}" Margin="0,12,0,6"/>
+                                    <StackPanel Grid.IsSharedSizeScope="True">
+                                        <ContentPresenter ContentTemplate="{StaticResource DetailTableHeaderTemplate}"/>
+                                        <ItemsControl ItemsSource="{Binding ObservationDetails}" ItemTemplate="{StaticResource DetailTableRowTemplate}" ItemContainerStyle="{StaticResource DetailItemContainerStyle}" AutomationProperties.Name="{loc:Loc ObservationMetadata}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{loc:Loc AdvancedPrivacy}" Style="{StaticResource HelpText}" Margin="0,6,0,8"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding HiddenComparison}" FontSize="{DynamicResource AppFont14}" Margin="0,4,0,6"/>
+                                <TextBlock Text="{loc:Loc Uncertainty}" Style="{StaticResource HelpText}"/>
                             </StackPanel>
-                            <TextBlock Text="{Binding HiddenComparison}" Margin="0,8,0,12"/>
-                            <TextBlock Text="{loc:Loc Uncertainty}"/>
+                        </ScrollViewer>
+                        <Border Grid.Row="2" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,0" Padding="20,10,20,12">
+                            <WrapPanel>
+                                <Button Content="{loc:Loc CopyDetails}" Command="{Binding CopyDetailsCommand}" CommandParameter="{Binding SelectedChange}" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8C8;"/>
+                                <Button Content="{loc:Loc OpenSettings}" Command="{Binding OpenSettingsCommand}" CommandParameter="{Binding SelectedChange}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8A7;"/>
+                                <Button Content="{Binding SelectedChange.ExpectedAction}" Command="{Binding ToggleExpectedCommand}" CommandParameter="{Binding SelectedChange}" controls:Icon.Glyph="&#xE73E;"/>
+                            </WrapPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Border>
+
+            <!-- Scope choice: a compact centered dialog; nothing is collected until it is confirmed. -->
+            <Border Grid.RowSpan="4" Background="{DynamicResource ScrimOverlayBrush}" Visibility="{Binding ChoosingScope, Converter={StaticResource BoolVisibility}}">
+                <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"
+                        MaxWidth="560" Margin="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" Padding="24,20,24,20">
+                        <StackPanel KeyboardNavigation.TabNavigation="Cycle">
+                            <TextBlock Text="{loc:Loc ScopeQuestion}" FontSize="{DynamicResource AppFont20}" FontWeight="SemiBold" Margin="0,0,0,14" AutomationProperties.HeadingLevel="Level1"/>
+                            <CheckBox x:Name="CurrentUserScopeCheckBox" Content="{loc:Loc UserScope}" IsChecked="{Binding CurrentUserScope}" FontWeight="SemiBold" AutomationProperties.AutomationId="CurrentUserScope"/>
+                            <TextBlock Text="{loc:Loc UserScopeHelp}" Style="{StaticResource HelpText}" Margin="28,0,0,12"/>
+                            <CheckBox Content="{loc:Loc MachineScope}" IsChecked="{Binding MachineScope}" FontWeight="SemiBold" AutomationProperties.AutomationId="MachineScope"/>
+                            <TextBlock Text="{loc:Loc MachineScopeHelp}" Style="{StaticResource HelpText}" Margin="28,0,0,12"/>
+                            <TextBlock Text="{loc:Loc ConsentHelp}" Style="{StaticResource HelpText}" Margin="0,4,0,18"/>
+                            <WrapPanel HorizontalAlignment="Right">
+                                <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" ToolTip="F1" Style="{StaticResource HelpButton}" controls:Icon.Glyph="&#xE897;" AutomationProperties.AutomationId="ScopeHelpMe"/>
+                                <Button Content="{loc:Loc UseScope}" Command="{Binding ConfirmScopeCommand}" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE73E;" Margin="0"
+                                        AutomationProperties.AutomationId="ConfirmScope"/>
+                            </WrapPanel>
                         </StackPanel>
                     </ScrollViewer>
-                    <WrapPanel Grid.Row="3" Margin="0,18,0,0">
-                        <Button Content="{loc:Loc CopyDetails}" Command="{Binding CopyDetailsCommand}" CommandParameter="{Binding SelectedChange}" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8C8;"/>
-                        <Button Content="{loc:Loc OpenSettings}" Command="{Binding OpenSettingsCommand}" CommandParameter="{Binding SelectedChange}" Style="{StaticResource NavigateButton}" controls:Icon.Glyph="&#xE8A7;"/>
-                        <Button Content="{Binding SelectedChange.ExpectedAction}" Command="{Binding ToggleExpectedCommand}" CommandParameter="{Binding SelectedChange}" controls:Icon.Glyph="&#xE73E;"/>
-                    </WrapPanel>
-                </Grid>
-                </ScrollViewer>
+                </Border>
             </Border>
-        </Border>
-        <Border Grid.Column="1" Grid.RowSpan="2" Background="#60000000" FlowDirection="{Binding Texts.Direction}" Visibility="{Binding ChoosingScope, Converter={StaticResource BoolVisibility}}">
-            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Padding="28"
-                    MaxWidth="560" Margin="24" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="6">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                <StackPanel KeyboardNavigation.TabNavigation="Cycle">
-                    <TextBlock Text="{loc:Loc ScopeQuestion}" FontSize="{DynamicResource AppFont22}" FontWeight="SemiBold" Margin="0,0,0,24" AutomationProperties.HeadingLevel="Level1"/>
-                    <CheckBox x:Name="CurrentUserScopeCheckBox" Content="{loc:Loc UserScope}" IsChecked="{Binding CurrentUserScope}" FontWeight="SemiBold"
-                                 AutomationProperties.AutomationId="CurrentUserScope" Margin="0,0,0,6"/>
-                    <TextBlock Text="{loc:Loc UserScopeHelp}" Foreground="{DynamicResource MutedBrush}" Margin="32,0,0,20"/>
-                    <CheckBox Content="{loc:Loc MachineScope}" IsChecked="{Binding MachineScope}" FontWeight="SemiBold"
-                                 AutomationProperties.AutomationId="MachineScope" Margin="0,0,0,6"/>
-                    <TextBlock Text="{loc:Loc MachineScopeHelp}" Foreground="{DynamicResource MutedBrush}" Margin="32,0,0,20"/>
-                    <TextBlock Text="{loc:Loc ConsentHelp}"
-                               Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,24"/>
-                        <WrapPanel HorizontalAlignment="Right">
-                        <Button Content="{loc:Loc Help}" Command="ApplicationCommands.Help" ToolTip="F1" Style="{StaticResource HelpButton}" controls:Icon.Glyph="&#xE897;" AutomationProperties.AutomationId="ScopeHelpMe"/>
-                        <Button Content="{loc:Loc UseScope}" Command="{Binding ConfirmScopeCommand}" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE73E;"
-                            AutomationProperties.AutomationId="ConfirmScope"/>
-                        </WrapPanel>
-                </StackPanel>
-                </ScrollViewer>
-            </Border>
-        </Border>
+        </Grid>
     </Grid>
 </Window>

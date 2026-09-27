@@ -13,7 +13,7 @@ Arabic, Egyptian Arabic, and Urdu use right-to-left content. The selector stays 
 Open **Settings** in the navigation menu. Preferences are saved for the current history directory and restored when you reopen the app. Sections appear as cards in up to three columns, read top to bottom and then across, so the page usually fits one screen without scrolling. Scope and Comparison controls are hidden on Settings; they remain on the other pages.
 
 - **Language** changes the interface and offline help immediately.
-- **Appearance** offers Dark/Light (Dark for new profiles; a saved choice is kept), a font family, **Text size** (100%, 125%, 150%, or 200%), and independent app-text, label, button-background, and button-text colors. Text size applies immediately to the main pages, controls, Help, and Report; the choice is saved. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Default restores that role's theme color. With Default button colors, buttons follow a clear hierarchy: the main check is teal, deletions are red, and every other command is a neutral button with a color-coded icon (blue for reports and viewing, violet for scope and navigation, gold for Help). A custom button background or text color applies to every button instead. Shades adapt to Dark/Light; Windows high contrast overrides them. Primary actions retain contrasting text.
+- **Appearance** offers Dark/Light (Dark for new profiles; a saved choice is kept), a font family, **Text size** (100%, 125%, 150%, or 200%), and independent app-text, label, button-background, and button-text colors. Text size applies immediately to the main pages, controls, Help, and Report; the choice is saved. Named swatches offer Default, Navy, Forest green, Maroon, and Purple. Default restores that role's theme color. With Default button colors, buttons follow a clear hierarchy: the main check is blue, replacing the baseline is amber, deletions are red, and every other command is a neutral button with a color-coded icon (blue for reports and viewing, violet for scope and navigation, gold for Help). The default palette is designed for low vision and color-vision deficiency: interactive elements are blue (the hue best preserved by common forms of color blindness), field labels have their own navy (Light) or light-blue (Dark) color so they are never mistaken for values, and every status also has a word and a symbol. A custom button background or text color applies to every button instead. Shades adapt to Dark/Light; Windows high contrast overrides them. Primary actions retain contrasting text.
 - **Snapshot frequency** defaults to every 4 hours when no valid preference is saved. Existing choices, including Off, are preserved. Choose Off, every 15 minutes, hour, 4 hours, 6 hours, day, or week. Checks run only while the app is open, including in the tray, use standard access, and can be canceled. After scope confirmation, a first or overdue check can run at the next minute check; subsequent checks follow the chosen interval. The app does not wake a sleeping PC or replay missed intervals.
 - **Data retention** defaults to 30 days when no valid preference is saved. Existing choices, including Forever, are preserved. Choose 30, 90, 180, or 365 days, or Forever. Cleanup deletes only older unnamed, non-baseline snapshots, runs when first due and then daily while open, even when automatic snapshots are Off, and after successful automatic checks. Named checkpoints and every scope/access baseline are protected. Deleted timestamps leave the selectors.
 - **Start ChangeTracker when I sign in** is an optional switch, off by default. It includes sign-in after a reboot, not collection before sign-in. Only this app's per-user startup entry is changed; no service or boot task is installed, and no other app or policy is changed. A failed registration restores the previous choice.
@@ -27,7 +27,7 @@ Both **Current user** and **Machine-wide** start selected for new profiles; save
 2. Review the **Current user** and **Machine-wide** checkboxes, both selected for a new profile. Keep either or both, never neither, then confirm. Your previous choice is remembered. Selecting scopes does not start collection or request administrator access.
 3. Open **Sources** and review the selected sources. All supported checks, including Network and PATH, start enabled when no valid choice is saved. Saved choices, including disabled checks, are preserved. Turn off any sources you do not want; unsupported sources stay disabled for the selected scope.
 4. In **Comparison**, leave **Today (new check)** selected. If there is no earlier snapshot, the next check saves current state only.
-5. Select **Check now**. The app collects the selected sources, saves the observation locally, and reports incomplete coverage where necessary.
+5. Select **Check now** at the right end of the command bar. The app collects the selected sources, saves the observation locally, and reports incomplete coverage where necessary.
 6. After a later configuration change, choose your earlier snapshot and check again, or compare two snapshots already saved.
 
 Your first usable snapshot becomes the baseline for that scope and access level. A first snapshot is inventory, not evidence of earlier changes. Subsequent captures do not automatically move the baseline.
@@ -63,7 +63,7 @@ Switching modes does not run a check, create or delete a snapshot, reset a compa
 | PATH | Persisted user PATH. | Persisted machine PATH. |
 | Services, tasks, updates, drivers, firewall | Not collected in this scope. | Selected readable system sources. |
 
-Use **Change scope** to select another scope. An unavailable source is labeled outside scope and cannot be enabled there. Source selections are remembered separately for each scope. Changing scope never starts a capture or an elevation prompt.
+Use **Change scope**, below the page navigation in the sidebar, to select another scope. An unavailable source is labeled outside scope and cannot be enabled there. Source selections are remembered separately for each scope. Changing scope never starts a capture or an elevation prompt.
 
 With both scopes selected, user and machine observations are read separately and combined into one snapshot. Both use standard access under your own account. If either portion is incomplete, the combined category is incomplete and cannot infer removals. Combined snapshots have their own baselines and cannot be compared to old single-scope snapshots.
 
@@ -71,11 +71,11 @@ History stays local to the initiating user even for machine-wide checks. The app
 
 ## Dates And Snapshots
 
-The **Comparison** section is available in both modes before running a check. It collapses after a successful check/comparison to make more room for results; expand it whenever you want to change the selection.
+The **Comparison** section is available in both modes before running a check. Its header always states both ends of the current selection, for example **Comparison: Baseline · 9/17/2026 12:00 PM → Today (new check)**, so you can see what will be compared while it is collapsed. It collapses after a successful check or comparison and when you open another page, to make more room for results; expand it whenever you want to change the selection.
 
-- **Earlier snapshot** selects an exact retained observation. Each choice shows its local time including milliseconds and UTC offset, checkpoint, and scope/access on separate lines. Simple also shows the date in each choice. Advanced adds a **Before date** filter containing only retained days, newest first, and limits the time list to that day. Dates and times cannot be typed or invented.
-- **Baseline** selects the saved standard-access baseline for the currently selected scope. It does not replace that baseline.
-- **Current state only**, the clear-reference button, removes the earlier selection and targets a fresh check today without a comparison.
+- **Earlier snapshot** selects an exact retained observation. In the open list, each choice shows its local time including milliseconds and UTC offset on the first line and its checkpoint and scope/access on the second; Simple also shows the date. The closed selector shows the date, time, and checkpoint on one line, with scope/access beneath it. Advanced adds a **Before date** filter containing only retained days, newest first, and limits the time list to that day. Dates and times cannot be typed or invented.
+- **Baseline** selects the saved standard-access baseline for the currently selected scope. It does not replace that baseline. It sits beside the scope/access line under the selector.
+- **Current state only**, the clear-reference button next to **Baseline**, removes the earlier selection and targets a fresh check today without a comparison.
 - **Today (new check)** means a new observation captured when you press **Check now**, not a previously saved snapshot from earlier today.
 - **Saved snapshot** shows the **Later snapshot** selector for an exact retained observation. Advanced also shows the **After date** filter. The main action becomes **Compare snapshots**, which reads saved history without collecting current configuration.
 
@@ -126,6 +126,8 @@ Installing the MSI requires administrator approval from Windows; that approval i
 
 **Added**, **Removed**, and **Modified** describe differences between the selected observations, not a precise timestamp or a confirmed cause.
 
+Each finding is a compact card: the change kind in an outlined tag and the category on the first line, the priority as a word with its own symbol at the end of that line (a warning triangle for Important, a flag for Review, an information mark for Info, and a check mark for Expected by you), then the item name, the reason, the values, and the actions.
+
 | Finding | Meaning |
 | --- | --- |
 | Review first | A rule found a change worth checking, such as a launch registration or a protection setting. It is not a malware verdict. |
@@ -135,11 +137,11 @@ Installing the MSI requires administrator approval from Windows; that approval i
 | Expected by you | You marked this particular observed occurrence expected. The underlying evidence remains. |
 | Other changes | A change was observed but its impact was not assessed by a supported rule. |
 
-The heading counts review-priority findings in the current filter, not every difference. Routine/expected and Other groups have separate labeled counts. Initially, up to three review findings are shown; **View all review findings** exposes the remainder. Category and search filters can narrow the visible list; **Clear filters** restores it.
+The heading counts review-priority findings in the current filter, not every difference. Routine/expected and Other groups have separate labeled counts. Initially, up to three review findings are shown; **View all review findings** exposes the remainder. The **Category** and **Search changes** filters sit on one line above the findings with their labels beside them; they narrow the visible list, and **Clear filters** restores it.
 
-In Simple, changed public fields appear directly in each finding with separate **Before** and **After** labels and larger, selectable values. Missing values say **Not present** and empty values are labeled separately. **Before / after** opens structured details, interval, reason, and uncertainty. Hidden launch values, protected fingerprints, and some identifiers are not displayed or exported. A hidden-value change can be detected without exposing that value.
+In Simple, changed public fields appear directly in each finding with **Before** and **After** labels beside larger, selectable values. Missing values say **Not present** and empty values are labeled separately. **Before / after** opens structured details, interval, reason, and uncertainty; its header and actions stay in place while the details scroll. Hidden launch values, protected fingerprints, and some identifiers are not displayed or exported. A hidden-value change can be detected without exposing that value.
 
-In **Advanced**, **All captured fields** includes source/record/endpoint identifiers where captured. **Observation metadata (UTC)** shows exact recorded times and versions. Missing and empty values are distinct; unchanged context remains visible. Long values are selectable and not truncated to the summary limit. Copy details uses this fuller view in Advanced. Device identifiers can identify you; review before sharing. No view can restore sensitive contents that were never stored, and fingerprints/keys stay hidden. Reports retain their stricter privacy projection.
+In **Advanced**, **All captured fields** is a Field / Before / After table that includes source/record/endpoint identifiers where captured. **Observation metadata (UTC)** uses the same table for exact recorded times and versions. Missing and empty values are distinct; unchanged context remains visible. Long values are selectable and not truncated to the summary limit. Copy details uses this fuller view in Advanced. Device identifiers can identify you; review before sharing. No view can restore sensitive contents that were never stored, and fingerprints/keys stay hidden. Reports retain their stricter privacy projection.
 
 **Open settings** opens an allowlisted Windows settings or management destination. It does not repair the change. Any changes you then make in Windows are your separate actions.
 
@@ -169,12 +171,12 @@ The app observes that a value differs between two readings. It generally cannot 
 
 ## Baselines And Saved History
 
-Open **Snapshots** to see capture times, checkpoints, scope/access, record counts, and complete-source counts.
+Open **Snapshots** to see capture times, scope/access, checkpoints, record counts, and complete-source counts. The commands sit above the list, and the list fills the rest of the window and scrolls on its own, so the commands stay in view however long the history grows.
 
 - **View selected** displays a saved observation and its compatible baseline comparison when available.
-- **Name checkpoint** assigns a local label of 1 to 120 characters.
-- **Use as baseline** replaces that scope/access baseline only after confirmation. The original capture time is retained.
-- **Delete selected** deletes a saved snapshot after confirmation. Choose another baseline before deleting a snapshot that is currently a baseline.
+- **Name checkpoint** assigns a local label of 1 to 120 characters, typed in the labeled **Checkpoint name** field beside it.
+- **Use as baseline** replaces that scope/access baseline only after confirmation. The original capture time is retained. It is amber because it replaces a saved reference.
+- **Delete selected** deletes a saved snapshot after confirmation. It is red and placed last, apart from the other commands. Choose another baseline before deleting a snapshot that is currently a baseline.
 
 There are separate baselines for user-only, machine-only, both scopes, their applicable access levels, and legacy mixed-scope observations. A switch between these contexts cannot be interpreted as added or removed settings.
 
@@ -187,6 +189,8 @@ Ordinary captures and custom comparisons do not move a baseline. There is no fix
 The app currently implements scoped subsets of 11 categories. It is not the complete 20-category roadmap.
 
 All supported sources start enabled when no valid preference is saved. This includes Network and PATH in both user and machine scopes. An existing disabled choice remains disabled after an update; open **Sources** to change it. Changing a source does not run a check or elevate permissions. A newly enabled source needs usable observations at both endpoints before it can show changes; older snapshots are not backfilled.
+
+On **Sources**, each source is a compact card in a grid of up to three columns: its checkbox and name, its status as a word with a symbol (a check mark for Success, a warning triangle for Partial, an error mark for Failed, and an empty circle when it has not been checked, is disabled, or is outside scope), what it reads in the selected scope, its record count, and any diagnostic.
 
 | Source | What is read | Important limits |
 | --- | --- | --- |
@@ -258,9 +262,9 @@ The app has no telemetry, account requirement, invisible uploads, ads, automatic
 
 Open **Settings > Appearance > Text size** to choose 100%, 125%, 150%, or 200%. This enlarges interface text, labels, buttons, details, Help, and Report without changing Windows settings. The font-family choice also applies to the Help document. The Help window's own Text size slider adds document-only zoom up to 160% of that base size.
 
-Larger text makes settings columns and before/after columns stack when needed. The main pane, sidebar, dialogs, and long field values can scroll; use the scrollbars or keyboard to reach content below the visible area. Selecting a page brings its heading into view. Collapsing Comparison provides more room for findings. Windows display scaling can enlarge the entire interface further.
+Larger text makes settings columns, source cards, and before/after columns stack when needed, and the sidebar widens so navigation labels wrap between words. The command bar stays at the top of the window; when its commands do not fit beside the Simple/Advanced choice, they move to their own row instead of being squeezed or cut off. Each page opens on its title, followed by the comparison it uses and then its content. The page below it, the sidebar, dialogs, and long field values can scroll; use the scrollbars or keyboard to reach content below the visible area. The **Snapshots** list fills the window and scrolls on its own, and at very large text sizes the whole page scrolls instead. Selecting a page brings its heading into view. Collapsing Comparison provides more room for findings. Windows display scaling can enlarge the entire interface further.
 
-Dark (the default) and Light themes, named color swatches, and Windows high-contrast overrides are supported. Default colors target at least 7:1 text contrast, 4.5:1 primary-button text, and 3:1 control boundaries; available custom presets are contrast-tested. Buttons use semantic roles rather than decoration: teal primary and red danger buttons have at least 7:1 text and a 3:1 outline, and neutral buttons carry a color-coded icon with at least 4.5:1 contrast. Dropdowns and text fields have a 3:1 outline, an accent arrow, and an accent outline while focused or open; check boxes, switches, and radio buttons fill with the accent color when on. Every keyboard focus shows a solid 2-pixel ring. Change kind and priority use words, radio choices show selected circles, check boxes show check marks, switches move their knob, button labels stay visible, and the active page shows a selection bar and bold label, so color is not the only indicator. The window title bar follows the Dark theme where Windows allows it. Buttons, checkboxes, switches, radios, text fields, and list rows have a minimum 44-device-independent-pixel interaction height; fonts can make them taller.
+Dark (the default) and Light themes, named color swatches, and Windows high-contrast overrides are supported. The default palette is built for low vision and color-vision deficiency: all text, including secondary text and field labels, targets at least 7:1 contrast on every surface; control boundaries, the selection bar, and focus accents at least 3:1; interactive color is blue, success uses a bluish green that stays distinct from red under red-green color blindness, and field labels use their own navy (Light) or light-blue (Dark) color. Available custom presets are contrast-tested. Buttons use semantic roles rather than decoration: the blue primary button and the amber caution and red danger buttons have at least 7:1 text and a 3:1 outline, and neutral buttons carry a color-coded icon with at least 4.5:1 contrast. Disabled buttons lose their fill and show a dashed outline, so the state is visible without relying on color. Dropdowns and text fields have a 3:1 outline, an accent arrow, and an accent outline while focused or open; check boxes, switches, and radio buttons fill with the accent color when on. Every keyboard focus shows a solid 2-pixel ring. Change kind, priority, and source status use words with distinct symbols, radio choices show selected circles, check boxes show check marks, switches move their knob, button labels stay visible, and the active page and selected rows show a tint, a selection bar, and bold text, so color is not the only indicator. The window title bar follows the Dark theme where Windows allows it. Buttons, fields, and list rows are at least 36 device-independent pixels tall, and check boxes, switches, and radio buttons at least 32, above the WCAG 2.2 AA minimum target size of 24 pixels; fonts can make them taller.
 
 ### Keyboard Navigation
 
@@ -283,7 +287,7 @@ Closing the main window, including Alt+F4, hides it in the tray rather than quit
 
 ### Screen-Reader Information
 
-Page titles, section headings, and finding names expose heading levels. Page navigation announces its selected item. Snapshot rows announce their timestamp, checkpoint, and scope/access instead of internal object text. Source checkboxes have names, scope/coverage help, and status. Finding groups, captured fields, and Help topics have readable names. Each selectable before/after value identifies its field and side. The checkpoint-name input has a persistent visible label.
+Page titles, section headings, and finding names expose heading levels. Page navigation announces its selected item, and the command bar is announced as the **Main commands** toolbar. Snapshot rows announce their timestamp, checkpoint, and scope/access instead of internal object text, and the snapshot list's column headers have names. Source checkboxes have names, scope/coverage help, and status. Finding groups, captured fields, and Help topics have readable names. Each selectable before/after value identifies its field and side. The checkpoint-name input has a persistent visible label. Decorative icons are hidden from screen readers, so only the visible label beside each icon is announced.
 
 The main status and comparison-selection messages, and the Help result count, expose polite live updates. The sidebar storage label exposes the same guidance as its mouse-hover tooltip. Icons used as commands have names; raw fingerprints and comparison keys remain hidden from both visible text and accessible item names.
 
@@ -324,6 +328,6 @@ The repository provides local x64 and ARM64 MSI installers and an x64 MSIX bundl
 
 Current local release artifacts are unsigned previews. They are not a trusted sideload distribution or proof of Microsoft Store publication. Signing, Store certification, Windows 10/ARM64 qualification, and install/upgrade/uninstall qualification remain outstanding. MSI ICE validation was blocked by the build machine's policy. Do not disable SmartScreen or managed-device protection to run a preview.
 
-Source changes marked **Unreleased** may be newer than existing installers. This guide is embedded when the application is built; it describes the source build that includes it. A release is not automatically rebuilt when source code or help changes.
+Source changes marked **Unreleased** may be newer than existing installers. This guide is embedded when the application is built; it describes the source build that includes it. The version at the bottom of the sidebar identifies the build you are running. A release is not automatically rebuilt when source code or help changes.
 
 Still planned: broader collectors, persistent event timeline, richer tags/rules/notes, storage-budget retention and archive controls, report import and encrypted bundles, HTML/PDF export, native-speaker localization qualification, and resource-approved background monitoring. Age-based retention is available in Settings. Collection consumes resources; no literal zero-CPU collection or universally harmless-change promise is made.

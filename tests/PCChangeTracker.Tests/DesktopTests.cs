@@ -105,16 +105,66 @@ public sealed class DesktopTests
     [Fact]
     public void AccessiblePaletteMeetsTextAndControlContrastTargets()
     {
-        var colors = LoadStandardBrushes().ToDictionary(pair => pair.Key, pair => ((System.Windows.Media.SolidColorBrush)pair.Value).Color);
-        double ContrastByKey(string foreground, string background) => Contrast(colors[foreground], colors[background]);
-        foreach (var background in new[] { "SurfaceBrush", "CanvasBrush" })
+        var standard = LoadStandardBrushes();
+        foreach (var theme in new[] { "Light", "Dark" })
         {
-            foreach (var foreground in new[] { "TextBrush", "MutedBrush", "ReviewBrush" })
-                Assert.True(ContrastByKey(foreground, background) >= 7, $"Insufficient text contrast: {foreground}/{background}");
-            Assert.True(ContrastByKey("LineBrush", background) >= 3, $"Insufficient control-boundary contrast: {background}");
+            var palette = PCChangeTracker.App.Appearance.BuildPalette(standard, theme);
+            double ContrastByKey(string foreground, string background) => Contrast(((System.Windows.Media.SolidColorBrush)palette[foreground]).Color,
+                ((System.Windows.Media.SolidColorBrush)palette[background]).Color);
+            foreach (var background in new[] { "SurfaceBrush", "CanvasBrush", "SubtleBackgroundBrush", "InputBackgroundBrush" })
+            {
+                foreach (var foreground in new[] { "TextBrush", "MutedBrush", "LabelBrush", "ReviewBrush" })
+                    Assert.True(ContrastByKey(foreground, background) >= 7, $"{theme}: insufficient text contrast {foreground}/{background}");
+                Assert.True(ContrastByKey("SuccessBrush", background) >= 4.5, $"{theme}: insufficient status contrast/{background}");
+                Assert.True(ContrastByKey("LineBrush", background) >= 3, $"{theme}: insufficient control-boundary contrast/{background}");
+            }
+            foreach (var foreground in new[] { "SelectionTextBrush", "TextBrush", "MutedBrush", "LabelBrush" })
+                Assert.True(ContrastByKey(foreground, "SelectionBackgroundBrush") >= 7, $"{theme}: selected-row text {foreground}");
+            Assert.True(ContrastByKey("SelectionAccentBrush", "SelectionBackgroundBrush") >= 3, $"{theme}: selection bar");
+            Assert.True(ContrastByKey("AccentTextBrush", "AccentBrush") >= 7, $"{theme}: primary button text");
+            Assert.True(ContrastByKey("BrandTextBrush", "BrandBrush") >= 4.5, $"{theme}: product mark");
         }
-        Assert.True(ContrastByKey("AccentTextBrush", "AccentBrush") >= 4.5);
         Assert.DoesNotContain(LoadThemeXaml("Controls.xaml").Descendants(Presentation + "Style"), style => (string?)style.Attribute(Xaml + "Key") == "ModeSegment");
+    }
+
+    [Fact]
+    public void EveryTokenHasADarkValueAndDefaultSwatchesMatchTheTokens()
+    {
+        var standard = LoadStandardBrushes();
+        Assert.Equal(standard.Keys.Order(), PCChangeTracker.App.Appearance.DarkPaletteHex.Keys.Order());
+        System.Windows.Media.Color Light(string key) => ((System.Windows.Media.SolidColorBrush)standard[key]).Color;
+        System.Windows.Media.Color Dark(string key) => Hex(PCChangeTracker.App.Appearance.DarkPaletteHex[key]);
+        Assert.Equal(Light("TextBrush"), PCChangeTracker.App.Appearance.ColorForChoice("Light", "ButtonColorDefault"));
+        Assert.Equal(Light("NeutralButtonBackgroundBrush"), PCChangeTracker.App.Appearance.ColorForChoice("Light", "ButtonColorDefault", true));
+        Assert.Equal(Dark("TextBrush"), PCChangeTracker.App.Appearance.ColorForChoice("Dark", "ButtonColorDefault"));
+        Assert.Equal(Dark("NeutralButtonBackgroundBrush"), PCChangeTracker.App.Appearance.ColorForChoice("Dark", "ButtonColorDefault", true));
+    }
+
+    /// <summary>A misspelled DynamicResource key fails silently at run time, so every brush a view names must be a declared token.</summary>
+    [Fact]
+    public void EveryBrushReferencedByTheViewsIsADeclaredToken()
+    {
+        var tokens = LoadStandardBrushes().Keys.ToHashSet();
+        var source = Path.Combine(FindRoot(), "src", "PCChangeTracker.App");
+        var references = Directory.EnumerateFiles(source, "*.xaml", SearchOption.AllDirectories)
+            .Where(file => !file.Split(Path.DirectorySeparatorChar).Any(part => part is "bin" or "obj"))
+            .SelectMany(file => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(file), @"\{(?:Dynamic|Static)Resource (\w+Brush)\}")
+                .Select(match => (File: Path.GetFileName(file), Key: match.Groups[1].Value)))
+            .ToArray();
+        Assert.NotEmpty(references);
+        Assert.All(references, reference => Assert.True(tokens.Contains(reference.Key), $"{reference.File} uses undeclared brush {reference.Key}"));
+        Assert.DoesNotContain(Directory.EnumerateFiles(source, "*.xaml", SearchOption.AllDirectories)
+            .Where(file => !file.Split(Path.DirectorySeparatorChar).Any(part => part is "bin" or "obj") && Path.GetFileName(file) != "Colors.xaml"),
+            file => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(file), "(Background|Foreground|BorderBrush|Fill|Stroke)=\"#"));
+    }
+
+    [Theory]
+    [InlineData(600d, 26d, 15d, 600d)]
+    [InlineData(300d, 26d, 15d, 390d)]
+    [InlineData(600d, 26d, 30d, 780d)]
+    public void ViewportFillNeverShrinksBelowItsTextScaledMinimum(double viewport, double minimumEms, double fontSize, double expected)
+    {
+        Assert.Equal(expected, PCChangeTracker.App.Controls.ViewportFill.FillHeight(viewport, minimumEms, fontSize));
     }
 
     private static readonly XNamespace Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -137,8 +187,10 @@ public sealed class DesktopTests
     {
         var resources = new System.Windows.ResourceDictionary();
         PCChangeTracker.App.Appearance.ApplyTextSize(resources, percentage);
-        foreach (var size in new[] { 14, 16, 17, 18, 19, 20, 22, 24, 26 })
+        Assert.Equal(new[] { 14, 15, 16, 17, 18, 19, 20, 22, 24, 26 }, PCChangeTracker.App.Appearance.FontSizes);
+        foreach (var size in PCChangeTracker.App.Appearance.FontSizes)
             Assert.Equal(size * scale, Assert.IsType<double>(resources["AppFont" + size]));
+        Assert.Equal(new System.Windows.GridLength(216 * (1 + (scale - 1) / 2)), Assert.IsType<System.Windows.GridLength>(resources["SidebarWidth"]));
     }
 
     [Fact]
@@ -170,7 +222,8 @@ public sealed class DesktopTests
                     Assert.True(Contrast(Color(text), Color(surface)) >= 7, $"{theme}: {foreground}/{surface}");
             Assert.True(Contrast(Color("ButtonTextBrush"), Color("ButtonBackgroundBrush")) >= 4.5, $"{theme}: {foreground}/{background}");
             Assert.True(Contrast(Color("LineBrush"), Color("ButtonBackgroundBrush")) >= 3, $"{theme}: button outline/{background}");
-            Assert.True(Contrast(Color("AccentTextBrush"), Color("AccentBrush")) >= 4.5, $"{theme}: primary button/{background}");
+            Assert.True(Contrast(Color("AccentTextBrush"), Color("AccentBrush")) >= 7, $"{theme}: primary button/{background}");
+            Assert.True(Contrast(Color("SelectionAccentBrush"), Color("SelectionBackgroundBrush")) >= 3, $"{theme}: selection bar/{background}");
             foreach (var role in PCChangeTracker.App.Appearance.ButtonRoles)
             {
                 var fill = Color(role + "ButtonBackgroundBrush");
@@ -241,6 +294,8 @@ public sealed class DesktopTests
         Assert.Equal(glyphs.Length, glyphs.Distinct().Count());
         Assert.All(window.Descendants(Presentation + "Button").Where(button => ((string?)button.Attribute("Content"))?.Contains("DeleteSelected") == true),
             button => Assert.Equal("{StaticResource DangerButton}", (string?)button.Attribute("Style")));
+        Assert.All(window.Descendants(Presentation + "Button").Where(button => ((string?)button.Attribute("Content"))?.Contains("UseBaseline") == true),
+            button => Assert.Equal("{StaticResource CautionButton}", (string?)button.Attribute("Style")));
     }
 
     [Theory]
@@ -300,6 +355,42 @@ public sealed class DesktopTests
     }
 
     [Fact]
+    public void CommandBarKeepsCommandsOnOneRowUntilTheyWouldBeSqueezed()
+    {
+        Assert.True(PCChangeTracker.App.Controls.CommandBarPanel.FitsOnOneRow(600, 200, 300, 16));
+        Assert.False(PCChangeTracker.App.Controls.CommandBarPanel.FitsOnOneRow(500, 200, 300, 16));
+        Assert.True(PCChangeTracker.App.Controls.CommandBarPanel.FitsOnOneRow(300, 0, 300, 16));
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var bar = new PCChangeTracker.App.Controls.CommandBarPanel { Spacing = 16 };
+                bar.Children.Add(new System.Windows.Controls.Border { Width = 200, Height = 30 });
+                bar.Children.Add(new System.Windows.Controls.Border { Width = 300, Height = 36 });
+                System.Windows.Point Position(int index) => bar.Children[index].TranslatePoint(new System.Windows.Point(), bar);
+                bar.Measure(new System.Windows.Size(700, double.PositiveInfinity));
+                bar.Arrange(new System.Windows.Rect(0, 0, 700, bar.DesiredSize.Height));
+                Assert.False(bar.IsStacked);
+                Assert.Equal(36, bar.DesiredSize.Height);
+                Assert.Equal(new System.Windows.Point(0, 3), Position(0));
+                Assert.Equal(new System.Windows.Point(400, 0), Position(1));
+                bar.Measure(new System.Windows.Size(450, double.PositiveInfinity));
+                bar.Arrange(new System.Windows.Rect(0, 0, 450, bar.DesiredSize.Height));
+                Assert.True(bar.IsStacked);
+                Assert.Equal(30 + 8 + 36, bar.DesiredSize.Height);
+                Assert.Equal(new System.Windows.Point(0, 0), Position(0));
+                Assert.Equal(new System.Windows.Point(150, 38), Position(1));
+            }
+            catch (Exception exception) { failure = exception; }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(10)), "Command bar layout did not finish.");
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    [Fact]
     public void HighContrastPaletteUsesSystemColorsAndRestoresOriginals()
     {
         var normal = new Dictionary<string, object>
@@ -308,7 +399,13 @@ public sealed class DesktopTests
             ["LineBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Gray),
             ["SurfaceBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
             ["AccentBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Teal),
-            ["AccentTextBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
+            ["AccentTextBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            ["SelectionBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightBlue),
+            ["SelectionTextBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Navy),
+            ["SelectionAccentBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Blue),
+            ["BrandBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Teal),
+            ["SuccessBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green),
+            ["ScrimOverlayBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Black)
         };
         var resources = new System.Windows.ResourceDictionary();
         PCChangeTracker.App.Appearance.ApplyAccessibilityColors(resources, normal, true);
@@ -316,6 +413,14 @@ public sealed class DesktopTests
         Assert.Same(System.Windows.SystemColors.WindowTextBrush, resources["LineBrush"]);
         Assert.Same(System.Windows.SystemColors.WindowBrush, resources["SurfaceBrush"]);
         Assert.Same(System.Windows.SystemColors.HighlightTextBrush, resources["AccentTextBrush"]);
+        Assert.Same(System.Windows.SystemColors.HighlightBrush, resources["SelectionBackgroundBrush"]);
+        Assert.Same(System.Windows.SystemColors.HighlightTextBrush, resources["SelectionTextBrush"]);
+        // The selection bar and selected navigation icon sit on the selection background, so they must not share its system color.
+        Assert.Same(System.Windows.SystemColors.HighlightTextBrush, resources["SelectionAccentBrush"]);
+        Assert.NotSame(resources["SelectionBackgroundBrush"], resources["SelectionAccentBrush"]);
+        Assert.Same(System.Windows.SystemColors.HighlightBrush, resources["BrandBrush"]);
+        Assert.Same(System.Windows.SystemColors.WindowTextBrush, resources["SuccessBrush"]);
+        Assert.Same(System.Windows.Media.Brushes.Transparent, resources["ScrimOverlayBrush"]);
         PCChangeTracker.App.Appearance.ApplyAccessibilityColors(resources, normal, false);
         foreach (var pair in normal) Assert.Same(pair.Value, resources[pair.Key]);
     }
@@ -1341,6 +1446,18 @@ public sealed class DesktopTests
                 Assert.True(((SelectionItemPattern)FindId(window, page).GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected);
                 var headingId = page.Replace("Page", "Heading", StringComparison.Ordinal);
                 Assert.True(SpinWait.SpinUntil(() => !FindId(window, headingId).Current.IsOffscreen, 5000), "Page heading was not brought into view: " + headingId);
+                // IsOffscreen only reports visibility, so also require a usable page viewport that actually contains the heading,
+                // and a primary command inside the window: a sticky bar must never crowd the page out at large text sizes.
+                var windowBounds = window.Current.BoundingRectangle;
+                var viewport = FindId(window, "MainContentScroll").Current.BoundingRectangle;
+                Assert.True(viewport.Height >= windowBounds.Height * 0.35, $"{page}: the page viewport is only {viewport.Height:0} of {windowBounds.Height:0}.");
+                Assert.True(SpinWait.SpinUntil(() =>
+                {
+                    var heading = FindId(window, headingId).Current.BoundingRectangle;
+                    return heading.Top >= viewport.Top - 1 && heading.Bottom <= viewport.Bottom + 1;
+                }, 5000), $"{headingId} is outside the page viewport {viewport}.");
+                var check = FindId(window, "CheckNow").Current.BoundingRectangle;
+                Assert.True(check.Width > 0 && check.Right <= windowBounds.Right + 1 && check.Bottom <= viewport.Top + 1, $"Check now is not in the command bar: {check}.");
                 AssertNamedControls(window);
                 if (page == "HistoryPage")
                 {
@@ -1427,17 +1544,23 @@ public sealed class DesktopTests
             Assert.True(SpinWait.SpinUntil(() => FindId(window, "HistoryHeading").Current.HasKeyboardFocus, 5000));
             SendKeysTo(process, "+{F6}");
             Assert.True(SpinWait.SpinUntil(() => FindId(window, "SimpleMode").Current.HasKeyboardFocus, 5000));
-            SendKeysTo(process, "^4");
+            // Another application can own Ctrl+digit as a system-wide hotkey, and Windows then never delivers the keystroke to
+            // ChangeTracker. The page shortcuts are exercised only when Windows can deliver them; otherwise the pages are opened
+            // through UI Automation so the rest of the keyboard workflow is still verified.
+            var pageShortcutsDeliverable = GlobalHotkeyIsFree(0x31) && GlobalHotkeyIsFree(0x34);
+            if (pageShortcutsDeliverable) SendKeysTo(process, "^4");
+            else { InvokeId(window, "SettingsPage"); FindId(window, "SettingsHeading").SetFocus(); }
             Assert.True(SpinWait.SpinUntil(() => FindId(window, "SettingsHeading").Current.HasKeyboardFocus, 5000));
             SelectSnapshot(window, "AppTextSize", "150%");
             Assert.True(SpinWait.SpinUntil(() => store.GetPreference("textSize") == "150", 5000));
-            SendKeysTo(process, "^1");
+            if (pageShortcutsDeliverable) SendKeysTo(process, "^1");
+            else { InvokeId(window, "ReviewPage"); FindId(window, "ReviewHeading").SetFocus(); }
             Assert.True(SpinWait.SpinUntil(() => FindId(window, "ReviewHeading").Current.HasKeyboardFocus, 5000));
             var inspect = FindId(window, "InspectChange");
             inspect.SetFocus();
             SendKeysTo(process, "{ENTER}");
             Assert.True(SpinWait.SpinUntil(() => FindId(window, "CloseChangeDetails").Current.HasKeyboardFocus, 5000));
-            SendKeysTo(process, "^4");
+            if (pageShortcutsDeliverable) SendKeysTo(process, "^4");
             Assert.True(((SelectionItemPattern)FindId(window, "ReviewPage").GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected);
             SendKeysTo(process, "+{TAB}");
             Assert.False(FindId(window, "HelpMe").Current.IsEnabled);
@@ -1470,6 +1593,24 @@ public sealed class DesktopTests
         Assert.Equal((uint)process.Id, foregroundProcess);
         System.Windows.Forms.SendKeys.SendWait(keys);
     }
+
+    /// <summary>Whether Ctrl plus the virtual key is free, that is, not registered as a system-wide hotkey by another process.</summary>
+    private static bool GlobalHotkeyIsFree(uint virtualKey)
+    {
+        const int probeId = 0x5C71;
+        const uint control = 0x2, noRepeat = 0x4000;
+        if (!RegisterHotKey(0, probeId, control | noRepeat, virtualKey)) return false;
+        UnregisterHotKey(0, probeId);
+        return true;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool RegisterHotKey(nint window, int id, uint modifiers, uint virtualKey);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool UnregisterHotKey(nint window, int id);
 
     private static AutomationElement FindName(AutomationElement parent, string name) => parent.FindFirst(TreeScope.Descendants,
         new PropertyCondition(AutomationElement.NameProperty, name)) ?? throw new InvalidOperationException($"The accessible element '{name}' was not found.");
@@ -1571,8 +1712,14 @@ public sealed class DesktopTests
         ((InvokePattern)button.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
     }
 
-    private static void WaitForText(AutomationElement window, string value) => Assert.True(SpinWait.SpinUntil(() =>
-        window.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, value)) is not null, 10000), "Missing UI text: " + value);
+    private static void WaitForText(AutomationElement window, string value)
+    {
+        if (SpinWait.SpinUntil(() => window.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, value)) is not null, 10000)) return;
+        var status = window.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "StatusText"))?.Current.Name;
+        var state = window.TryGetCurrentPattern(WindowPattern.Pattern, out var pattern) ? ((WindowPattern)pattern).Current.WindowVisualState.ToString() : "unavailable";
+        GetWindowThreadProcessId(GetForegroundWindow(), out var foregroundProcess);
+        Assert.Fail($"Missing UI text: {value}; status: {status ?? "(none)"}; window={state}; offscreen={window.Current.IsOffscreen}; foregroundProcess={foregroundProcess}.");
+    }
 
     private static string FindRoot()
     {

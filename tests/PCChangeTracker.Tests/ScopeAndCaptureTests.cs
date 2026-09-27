@@ -175,6 +175,53 @@ public sealed class ScopeAndCaptureTests
         { Scope = CollectionScope.CurrentUser };
 
     [Fact]
+    public void ComparisonHeaderStatesBothEndsAndCollapsesAwayFromReview()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? model = null;
+        try
+        {
+            var store = new HistoryStore(Path.Combine(directory, "history.db"));
+            store.SetPreference("collection.scope", "CurrentUser");
+            var first = ComparisonSnapshot(new DateTimeOffset(DateTime.Today.AddDays(-2).AddHours(9)), "older");
+            var second = ComparisonSnapshot(first.StartedAt.AddHours(1), "later");
+            store.Save(first);
+            store.Save(second);
+            store.Rename(first.Id, "Before setup");
+            model = new MainViewModel(store, new RecordingCaptureService(), directory);
+            var texts = model.Texts;
+            Assert.Equal(first.Id, model.CompareFrom!.Id);
+            Assert.True(model.ComparisonPickerExpanded);
+            Assert.Equal($"{texts["Comparison"]}: {texts["Baseline"]} · {texts.Date(model.CompareFrom.CapturedAt)} (Before setup) → {texts["Today"]}",
+                model.ComparisonHeader);
+
+            model.CompareWithToday = false;
+            model.CompareTo = model.Snapshots.Single(snapshot => snapshot.Id == second.Id);
+            Assert.EndsWith($" → {texts.Date(model.CompareTo.CapturedAt)}", model.ComparisonHeader);
+
+            model.CurrentStateOnlyCommand.Execute(null);
+            Assert.Equal($"{texts["Comparison"]}: {texts["CurrentState"]} → {texts["Today"]}", model.ComparisonHeader);
+
+            foreach (var page in new[] { "History", "Sources", "Settings" })
+            {
+                model.ComparisonPickerExpanded = true;
+                model.NavigateCommand.Execute(page);
+                Assert.False(model.ComparisonPickerExpanded, page);
+            }
+            model.ComparisonPickerExpanded = true;
+            model.NavigateCommand.Execute("Review");
+            Assert.True(model.ComparisonPickerExpanded);
+
+            Assert.Equal("Version " + typeof(MainViewModel).Assembly.GetName().Version!.ToString(3), model.VersionText);
+            model.SelectedLanguage = PCChangeTracker.App.Localization.UiText.Languages.Single(language => language.Code == "ar");
+            Assert.Contains(" ← ", model.ComparisonHeader);
+            Assert.DoesNotContain("→", model.ComparisonHeader);
+            Assert.Empty(store.List().Where(snapshot => snapshot.Id != first.Id && snapshot.Id != second.Id));
+        }
+        finally { model?.StopBackgroundWork(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
+    [Fact]
     public async Task FirstRunRequiresScopeChoiceAndNeverElevatesOnSelectionOrModeChange()
     {
         var directory = Path.Combine(Path.GetTempPath(), "PCChangeTrackerTests", Guid.NewGuid().ToString("N"));

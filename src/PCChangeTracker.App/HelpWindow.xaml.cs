@@ -97,6 +97,14 @@ public partial class HelpWindow : Window
     protected override void OnPreviewKeyDown(KeyEventArgs eventArgs)
     {
         base.OnPreviewKeyDown(eventArgs);
+        // Ctrl+F is handled while tunneling: otherwise the document viewer claims the Find command for its own find bar
+        // whenever it has focus, and the topic search could not be reached from the document.
+        if (eventArgs.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            FocusSearch(this, eventArgs);
+            eventArgs.Handled = true;
+            return;
+        }
         if (eventArgs.Key != Key.F6 || Keyboard.Modifiers is not (ModifierKeys.None or ModifierKeys.Shift)) return;
         UIElement[] regions = [HelpSearch, TopicList, HelpReader];
         var current = Array.FindIndex(regions, region => region.IsKeyboardFocusWithin);

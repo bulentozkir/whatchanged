@@ -1,49 +1,67 @@
 <!--
     Color tokens. These are the Light values; Appearance.DarkPaletteHex supplies the Dark values for the same keys,
     user color choices are layered on top, and Windows high contrast replaces every token with system colors.
-    Contrast targets are enforced by tests: text 7:1 on surfaces, control boundaries 3:1 against adjacent surfaces.
+
+    The palette is built for low vision and color-vision deficiency: all text reaches 7:1 (WCAG AAA) on every surface,
+    control boundaries and focus cues reach 3:1, interactive color is blue (the hue best preserved by protanopia,
+    deuteranopia, and tritanopia), and success is a bluish green kept clear of danger red under red-green deficiency.
+    Meaning is never carried by color alone: every status also has a word and a distinct glyph. Tests enforce the ratios.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Surfaces -->
-    <SolidColorBrush x:Key="CanvasBrush" Color="#F5F7F8" />
+    <SolidColorBrush x:Key="CanvasBrush" Color="#F3F5F8" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="SubtleBackgroundBrush" Color="#E3EAEE" />
+    <SolidColorBrush x:Key="SubtleBackgroundBrush" Color="#E6EBF1" />
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="CardStrokeBrush" Color="#D5DDE2" />
+    <SolidColorBrush x:Key="CardStrokeBrush" Color="#D2D9E2" />
 
-    <!-- Text and control boundaries -->
-    <SolidColorBrush x:Key="TextBrush" Color="#172126" />
-    <SolidColorBrush x:Key="MutedBrush" Color="#394A53" />
-    <SolidColorBrush x:Key="LabelBrush" Color="#172126" />
-    <SolidColorBrush x:Key="LineBrush" Color="#70808A" />
-    <SolidColorBrush x:Key="ReviewBrush" Color="#783D08" />
+    <!-- Text: body, secondary, form labels (a distinct navy so labels never read as values), and warnings -->
+    <SolidColorBrush x:Key="TextBrush" Color="#141A21" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#3E4958" />
+    <SolidColorBrush x:Key="LabelBrush" Color="#173A6B" />
+    <SolidColorBrush x:Key="ReviewBrush" Color="#7A3300" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#00675A" />
 
-    <!-- Accent: primary actions, selection, selector affordances -->
-    <SolidColorBrush x:Key="AccentBrush" Color="#08675F" />
+    <!-- Control boundaries -->
+    <SolidColorBrush x:Key="LineBrush" Color="#687585" />
+
+    <!-- Accent: primary actions, selector affordances, checked states, focus accents -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#0B50B8" />
     <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF" />
 
+    <!-- Selected list rows and navigation items: a tint plus an accent bar (and accent icon) and bold text.
+         The bar has its own token so Windows high contrast can draw it in HighlightText on the Highlight row. -->
+    <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="#DCE7F9" />
+    <SolidColorBrush x:Key="SelectionTextBrush" Color="#0A2A5C" />
+    <SolidColorBrush x:Key="SelectionAccentBrush" Color="#0B50B8" />
+
+    <!-- Product mark; matches the application icon rather than the interactive accent -->
+    <SolidColorBrush x:Key="BrandBrush" Color="#08675F" />
+    <SolidColorBrush x:Key="BrandTextBrush" Color="#FFFFFF" />
+
     <!-- Base pair for user-chosen button colors -->
-    <SolidColorBrush x:Key="ButtonTextBrush" Color="#172126" />
+    <SolidColorBrush x:Key="ButtonTextBrush" Color="#141A21" />
     <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FFFFFF" />
 
-    <!-- Command roles: standard, caution (elevation), danger (deletion) -->
+    <!-- Command roles: standard, caution (replaces a saved reference), danger (deletion) -->
     <SolidColorBrush x:Key="NeutralButtonBackgroundBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="NeutralButtonTextBrush" Color="#172126" />
-    <SolidColorBrush x:Key="NeutralButtonBorderBrush" Color="#70808A" />
-    <SolidColorBrush x:Key="CautionButtonBackgroundBrush" Color="#FFF3DC" />
-    <SolidColorBrush x:Key="CautionButtonTextBrush" Color="#6B3D00" />
-    <SolidColorBrush x:Key="CautionButtonBorderBrush" Color="#9A5A00" />
+    <SolidColorBrush x:Key="NeutralButtonTextBrush" Color="#141A21" />
+    <SolidColorBrush x:Key="NeutralButtonBorderBrush" Color="#687585" />
+    <SolidColorBrush x:Key="CautionButtonBackgroundBrush" Color="#FFF3DD" />
+    <SolidColorBrush x:Key="CautionButtonTextBrush" Color="#673800" />
+    <SolidColorBrush x:Key="CautionButtonBorderBrush" Color="#A15B00" />
     <SolidColorBrush x:Key="DangerButtonBackgroundBrush" Color="#FDECEC" />
-    <SolidColorBrush x:Key="DangerButtonTextBrush" Color="#8C1D18" />
-    <SolidColorBrush x:Key="DangerButtonBorderBrush" Color="#B42318" />
+    <SolidColorBrush x:Key="DangerButtonTextBrush" Color="#8E1A1A" />
+    <SolidColorBrush x:Key="DangerButtonBorderBrush" Color="#BF2B2B" />
 
     <!-- Icon tones that make otherwise neutral commands recognizable at a glance -->
-    <SolidColorBrush x:Key="InfoIconBrush" Color="#1A56A3" />
-    <SolidColorBrush x:Key="NavigateIconBrush" Color="#5A31A0" />
-    <SolidColorBrush x:Key="HelpIconBrush" Color="#7A5A00" />
+    <SolidColorBrush x:Key="InfoIconBrush" Color="#0B57C2" />
+    <SolidColorBrush x:Key="NavigateIconBrush" Color="#6A2DB3" />
+    <SolidColorBrush x:Key="HelpIconBrush" Color="#7D5300" />
 
-    <!-- Interaction state layers drawn over any fill -->
+    <!-- Interaction state layers drawn over any fill, and the scrim behind modal panels -->
     <SolidColorBrush x:Key="ControlHoverOverlayBrush" Color="#0F000000" />
     <SolidColorBrush x:Key="ControlPressedOverlayBrush" Color="#1F000000" />
+    <SolidColorBrush x:Key="ScrimOverlayBrush" Color="#66000000" />
 </ResourceDictionary>

@@ -12,7 +12,7 @@
 | Platforms | Windows 10 and Windows 11, with explicitly qualified builds and architectures |
 | Distribution | Microsoft Store, MSIX-packaged desktop app |
 | Delivery model | Phased development governed by correctness, privacy, usability, and performance gates |
-| Current state | Development build 1.0.1 implements an initial manual slice; see the README status matrix. Full product and Store certification remain incomplete. |
+| Current state | Development build 1.0.2 implements an initial manual slice; see the README status matrix. Full product and Store certification remain incomplete. |
 
 The owner has chosen a comprehensive product and accepts a longer development effort. This revision supersedes the former narrow MVP, short delivery estimate, checkpoint cap, and requirement numbering. The initial implementation can be incremental, but that first increment is not the full product contract.
 

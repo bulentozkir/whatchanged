@@ -12,9 +12,10 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolVisibility" />
             <DataTemplate DataType="{x:Type sys:String}"><TextBlock Text="{Binding}" TextWrapping="Wrap"/></DataTemplate>
-            <!-- Type ramp; Appearance.ApplyTextSize rescales these for the Text size setting. -->
+            <!-- Type ramp; Appearance.ApplyTextSize rescales these for the Text size setting. Body text is AppFont15. -->
             <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
             <sys:Double x:Key="AppFont14">14</sys:Double>
+            <sys:Double x:Key="AppFont15">15</sys:Double>
             <sys:Double x:Key="AppFont16">16</sys:Double>
             <sys:Double x:Key="AppFont17">17</sys:Double>
             <sys:Double x:Key="AppFont18">18</sys:Double>
@@ -23,6 +24,7 @@
             <sys:Double x:Key="AppFont22">22</sys:Double>
             <sys:Double x:Key="AppFont24">24</sys:Double>
             <sys:Double x:Key="AppFont26">26</sys:Double>
+            <GridLength x:Key="SidebarWidth">216</GridLength>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

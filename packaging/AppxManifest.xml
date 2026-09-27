@@ -3,7 +3,7 @@
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap rescap">
-  <Identity Name="BulentOzkir.ChangeTracker" Publisher="CN=06D08AF4-6BB1-40DF-9B96-5DF27BEE0635" Version="1.0.1.0" ProcessorArchitecture="x64" />
+  <Identity Name="BulentOzkir.ChangeTracker" Publisher="CN=06D08AF4-6BB1-40DF-9B96-5DF27BEE0635" Version="1.0.2.0" ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>ChangeTracker</DisplayName>
     <PublisherDisplayName>Bulent Ozkir</PublisherDisplayName>

@@ -3,25 +3,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:PCChangeTracker.App.Localization"
         xmlns:controls="clr-namespace:PCChangeTracker.App.Controls"
-        Title="{loc:Loc ReportTitle}" Width="880" Height="700" MinWidth="640" MinHeight="480" WindowStartupLocation="CenterOwner"
+        Title="{loc:Loc ReportTitle}" Width="880" Height="680" MinWidth="600" MinHeight="420" WindowStartupLocation="CenterOwner"
         Language="{Binding Texts.XmlLanguage}" Style="{StaticResource {x:Type Window}}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" FlowDirection="{Binding Texts.Direction}">
-    <Grid Margin="24">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel Margin="0,0,0,16">
-            <TextBlock Text="{loc:Loc ReviewSharing}" FontSize="{DynamicResource AppFont24}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/>
-            <TextBlock Text="{loc:Loc ReportPrivacy}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0"/>
+    <!-- The preview fills the window and scrolls itself, so the actions below it are always visible. -->
+    <Grid Margin="20,16,20,16" FlowDirection="{Binding Texts.Direction}">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,12">
+            <TextBlock Text="{loc:Loc ReviewSharing}" FontSize="{DynamicResource AppFont22}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level1"/>
+            <TextBlock Text="{loc:Loc ReportPrivacy}" Style="{StaticResource PageSubtitle}" Margin="0,4,0,0"/>
         </StackPanel>
-        <TextBox x:Name="Preview" Grid.Row="1" Height="360" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Stretch" FontSize="{DynamicResource AppFont16}" AutomationProperties.Name="{loc:Loc ReportPreview}" AutomationProperties.AutomationId="ReportContent"/>
-        <DockPanel Grid.Row="2" Margin="0,18,0,0">
-            <Button DockPanel.Dock="Right" Content="{loc:Loc Close}" IsCancel="True"/>
+        <TextBox x:Name="Preview" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                 AutomationProperties.Name="{loc:Loc ReportPreview}" AutomationProperties.AutomationId="ReportContent"/>
+        <DockPanel Grid.Row="2" Margin="0,12,0,0">
+            <Button DockPanel.Dock="Right" Content="{loc:Loc Close}" IsCancel="True" Margin="12,0,0,0" controls:Icon.Glyph="&#xE711;"/>
             <WrapPanel>
-                <Button Content="{loc:Loc CopyText}" Click="CopyText" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8C8;"/>
                 <Button Content="{loc:Loc SaveText}" Click="SaveText" Style="{StaticResource PrimaryButton}" controls:Icon.Glyph="&#xE74E;"/>
+                <Button Content="{loc:Loc CopyText}" Click="CopyText" Style="{StaticResource InfoButton}" controls:Icon.Glyph="&#xE8C8;"/>
                 <Button x:Name="JsonButton" Content="{loc:Loc SaveJson}" Click="SaveJson" controls:Icon.Glyph="&#xE74E;"/>
                 <Button x:Name="CsvButton" Content="{loc:Loc SaveCsv}" Click="SaveCsv" controls:Icon.Glyph="&#xE74E;"/>
             </WrapPanel>
         </DockPanel>
     </Grid>
-    </ScrollViewer>
 </Window>

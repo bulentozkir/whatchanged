@@ -25,6 +25,21 @@ public sealed class LocalizationTests
         }
     }
 
+    [Theory]
+    [InlineData("tr-TR", "tr")]
+    [InlineData("zh-CN", "zh-hans")]
+    [InlineData("ar-EG", "arz")]
+    [InlineData("ar-SA", "ar")]
+    [InlineData("de-AT", "de")]
+    [InlineData("sv-SE", "en")]
+    public void StartupMessagesFollowTheWindowsDisplayLanguage(string cultureName, string expectedCode)
+    {
+        var texts = UiText.ForSystemLanguage(System.Globalization.CultureInfo.GetCultureInfo(cultureName));
+        Assert.Equal(expectedCode, texts.Language.Code);
+        foreach (var key in new[] { "StandardLaunchRequired", "HistoryOpenFailed" })
+            Assert.Equal(UiText.ReadCatalog(expectedCode)[key], texts[key]);
+    }
+
     [Fact]
     public void CatalogHasTwentyExplicitLanguagesAndSafeFallback()
     {
